@@ -12,6 +12,9 @@
 #ifndef _DEBUG_H    /* Guard against multiple inclusion */
 #define _DEBUG_H
 
+#include "system_definitions.h"
+#include <plib.h>
+
 /* ************************************************************************** */
 /* ************************************************************************** */
 /* Section: Constants                                                         */

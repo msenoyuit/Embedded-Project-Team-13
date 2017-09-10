@@ -116,8 +116,11 @@ void USART_OUTPUT_Initialize ( void )
 {
     /* Place the App state machine in its initial state. */
     usart_outputData.state = USART_OUTPUT_STATE_INIT;
+    dbgInit();
+    unsigned char testChar = 'e';
+    dbgOutputVal(testChar);
+    dbgOutputLoc(DBG_TASK_BEFORE_QUEUE_RECEIVE);
 
-    
     /* TODO: Initialize your application's state machine and other
      * parameters.
      */
