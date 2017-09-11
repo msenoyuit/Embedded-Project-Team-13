@@ -61,6 +61,11 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 
+// Queue related constants
+#define QUEUE_LENGTH 10
+#define QUEUE_ITEM_SIZE sizeof(QueueMessage)
+#define TIMER_FREQUENCY_MS 50
+
 // *****************************************************************************
 /* Application Data
 
@@ -76,7 +81,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
     Application strings and buffers are be defined outside this structure.
 */
 
-USART_OUTPUT_DATA usart_outputData;
+USART_OUTPUT_DATA usartOutputData;
 
 // *****************************************************************************
 // *****************************************************************************
@@ -94,8 +99,18 @@ USART_OUTPUT_DATA usart_outputData;
 // *****************************************************************************
 
 
-/* TODO:  Add any necessary local functions.
-*/
+void timerCallbackFn(TimerHandle_t timer) {
+    BaseType_t higherPriorityTaskWoken = pdFALSE;
+    QueueMessage message;
+    message.id = 0;
+    if(xQueueSendToBackFromISR(usartOutputData.queue, &message,
+                               &higherPriorityTaskWoken)
+       != pdTRUE) {
+        // Queue is full, preventing data from being added
+        dbgOutputVal('e');
+    }
+    portEND_SWITCHING_ISR(higherPriorityTaskWoken);
+}
 
 
 // *****************************************************************************
@@ -111,19 +126,37 @@ USART_OUTPUT_DATA usart_outputData;
   Remarks:
     See prototype in usart_output.h.
  */
-
 void USART_OUTPUT_Initialize ( void )
 {
     /* Place the App state machine in its initial state. */
-    usart_outputData.state = USART_OUTPUT_STATE_INIT;
+    usartOutputData.state = USART_OUTPUT_STATE_INIT;
+    
+    /* Initialize debugging utilities */
     dbgInit();
-    unsigned char testChar = 'e';
+    unsigned char testChar = 'a';
     dbgOutputVal(testChar);
     dbgOutputLoc(DBG_TASK_BEFORE_QUEUE_RECEIVE);
 
-    /* TODO: Initialize your application's state machine and other
-     * parameters.
-     */
+    /* Configure Queue */
+    usartOutputData.queue = xQueueCreate(QUEUE_LENGTH, QUEUE_ITEM_SIZE);
+    if(usartOutputData.queue == NULL) {
+        // Queue could not be created
+        dbgOutputVal('e');
+    }
+    
+    /* Configure Timer */
+    usartOutputData.timer = xTimerCreate("50 ms Timer",
+                                  pdMS_TO_TICKS(TIMER_FREQUENCY_MS), pdTRUE,
+                                  ( void * ) 0, timerCallbackFn);
+    if(usartOutputData.timer == NULL) {
+        // Timer could not be created
+        dbgOutputVal('e');
+    }
+    // Start the timer
+    if(xTimerStart(usartOutputData.timer, 0) != pdPASS) {
+        // Timer could not be set into active state
+        dbgOutputVal('e');
+    }
 }
 
 
@@ -135,42 +168,13 @@ void USART_OUTPUT_Initialize ( void )
     See prototype in usart_output.h.
  */
 
-void USART_OUTPUT_Tasks ( void )
-{
-
-    /* Check the application's current state. */
-    switch ( usart_outputData.state )
-    {
-        /* Application's initial state. */
-        case USART_OUTPUT_STATE_INIT:
-        {
-            bool appInitialized = true;
-       
-        
-            if (appInitialized)
-            {
-            
-                usart_outputData.state = USART_OUTPUT_STATE_SERVICE_TASKS;
-            }
-            break;
-        }
-
-        case USART_OUTPUT_STATE_SERVICE_TASKS:
-        {
-        
-            break;
-        }
-
-        /* TODO: implement your application state machine.*/
-        
-
-        /* The default state should never be executed. */
-        default:
-        {
-            /* TODO: Handle error in application's state machine. */
-            break;
-        }
-    }
+void USART_OUTPUT_Tasks ( void ){
+    QueueMessage receivedMessage;
+    // Block and wait for a message
+    xQueueReceive(usartOutputData.queue, &receivedMessage, portMAX_DELAY);
+    // Handle the message
+    SYS_PORTS_PinToggle(0, PORT_CHANNEL_A, 3);
+    dbgUARTVal('A');
 }
 
  

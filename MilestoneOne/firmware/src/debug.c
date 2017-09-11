@@ -22,11 +22,30 @@
 /* ************************************************************************** */
 
 #include "debug.h"
+#include "../framework/driver/usart/drv_usart.h"
+
+/* ************************************************************************** */
+/* ************************************************************************** */
+/* Section: Constants                                                         */
+/* ************************************************************************** */
+/* ************************************************************************** */
+
+static DRV_HANDLE dbgUsartHandle = 0; // Handle for the USART driver
+                                      // assigned in dbgInit()
+
 /*
  * Perform any initialization necessary to use functions below.
  * Should be called once during program initialization
+ * 
+ * Configures ports/pins for debug output over i/o lines
+ * Configures USART module 1 for debug output
+ * 
  */
 void dbgInit(){
+    
+    /*
+     * Port/Pin configuration:
+     */
     
     //clear bits for dbgOutputVal
     int mask = 0x00FF;
@@ -43,6 +62,12 @@ void dbgInit(){
     SYS_PORTS_PinClear(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8);
     SYS_PORTS_PinClear(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_6);
     SYS_PORTS_PinClear(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_9);
+    
+    /*
+     * USART configuration:
+     */
+    
+    dbgUsartHandle = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_WRITE);
 
 }
 // *****************************************************************************
@@ -97,6 +122,8 @@ void dbgOutputVal(unsigned char outVal){
  * Sends a single character out of the UART
  */
 void dbgUARTVal(unsigned char outVal){
+    // Write a byte to the UART
+    DRV_USART_WriteByte(dbgUsartHandle, outVal);
 }
 
 
@@ -138,13 +165,13 @@ void dbgUARTVal(unsigned char outVal){
  * dbgOutputVal. The value should be a constant defined in dbgLocationType
  */
 void dbgOutputLoc(unsigned char outVal){
-    bool RF1 = (outVal & 0x80) >> 7;
-    bool RD6 = (outVal & 0x40) >> 6;
-    bool RD8 = (outVal & 0x20) >> 5;
-    bool RD11 = (outVal & 0x10) >> 4;
-    bool RG7 = (outVal & 0x08) >> 3;
-    bool RG8 = (outVal & 0x04) >> 2;
-    bool RG6 = (outVal & 0x02) >> 1;
+    bool RF1 = (outVal & 0x80);
+    bool RD6 = (outVal & 0x40);
+    bool RD8 = (outVal & 0x20);
+    bool RD11 = (outVal & 0x10);
+    bool RG7 = (outVal & 0x08);
+    bool RG8 = (outVal & 0x04);
+    bool RG6 = (outVal & 0x02);
     bool RG9 = (outVal & 0x01);
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_F, PORTS_BIT_POS_1, RF1);
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_6, RD6);

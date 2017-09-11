@@ -59,6 +59,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 #include "debug.h"
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "timers.h"
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
 
@@ -94,6 +97,10 @@ typedef enum
 
 } USART_OUTPUT_STATES;
 
+/* Message type for this tasks queue */
+typedef struct QueueMessage {
+    int id;                     /* Meaningless content ATM */
+} QueueMessage;
 
 // *****************************************************************************
 /* Application Data
@@ -113,7 +120,11 @@ typedef struct
     /* The application's current state */
     USART_OUTPUT_STATES state;
 
-    /* TODO: Define any additional data used by the application. */
+    /* Handle to the queue */
+    QueueHandle_t queue;
+    
+    /* Handle to the timer */
+    TimerHandle_t timer;
 
 } USART_OUTPUT_DATA;
 

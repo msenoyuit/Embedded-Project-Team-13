@@ -88,14 +88,14 @@ extern "C" {
 #define SYS_CLK_CONFIG_SECONDARY_XTAL       32768ul
    
 /*** Ports System Service Configuration ***/
-#define SYS_PORT_AD1PCFG        ~0xffff
+#define SYS_PORT_AD1PCFG        ~0xffdf
 #define SYS_PORT_CNPUE          0x0
 #define SYS_PORT_CNEN           0x0
 #define SYS_PORT_A_TRIS         0xFFF7
 #define SYS_PORT_A_LAT          0x0008
 #define SYS_PORT_A_ODC          0x0000
 
-#define SYS_PORT_B_TRIS         0xFFFF
+#define SYS_PORT_B_TRIS         0xFFDF
 #define SYS_PORT_B_LAT          0x0000
 #define SYS_PORT_B_ODC          0x0000
 
@@ -128,23 +128,7 @@ extern "C" {
 // Section: Driver Configuration
 // *****************************************************************************
 // *****************************************************************************
-/*** Timer Driver Configuration ***/
-#define DRV_TMR_INTERRUPT_MODE             true
-
-/*** Timer Driver 0 Configuration ***/
-#define DRV_TMR_PERIPHERAL_ID_IDX0          TMR_ID_2
-#define DRV_TMR_INTERRUPT_SOURCE_IDX0       INT_SOURCE_TIMER_2
-#define DRV_TMR_INTERRUPT_VECTOR_IDX0       INT_VECTOR_T2
-#define DRV_TMR_ISR_VECTOR_IDX0             _TIMER_2_VECTOR
-#define DRV_TMR_INTERRUPT_PRIORITY_IDX0     INT_PRIORITY_LEVEL1
-#define DRV_TMR_INTERRUPT_SUB_PRIORITY_IDX0 INT_SUBPRIORITY_LEVEL0
-#define DRV_TMR_CLOCK_SOURCE_IDX0           DRV_TMR_CLKSOURCE_INTERNAL
-#define DRV_TMR_PRESCALE_IDX0               TMR_PRESCALE_VALUE_256
-#define DRV_TMR_OPERATION_MODE_IDX0         DRV_TMR_OPERATION_MODE_16_BIT
-#define DRV_TMR_ASYNC_WRITE_ENABLE_IDX0     false
-#define DRV_TMR_POWER_STATE_IDX0            
-
- // *****************************************************************************
+// *****************************************************************************
 /* USART Driver Configuration Options
 */
 #define DRV_USART_INSTANCES_NUMBER                  1
