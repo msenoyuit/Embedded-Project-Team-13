@@ -71,6 +71,8 @@ funclist
 *.sdb
 *.sym
 
+*/system_config/*
+
 # Note - these ignore the 'private' directory which is machine
 # specific information, meaning any USB debug tools won't be
 # version controlled.
