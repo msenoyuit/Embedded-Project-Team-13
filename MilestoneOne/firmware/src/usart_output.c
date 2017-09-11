@@ -89,16 +89,6 @@ USART_OUTPUT_DATA usartOutputData;
 // *****************************************************************************
 // *****************************************************************************
 
-/* TODO:  Add any necessary callback functions.
-*/
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Local Functions
-// *****************************************************************************
-// *****************************************************************************
-
-
 void timerCallbackFn(TimerHandle_t timer) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
     QueueMessage message;
@@ -112,6 +102,18 @@ void timerCallbackFn(TimerHandle_t timer) {
     portEND_SWITCHING_ISR(higherPriorityTaskWoken);
 }
 
+// *****************************************************************************
+// *****************************************************************************
+// Section: Application Local Functions
+// *****************************************************************************
+// *****************************************************************************
+
+BaseType_t usartOutputSendMsgToQFromISR(QueueMessage * message,
+                                        BaseType_t * higherPriorityTaskWoken) {
+    return xQueueSendToBackFromISR(usartOutputData.queue, message,
+                                   higherPriorityTaskWoken);
+    
+}
 
 // *****************************************************************************
 // *****************************************************************************
@@ -126,11 +128,7 @@ void timerCallbackFn(TimerHandle_t timer) {
   Remarks:
     See prototype in usart_output.h.
  */
-void USART_OUTPUT_Initialize ( void )
-{
-    /* Place the App state machine in its initial state. */
-    usartOutputData.state = USART_OUTPUT_STATE_INIT;
-    
+void USART_OUTPUT_Initialize ( void ) {
     /* Initialize debugging utilities */
     dbgInit();
     unsigned char testChar = 'a';

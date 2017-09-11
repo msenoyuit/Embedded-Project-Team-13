@@ -77,25 +77,6 @@ extern "C" {
 // *****************************************************************************
 
 // *****************************************************************************
-/* Application states
-
-  Summary:
-    Application states enumeration
-
-  Description:
-    This enumeration defines the valid application states.  These states
-    determine the behavior of the application at various times.
-*/
-
-typedef enum
-{
-	/* Application's state machine's initial state. */
-	USART_OUTPUT_STATE_INIT=0,
-	USART_OUTPUT_STATE_SERVICE_TASKS,
-
-	/* TODO: Define states used by the application state machine. */
-
-} USART_OUTPUT_STATES;
 
 /* Message type for this tasks queue */
 typedef struct QueueMessage {
@@ -115,11 +96,7 @@ typedef struct QueueMessage {
     Application strings and buffers are be defined outside this structure.
  */
 
-typedef struct
-{
-    /* The application's current state */
-    USART_OUTPUT_STATES state;
-
+typedef struct {
     /* Handle to the queue */
     QueueHandle_t queue;
     
