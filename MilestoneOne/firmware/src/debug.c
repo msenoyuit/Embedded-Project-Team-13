@@ -97,7 +97,6 @@ void dbgOutputVal(unsigned char outVal){
  * Sends a single character out of the UART
  */
 void dbgUARTVal(unsigned char outVal){
-     UARTConfigure(UART2, UART_ENABLE_PINS_TX_RX_ONLY);
 }
 
 
