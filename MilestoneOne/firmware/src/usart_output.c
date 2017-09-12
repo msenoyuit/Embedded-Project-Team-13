@@ -99,8 +99,7 @@ void timerCallbackFn(TimerHandle_t timer) {
     QueueMessage message;
     message.id = 0;
     dbgOutputLoc(DBG_ISR_BEFORE_QUEUE_SEND);
-    if(xQueueSendToBackFromISR(usartOutputData.queue, &message,
-                               &higherPriorityTaskWoken)
+    if(usartOutputSendMsgToQFromISR(&message, &higherPriorityTaskWoken)
        != pdTRUE) {
         // Queue is full, preventing data from being added
         dbgOutputVal('e');
