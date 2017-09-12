@@ -115,6 +115,7 @@ void dbgInit(){
 
 void dbgOutputVal(unsigned char outVal){
     PORTS_DATA_MASK mask = (PORTS_DATA_MASK)0x00FF;
+    SYS_PORTS_Clear(PORTS_ID_0, PORT_CHANNEL_E, mask);
     SYS_PORTS_Set(PORTS_ID_0, PORT_CHANNEL_E, outVal, mask);
 }
 
