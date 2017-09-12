@@ -30,6 +30,10 @@
 /* ************************************************************************** */
 /* ************************************************************************** */
 
+// Message to be output over UART and IO lines
+#define ERROR_STRING_LENGTH 8
+static unsigned char ERROR_STRING[ERROR_STRING_LENGTH] = "-Error- ";
+
 static DRV_HANDLE dbgUsartHandle = 0; // Handle for the USART driver
                                       // assigned in dbgInit()
 
@@ -174,6 +178,25 @@ void dbgOutputLoc(unsigned char outVal){
     bool RG8 = (outVal & 0x04);
     bool RG6 = (outVal & 0x02);
     bool RG9 = (outVal & 0x01);
+    PORTS_DATA_MASK mask_F = (PORTS_DATA_MASK)0x0001;
+    PORTS_DATA_MASK mask_D = (PORTS_DATA_MASK)0x0940;
+    PORTS_DATA_MASK mask_G = (PORTS_DATA_MASK)0x0430;
+    
+    SYS_PORTS_Clear(PORTS_ID_0, PORT_CHANNEL_F, mask_F);
+    SYS_PORTS_Clear(PORTS_ID_0, PORT_CHANNEL_D, mask_D);
+    SYS_PORTS_Clear(PORTS_ID_0, PORT_CHANNEL_G, mask_G);
+    
+    
+    /*
+    SYS_PORTS_PinClear(PORTS_ID_0, PORT_CHANNEL_F, PORTS_BIT_POS_1);
+    SYS_PORTS_PinClear(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_6);
+    SYS_PORTS_PinClear(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_8);
+    SYS_PORTS_PinClear(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_11);
+    SYS_PORTS_PinClear(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_7);
+    SYS_PORTS_PinClear(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_8);
+    SYS_PORTS_PinClear(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_6);
+    SYS_PORTS_PinClear(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_9);
+    */
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_F, PORTS_BIT_POS_1, RF1);
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_6, RD6);
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, PORTS_BIT_POS_8, RD8);
@@ -184,6 +207,22 @@ void dbgOutputLoc(unsigned char outVal){
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_9, RG9);
 }
 
+void dbgFatalError(dbgErrorType errorType)
+{
+    int messageIndex = 0;
+    taskENTER_CRITICAL();
+    dbgOutputVal(errorType);
+    while(1)
+    {
+        dbgUARTVal(ERROR_STRING[messageIndex]);
+        messageIndex = (messageIndex + 1);
+        if(messageIndex >= ERROR_STRING_LENGTH)
+        {
+            messageIndex = 0;
+        }
+    }
+    taskEXIT_CRITICAL();
+}
 
 
 /* *****************************************************************************

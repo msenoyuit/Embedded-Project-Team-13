@@ -28,20 +28,26 @@
 typedef enum dbgLocation {
     // Within individual tasks:
             DBG_TASK_ENTRY = 0,             // Immediately upon entering a task
-            DBG_TASK_BEFORE_LOOP,           // Before task's while(1)
-            DBG_TASK_BEFORE_QUEUE_SEND,     // Before sending to a queue
-            DBG_TASK_BEFORE_QUEUE_RECEIVE,  // Before receiving from a queue
-            DBG_TASK_AFTER_QUEUE_SEND,      // After sending to a queue
-            DBG_TASK_AFTER_QUEUE_RECEIVE,   // After receiving from a queue
+            DBG_TASK_BEFORE_LOOP = 1,           // Before task's while(1)
+            DBG_TASK_BEFORE_QUEUE_SEND = 2,     // Before sending to a queue
+            DBG_TASK_BEFORE_QUEUE_RECEIVE = 3,  // Before receiving from a queue
+            DBG_TASK_AFTER_QUEUE_SEND = 4,      // After sending to a queue
+            DBG_TASK_AFTER_QUEUE_RECEIVE = 5,   // After receiving from a queue
     // Within ISRs:
-            DBG_ISR_ENTRY,                  // Immediately upon entering ISR
-            DBG_ISR_EXIT,                   // Immediately before leaving ISR
-            DBG_ISR_BEFORE_QUEUE_SEND,      // Before sending to a queue
-            DBG_ISR_BEFORE_QUEUE_RECEIVE,   // Before receiving from a queue
-            DBG_ISR_AFTER_QUEUE_SEND,       // After sending to a queue
-            DBG_ISR_AFTER_QUEUE_RECEIVE     // After receiving from a queue
+            DBG_ISR_ENTRY = 6,                  // Immediately upon entering ISR
+            DBG_ISR_EXIT = 7,                   // Immediately before leaving ISR
+            DBG_ISR_BEFORE_QUEUE_SEND = 8,      // Before sending to a queue
+            DBG_ISR_BEFORE_QUEUE_RECEIVE = 9,   // Before receiving from a queue
+            DBG_ISR_AFTER_QUEUE_SEND = 10,       // After sending to a queue
+            DBG_ISR_AFTER_QUEUE_RECEIVE = 11     // After receiving from a queue
 } dbgLocationType;
 
+
+//add more errors as they become relevant
+//DON'T USE ZERO AS AN ERROR CODE
+typedef enum dbgError {
+    TEST_ERROR = 15
+} dbgErrorType;
 // *****************************************************************************
 // *****************************************************************************
 // Section: Function Declarations
@@ -77,6 +83,8 @@ void dbgUARTVal(unsigned char outVal);
  * dbgOutputVal. The value should be a constant defined in dbgLocationType
  */
 void dbgOutputLoc(unsigned char outVal);
+
+void dbgFatalError(dbgErrorType errorType);
 
 #endif /* _DEBUG_H */
 
