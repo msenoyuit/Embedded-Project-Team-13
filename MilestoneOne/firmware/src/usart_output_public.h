@@ -6,7 +6,7 @@
 
 #include "usart_output.h"
 
-BaseType_t usartOutputSendMsgToQFromISR(QueueMessage message,
+BaseType_t usartOutputSendMsgToQFromISR(QueueMessage * message,
                                         BaseType_t * higherPriorityTaskWoken);
 
 #endif // _USART_OUTPUT_PUBLIC_H
