@@ -108,6 +108,7 @@ void DRV_USART0_WriteByte(const uint8_t byte)
 
     /* Send one byte */
     PLIB_USART_TransmitterByteSend(USART_ID_1, byte);
+    SYS_INT_SourceEnable(INT_SOURCE_USART_1_TRANSMIT);
 
     OSAL_MUTEX_Unlock(&(dObj->mutexDriverInstance));
 }
@@ -132,6 +133,21 @@ bool DRV_USART0_TransmitBufferIsFull(void)
 {
     /* Check the status of transmitter buffer */
     return(PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
+}
+
+void DRV_USART0_ByteTransmitCallbackSet(const DRV_USART_BYTE_EVENT_HANDLER eventHandler)
+{
+        gDrvUSART0Obj.transmitCallback = eventHandler;
+}
+
+void DRV_USART0_ByteReceiveCallbackSet(const DRV_USART_BYTE_EVENT_HANDLER eventHandler)
+{
+        gDrvUSART0Obj.receiveCallback = eventHandler;
+}
+
+void DRV_USART0_ByteErrorCallbackSet(const DRV_USART_BYTE_EVENT_HANDLER eventHandler)
+{
+        gDrvUSART0Obj.errorCallback = eventHandler;
 }
 
 extern DRV_USART_OBJ  gDrvUSART1Obj ;
@@ -184,6 +200,7 @@ void DRV_USART1_WriteByte(const uint8_t byte)
 
     /* Send one byte */
     PLIB_USART_TransmitterByteSend(USART_ID_1, byte);
+    SYS_INT_SourceEnable(INT_SOURCE_USART_1_TRANSMIT);
 
     OSAL_MUTEX_Unlock(&(dObj->mutexDriverInstance));
 }
@@ -208,6 +225,21 @@ bool DRV_USART1_TransmitBufferIsFull(void)
 {
     /* Check the status of transmitter buffer */
     return(PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
+}
+
+void DRV_USART1_ByteTransmitCallbackSet(const DRV_USART_BYTE_EVENT_HANDLER eventHandler)
+{
+        gDrvUSART1Obj.transmitCallback = eventHandler;
+}
+
+void DRV_USART1_ByteReceiveCallbackSet(const DRV_USART_BYTE_EVENT_HANDLER eventHandler)
+{
+        gDrvUSART1Obj.receiveCallback = eventHandler;
+}
+
+void DRV_USART1_ByteErrorCallbackSet(const DRV_USART_BYTE_EVENT_HANDLER eventHandler)
+{
+        gDrvUSART1Obj.errorCallback = eventHandler;
 }
 
 /*******************************************************************************

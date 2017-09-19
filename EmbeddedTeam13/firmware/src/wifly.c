@@ -77,7 +77,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
     
     Application strings and buffers are be defined outside this structure.
 */
-
 WIFLY_DATA wiflyData;
 
 // *****************************************************************************
@@ -90,12 +89,26 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
     
     char readByte = DRV_USART_ReadByte(wiflyData.usartHandle);
-    if (readByte == START_CHAR) wiflyData.rxMsgLen = 0;
-    } else if (readByte == STOP_CHAR) {
-        wiflyData.rxBuff[wiflyData.rxMsgLen] = 0; // null terminate        
-        qQueueSendToBackFromISR(wiflyData.rxMsgQ, msg,
-                                &higherPriorityTaskWoken);
-    } else wiflyData.rxBuff[wiflyData.rxMsgLen++] = readByte;
+    if (readByte == STOP_CHAR) {
+        wiflyData.rxBuff[wiflyData.rxMsgLen] = 0; // null terminate
+        // TODO: pull out the message into an appropriate type and send it off
+        //       to whatever queue it should go to
+        /* if (xQueueSendToBackFromISR(wiflyData.rxMsgQ, msg, */
+        /*                             &higherPriorityTaskWoken) != pdTRUE) { */
+        /*     dbgFatalError(DBG_ERROR_WIFLY_RUN); */
+        /* } */
+        wiflyData.rxMsgLen = 0;
+    } else if (readByte == START_CHAR) {
+        wiflyData.rxMsgLen = 0;
+    } else {
+        if (wiflyData.rxMsgLen >= WIFLY_MAX_MSG_LEN) {
+            // We've overflowed; start writing over the begining
+            // TODO: Make this fail non-silently, without halting the system
+            //       either
+            wiflyData.rxMsgLen = 0;
+        }
+        wiflyData.rxBuff[wiflyData.rxMsgLen++] = readByte;
+    }
         
     portEND_SWITCHING_ISR(higherPriorityTaskWoken);
 }
@@ -103,17 +116,22 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
 /*
  * Send the next byte from wiflyData.txBuff, until we reach the null character
  */
-void wiflyUsartSendEventHandler(const SYS_MODULE_INDEX index) {
-    if (wiflyData.txBuff[txSentChars] == 0) {
-        // End of message
-        wiflyData.isSending = false;
+void wiflyUsartTransmitEventHandler(const SYS_MODULE_INDEX index) {
+    BaseType_t higherPriorityTaskWoken = pdFALSE;
+    
+    if (wiflyData.txBuff[wiflyData.txSentChars] == 0) {
+        // End of message; give back the tx buffer
+        xSemaphoreGiveFromISR(wiflyData.txBufferSemaphoreHandle,
+                              &higherPriorityTaskWoken);
     } else {
         // Fill the hardware transmit buffer
         while(!DRV_USART_TransmitBufferIsFull(wiflyData.usartHandle)) {
             DRV_USART_WriteByte(wiflyData.usartHandle,
-                                wiflyData.txBuff[txSentChars++]);
+                                wiflyData.txBuff[wiflyData.txSentChars++]);
         }
     }
+
+    portEND_SWITCHING_ISR(higherPriorityTaskWoken);
 }
     
 
@@ -127,17 +145,19 @@ void wiflyUsartSendEventHandler(const SYS_MODULE_INDEX index) {
  * Initiate sending a message over UART
  * 
  * Precondition:
- * There should not be a message currently being sent (!wiflyData.isSending)
+ * There should not be a message currently being sent
  */
-void startSendingMessage(char * msg) {
-    if (strlen(msg) >= WIFLY_SEND_BUFFER_SIZE) {
-        dbgFatalError(DBG_ERROR_WIFLY_SEND_MSG_TOO_LONG);
-    }
-    strcpy(wiflyData.txBuff, msg);
+void startMsgSend(WiflyMsg msg) {
+    // Obtain tx uart
+    xSemaphoreTake(pdTRUE, portMAX_DELAY);
+    // Copy the string into the buffer
+    strcpy(wiflyData.txBuff, msg.text);
     wiflyData.txSentChars = 0;
-    wiflyData.isSending = true;
     // Start transmitting
-    DRV_USART_WriteByte(wiflyData.usartHandle, wiflyData.txBuff[txSentChars++]);
+    DRV_USART_WriteByte(wiflyData.usartHandle,
+                        wiflyData.txBuff[wiflyData.txSentChars++]);
+    // Once this byte gets succesfully sent, the wiflyUsartTransmitEventHandler
+    // will take over sending the rest
 }
 
 // *****************************************************************************
@@ -159,16 +179,24 @@ void WIFLY_Initialize ( void ) {
     wiflyData.usartHandle = DRV_USART_Open(WIFLY_USART_INDEX,
                                            DRV_IO_INTENT_READWRITE|
                                            DRV_IO_INTENT_NONBLOCKING);
-    if (wiflyData.usartHandle == DRV_HANDLE_INVALD) {
+    if (wiflyData.usartHandle == DRV_HANDLE_INVALID) {
         dbgFatalError(DBG_ERROR_WIFLY_INIT);
     }
     // Add callbacks to USART
     DRV_USART_ByteReceiveCallbackSet(WIFLY_USART_INDEX,
                                      wiflyUsartReceiveEventHandler);
-    DRV_USART_ByteSendCallbackSet(WIFLY_USART_INDEX,
-                                  wiflyUsartSendEventHandler);
+    DRV_USART_ByteTransmitCallbackSet(WIFLY_USART_INDEX,
+                                      wiflyUsartTransmitEventHandler);
 
-    wiflyData.msgsToSend = xQueueCreate(
+    wiflyData.toSendQ = xQueueCreate(WIFLY_QUEUE_LENGTH, sizeof(WiflyMsg));
+
+    // Initialize the semaphore for the tx buffer
+    wiflyData.txBufferSemaphoreHandle = xSemaphoreCreateBinary();
+    if (wiflyData.txBufferSemaphoreHandle == NULL) {
+        dbgFatalError(DBG_ERROR_WIFLY_INIT);
+    }
+    // Initial 'giving' to make it available
+    xSemaphoreGive(wiflyData.txBufferSemaphoreHandle);
 }
 
 
@@ -181,8 +209,10 @@ void WIFLY_Initialize ( void ) {
  */
 
 void WIFLY_Tasks ( void ) {
-    
- 
+    WiflyMsg toSend;
+    xQueueReceive(wiflyData.toSendQ, &toSend, portMAX_DELAY);
+    startMsgSend(toSend);
+    // deallocate message?
 }
 
  

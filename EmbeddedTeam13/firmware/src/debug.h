@@ -46,10 +46,10 @@ typedef enum dbgLocation {
 //add more errors as they become relevant
 //DON'T USE ZERO AS AN ERROR CODE
 typedef enum dbgError {
-    DBG_ERROR_WIFLY_INIT = 1;
-    DBG_ERROR_WIFLY_RUN = 2;
-    DBG_ERROR_WIFLY_SEND_MSG_TOO_LONG = 3;
-    TEST_ERROR = 15
+    DBG_ERROR_WIFLY_INIT = 1,
+    DBG_ERROR_WIFLY_RUN = 2,
+    DBG_ERROR_WIFLY_SEND_MSG_TOO_LONG = 3,
+    TEST_ERROR = 15,
 } dbgErrorType;
 // *****************************************************************************
 // *****************************************************************************

@@ -231,7 +231,7 @@
       <Template dnOrder="1">
         <Name dnOrder="0">system_interrupt_a.S</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">F8E29721D7D91213A568F3DC060408EC</Checksum>
+        <Checksum dnOrder="2">56B232C778B13507DD3821B6D07D4131</Checksum>
       </Template>
       <Template dnOrder="2">
         <Name dnOrder="0">wifly.h</Name>
@@ -240,7 +240,7 @@
       <Template dnOrder="3">
         <Name dnOrder="0">drv_usart_mapping.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default/framework/driver/usart/src</Path>
-        <Checksum dnOrder="2">64FB3C959ACBED05166C75B3E058355D</Checksum>
+        <Checksum dnOrder="2">9947B63A7DB8BFF9BC7CAD380CFDBC02</Checksum>
       </Template>
       <Template dnOrder="4">
         <Name dnOrder="0">sys_devcon_local.h</Name>
@@ -260,8 +260,7 @@
       <Template dnOrder="7">
         <Name dnOrder="0">drv_usart_static_byte_model.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default/framework/driver/usart/src</Path>
-        <Checksum dnOrder="2">FF7BB3122745AC61954B994981DA0385</Checksum>
-        <ProjectFileChecksum dnOrder="3">6B02F7D23CEDA1311B8FEA7F18E183CD</ProjectFileChecksum>
+        <Checksum dnOrder="2">D5A8B2381D7E0B6FBD9DF8B9617F9674</Checksum>
       </Template>
       <Template dnOrder="8">
         <Name dnOrder="0">usart_output.c</Name>
@@ -270,17 +269,17 @@
       <Template dnOrder="9">
         <Name dnOrder="0">system_interrupt.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">61DA1EE0E85AF114AC3E8C2031E12566</Checksum>
+        <Checksum dnOrder="2">C99DC68138454CC92C4F362578D693EB</Checksum>
       </Template>
       <Template dnOrder="10">
         <Name dnOrder="0">drv_usart_static.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default/framework/driver/usart/src</Path>
-        <Checksum dnOrder="2">9E5EE37F1225622D0B4E98092DF131F5</Checksum>
+        <Checksum dnOrder="2">189CB798B313FD2C310D5C0E8F02A22F</Checksum>
       </Template>
       <Template dnOrder="11">
         <Name dnOrder="0">system_init.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">A2627547A91559E30C6F96A476D04EAA</Checksum>
+        <Checksum dnOrder="2">2E59FE2EA7BBC36EAAB37019F94AF3D6</Checksum>
       </Template>
       <Template dnOrder="12">
         <Name dnOrder="0">main.c</Name>
@@ -312,12 +311,12 @@
       <Template dnOrder="18">
         <Name dnOrder="0">drv_usart_static.h</Name>
         <Path dnOrder="1">Header&amp;#160;Files/app/system_config/default/framework/driver/usart</Path>
-        <Checksum dnOrder="2">530CF20A9C9BAF69F2E99FE6C5784867</Checksum>
+        <Checksum dnOrder="2">824F0550562F68E03AB3E2E5247E04FA</Checksum>
       </Template>
       <Template dnOrder="19">
         <Name dnOrder="0">system_tasks.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">5B5FDBC3C08C7741A1598C73CDCA1D3C</Checksum>
+        <Checksum dnOrder="2">BC1608852ACC25688B0F4EA2F447747A</Checksum>
       </Template>
       <Template dnOrder="20">
         <Name dnOrder="0">sys_devcon_pic32mx.c</Name>
@@ -327,7 +326,7 @@
       <Template dnOrder="21">
         <Name dnOrder="0">system_config.h</Name>
         <Path dnOrder="1">Header&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">B4F44CD3A1158A19C08460ADD33CD6D3</Checksum>
+        <Checksum dnOrder="2">D98D451D0D7653707D6C4803F70FF332</Checksum>
       </Template>
       <Template dnOrder="22">
         <Name dnOrder="0">rtos_hooks.c</Name>
@@ -337,7 +336,7 @@
       <Template dnOrder="23">
         <Name dnOrder="0">drv_usart_static_local.h</Name>
         <Path dnOrder="1">Header&amp;#160;Files/app/system_config/default/framework/driver/usart/src</Path>
-        <Checksum dnOrder="2">1BC24F235F6DEC57BFF969A7508990F9</Checksum>
+        <Checksum dnOrder="2">9C876A422C1066B242348441E6DD4B62</Checksum>
       </Template>
       <Template dnOrder="24">
         <Name dnOrder="0">sys_clk_pic32mx.c</Name>

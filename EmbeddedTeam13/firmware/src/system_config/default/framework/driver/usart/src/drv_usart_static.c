@@ -81,6 +81,9 @@ SYS_MODULE_OBJ DRV_USART0_Initialize(void)
 
     /* Disable the USART module to configure it*/
     PLIB_USART_Disable (USART_ID_1);
+    dObj->transmitCallback      = NULL;
+    dObj->receiveCallback       = NULL;
+    dObj->errorCallback         = NULL;
 
     /* Create the hardware instance mutex. */
     if(OSAL_MUTEX_Create(&(dObj->mutexDriverInstance)) != OSAL_RESULT_TRUE)
@@ -114,12 +117,24 @@ SYS_MODULE_OBJ DRV_USART0_Initialize(void)
             clockSource,
             9600);  /*Desired Baud rate value*/
 
+    /* Clear the interrupts to be on the safer side*/
+    SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_TRANSMIT);
+    SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_RECEIVE);
+    SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_ERROR);
+
+    /* Enable the error interrupt source */
+    SYS_INT_SourceEnable(INT_SOURCE_USART_1_ERROR);
+
+    /* Enable the Receive interrupt source */
+    SYS_INT_SourceEnable(INT_SOURCE_USART_1_RECEIVE);
+
     /* Return the driver instance value*/
     return (SYS_MODULE_OBJ)DRV_USART_INDEX_0;
 }
 
 void  DRV_USART0_Deinitialize(void)
 {
+    bool status;
     DRV_USART_OBJ *dObj = (DRV_USART_OBJ*)NULL;
 
     dObj = &gDrvUSART0Obj;
@@ -130,6 +145,14 @@ void  DRV_USART0_Deinitialize(void)
         SYS_DEBUG_MESSAGE(SYS_ERROR_DEBUG, "\r\nUSART Driver: Mutex Delete Failed");
         return;
     }
+
+    /* Disable the interrupts */
+    status = SYS_INT_SourceDisable(INT_SOURCE_USART_1_TRANSMIT) ;
+    status = SYS_INT_SourceDisable(INT_SOURCE_USART_1_RECEIVE) ;
+    status = SYS_INT_SourceDisable(INT_SOURCE_USART_1_ERROR);
+    /* Ignore the warning */
+    (void)status;
+
     /* Disable USART module */
     PLIB_USART_Disable (USART_ID_1);
 
@@ -140,6 +163,60 @@ SYS_STATUS DRV_USART0_Status(void)
 {
     /* Return the status as ready always */
     return SYS_STATUS_READY;
+}
+
+
+void DRV_USART0_TasksTransmit(void)
+{
+    /* This is the USART Driver Transmit tasks routine.
+       In this function, the driver checks if a transmit
+       interrupt is active and performs respective action*/
+
+    /* Reading the transmit interrupt flag */
+    if(SYS_INT_SourceStatusGet(INT_SOURCE_USART_1_TRANSMIT))
+    {
+        /* Call the Transmit callback function*/
+        _DRV_USART0_ByteTransmitTasks ();
+
+        /* Clear up the interrupt flag */
+        SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_TRANSMIT);
+    }
+}
+
+void DRV_USART0_TasksReceive(void)
+{
+    /* This is the USART Driver Receive tasks routine. If the receive
+       interrupt flag is set, the tasks routines are executed.
+     */
+
+    /* Reading the receive interrupt flag */
+    if(SYS_INT_SourceStatusGet(INT_SOURCE_USART_1_RECEIVE))
+    {
+        /* Call the Receive callback function*/
+        _DRV_USART0_ByteReceiveTasks ();
+
+        /* Clear up the interrupt flag */
+        SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_RECEIVE);
+    }
+}
+
+
+void DRV_USART0_TasksError(void)
+{
+    /* This is the USART Driver Error tasks routine. In this function, the
+     * driver checks if an error interrupt has occurred. If so the error
+     * condition is cleared.  */
+
+    /* Reading the error interrupt flag */
+    if(SYS_INT_SourceStatusGet(INT_SOURCE_USART_1_ERROR))
+    {
+        /* This means an error has occurred */
+        /* Call the Error callback function*/
+        _DRV_USART0_ByteErrorTasks ();
+
+        /* Clear up the error interrupt flag */
+        SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_ERROR);
+    }
 }
 
 DRV_HANDLE DRV_USART0_Open(const SYS_MODULE_INDEX index, const DRV_IO_INTENT ioIntent)
@@ -239,6 +316,49 @@ void _DRV_USART0_ErrorConditionClear()
     SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_RECEIVE);
 }
 
+
+void _DRV_USART0_ByteTransmitTasks (void)
+{
+    DRV_USART_OBJ *dObj = (DRV_USART_OBJ*)NULL;
+
+    dObj = &gDrvUSART0Obj;
+
+
+    /* Disable the interrupt, to avoid calling ISR continuously*/
+    SYS_INT_SourceDisable(INT_SOURCE_USART_1_TRANSMIT);
+
+    if (dObj->transmitCallback != NULL)
+    {
+        dObj->transmitCallback (DRV_USART_INDEX_0);
+    }
+}
+
+void _DRV_USART0_ByteReceiveTasks (void)
+{
+    DRV_USART_OBJ *dObj = (DRV_USART_OBJ*)NULL;
+
+    dObj = &gDrvUSART0Obj;
+
+    if (dObj->receiveCallback != NULL)
+    {
+        dObj->receiveCallback (DRV_USART_INDEX_0);
+    }
+}
+
+void _DRV_USART0_ByteErrorTasks (void)
+{
+    DRV_USART_OBJ *dObj = (DRV_USART_OBJ*)NULL;
+
+    dObj = &gDrvUSART0Obj;
+
+    /* Clear error condition */
+    _DRV_USART0_ErrorConditionClear();
+
+    if (dObj->errorCallback != NULL)
+    {
+        dObj->errorCallback (DRV_USART_INDEX_0);
+    }
+}
 
 
 DRV_USART_BAUD_SET_RESULT DRV_USART0_BaudSet(uint32_t baud)
@@ -374,6 +494,9 @@ SYS_MODULE_OBJ DRV_USART1_Initialize(void)
 
     /* Disable the USART module to configure it*/
     PLIB_USART_Disable (USART_ID_1);
+    dObj->transmitCallback      = NULL;
+    dObj->receiveCallback       = NULL;
+    dObj->errorCallback         = NULL;
 
     /* Create the hardware instance mutex. */
     if(OSAL_MUTEX_Create(&(dObj->mutexDriverInstance)) != OSAL_RESULT_TRUE)
@@ -407,12 +530,24 @@ SYS_MODULE_OBJ DRV_USART1_Initialize(void)
             clockSource,
             9600);  /*Desired Baud rate value*/
 
+    /* Clear the interrupts to be on the safer side*/
+    SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_TRANSMIT);
+    SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_RECEIVE);
+    SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_ERROR);
+
+    /* Enable the error interrupt source */
+    SYS_INT_SourceEnable(INT_SOURCE_USART_1_ERROR);
+
+    /* Enable the Receive interrupt source */
+    SYS_INT_SourceEnable(INT_SOURCE_USART_1_RECEIVE);
+
     /* Return the driver instance value*/
     return (SYS_MODULE_OBJ)DRV_USART_INDEX_1;
 }
 
 void  DRV_USART1_Deinitialize(void)
 {
+    bool status;
     DRV_USART_OBJ *dObj = (DRV_USART_OBJ*)NULL;
 
     dObj = &gDrvUSART1Obj;
@@ -423,6 +558,14 @@ void  DRV_USART1_Deinitialize(void)
         SYS_DEBUG_MESSAGE(SYS_ERROR_DEBUG, "\r\nUSART Driver: Mutex Delete Failed");
         return;
     }
+
+    /* Disable the interrupts */
+    status = SYS_INT_SourceDisable(INT_SOURCE_USART_1_TRANSMIT) ;
+    status = SYS_INT_SourceDisable(INT_SOURCE_USART_1_RECEIVE) ;
+    status = SYS_INT_SourceDisable(INT_SOURCE_USART_1_ERROR);
+    /* Ignore the warning */
+    (void)status;
+
     /* Disable USART module */
     PLIB_USART_Disable (USART_ID_1);
 
@@ -433,6 +576,60 @@ SYS_STATUS DRV_USART1_Status(void)
 {
     /* Return the status as ready always */
     return SYS_STATUS_READY;
+}
+
+
+void DRV_USART1_TasksTransmit(void)
+{
+    /* This is the USART Driver Transmit tasks routine.
+       In this function, the driver checks if a transmit
+       interrupt is active and performs respective action*/
+
+    /* Reading the transmit interrupt flag */
+    if(SYS_INT_SourceStatusGet(INT_SOURCE_USART_1_TRANSMIT))
+    {
+        /* Call the Transmit callback function*/
+        _DRV_USART1_ByteTransmitTasks ();
+
+        /* Clear up the interrupt flag */
+        SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_TRANSMIT);
+    }
+}
+
+void DRV_USART1_TasksReceive(void)
+{
+    /* This is the USART Driver Receive tasks routine. If the receive
+       interrupt flag is set, the tasks routines are executed.
+     */
+
+    /* Reading the receive interrupt flag */
+    if(SYS_INT_SourceStatusGet(INT_SOURCE_USART_1_RECEIVE))
+    {
+        /* Call the Receive callback function*/
+        _DRV_USART1_ByteReceiveTasks ();
+
+        /* Clear up the interrupt flag */
+        SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_RECEIVE);
+    }
+}
+
+
+void DRV_USART1_TasksError(void)
+{
+    /* This is the USART Driver Error tasks routine. In this function, the
+     * driver checks if an error interrupt has occurred. If so the error
+     * condition is cleared.  */
+
+    /* Reading the error interrupt flag */
+    if(SYS_INT_SourceStatusGet(INT_SOURCE_USART_1_ERROR))
+    {
+        /* This means an error has occurred */
+        /* Call the Error callback function*/
+        _DRV_USART1_ByteErrorTasks ();
+
+        /* Clear up the error interrupt flag */
+        SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_ERROR);
+    }
 }
 
 DRV_HANDLE DRV_USART1_Open(const SYS_MODULE_INDEX index, const DRV_IO_INTENT ioIntent)
@@ -532,6 +729,49 @@ void _DRV_USART1_ErrorConditionClear()
     SYS_INT_SourceStatusClear(INT_SOURCE_USART_1_RECEIVE);
 }
 
+
+void _DRV_USART1_ByteTransmitTasks (void)
+{
+    DRV_USART_OBJ *dObj = (DRV_USART_OBJ*)NULL;
+
+    dObj = &gDrvUSART1Obj;
+
+
+    /* Disable the interrupt, to avoid calling ISR continuously*/
+    SYS_INT_SourceDisable(INT_SOURCE_USART_1_TRANSMIT);
+
+    if (dObj->transmitCallback != NULL)
+    {
+        dObj->transmitCallback (DRV_USART_INDEX_1);
+    }
+}
+
+void _DRV_USART1_ByteReceiveTasks (void)
+{
+    DRV_USART_OBJ *dObj = (DRV_USART_OBJ*)NULL;
+
+    dObj = &gDrvUSART1Obj;
+
+    if (dObj->receiveCallback != NULL)
+    {
+        dObj->receiveCallback (DRV_USART_INDEX_1);
+    }
+}
+
+void _DRV_USART1_ByteErrorTasks (void)
+{
+    DRV_USART_OBJ *dObj = (DRV_USART_OBJ*)NULL;
+
+    dObj = &gDrvUSART1Obj;
+
+    /* Clear error condition */
+    _DRV_USART1_ErrorConditionClear();
+
+    if (dObj->errorCallback != NULL)
+    {
+        dObj->errorCallback (DRV_USART_INDEX_1);
+    }
+}
 
 
 DRV_USART_BAUD_SET_RESULT DRV_USART1_BaudSet(uint32_t baud)

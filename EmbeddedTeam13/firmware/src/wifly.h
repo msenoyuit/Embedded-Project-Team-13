@@ -58,7 +58,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <stdlib.h>
 #include "system_config.h"
 #include "system_definitions.h"
-#include "drv_usart.h"
+#include "../framework/driver/usart/drv_usart.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -69,11 +69,10 @@ extern "C" {
 // DOM-IGNORE-END
 
 #define WIFLY_USART_INDEX DRV_USART_INDEX_0
-#define WIFLY_RECEIVE_BUFFER_SIZE 100
-#define WIFLY_SEND_BUFFER_SIZE 100
+#define WIFLY_MAX_MSG_LEN 100
+#define WIFLY_QUEUE_LENGTH 10
 const char START_CHAR = 0x80;
 const char STOP_CHAR = 0x81;
-
 
 // *****************************************************************************
 /* Application Data
@@ -90,13 +89,19 @@ const char STOP_CHAR = 0x81;
 
 typedef struct {
     SYS_MODULE_OBJ usartHandle;
-    char rxBuff[WIFLY_RECEIVE_BUFFER_SIZE];
+    char rxBuff[WIFLY_MAX_MSG_LEN];
     unsigned int rxMsgLen;
     QueueHandle_t rxMsgQ;
-    bool isSending;
-    char txBuff[WIFLY_SEND_BUFFER_SIZE];
+
+    SemaphoreHandle_t txBufferSemaphoreHandle;
+    QueueHandle_t toSendQ;
+    char txBuff[WIFLY_MAX_MSG_LEN];
     unsigned int txSentChars;
 } WIFLY_DATA;
+
+typedef struct {
+    char text[WIFLY_MAX_MSG_LEN];
+} WiflyMsg;
 
 
 // *****************************************************************************
