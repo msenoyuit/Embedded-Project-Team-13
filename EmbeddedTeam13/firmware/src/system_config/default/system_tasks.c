@@ -55,6 +55,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 #include "usart_output.h"
+#include "wifly.h"
 
 
 // *****************************************************************************
@@ -69,6 +70,7 @@ static void _SYS_Tasks ( void );
  
  
 static void _USART_OUTPUT_Tasks(void);
+static void _WIFLY_Tasks(void);
 
 
 // *****************************************************************************
@@ -99,6 +101,11 @@ void SYS_Tasks ( void )
                 "USART_OUTPUT Tasks",
                 1024, NULL, 1, NULL);
 
+    /* Create OS Thread for WIFLY Tasks. */
+    xTaskCreate((TaskFunction_t) _WIFLY_Tasks,
+                "WIFLY Tasks",
+                1024, NULL, 1, NULL);
+
     /**************
      * Start RTOS * 
      **************/
@@ -123,6 +130,9 @@ static void _SYS_Tasks ( void)
     DRV_USART_TasksTransmit(sysObj.drvUsart0);
     DRV_USART_TasksError (sysObj.drvUsart0);
     DRV_USART_TasksReceive(sysObj.drvUsart0);
+    DRV_USART_TasksTransmit(sysObj.drvUsart1);
+    DRV_USART_TasksError (sysObj.drvUsart1);
+    DRV_USART_TasksReceive(sysObj.drvUsart1);
  
  
 
@@ -148,6 +158,23 @@ static void _USART_OUTPUT_Tasks(void)
     while(1)
     {
         USART_OUTPUT_Tasks();
+    }
+}
+
+
+/*******************************************************************************
+  Function:
+    void _WIFLY_Tasks ( void )
+
+  Summary:
+    Maintains state machine of WIFLY.
+*/
+
+static void _WIFLY_Tasks(void)
+{
+    while(1)
+    {
+        WIFLY_Tasks();
     }
 }
 

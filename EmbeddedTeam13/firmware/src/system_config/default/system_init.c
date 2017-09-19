@@ -151,6 +151,7 @@ void SYS_Initialize ( void* data )
 
     /* Initialize Drivers */
     sysObj.drvUsart0 = DRV_USART_Initialize(DRV_USART_INDEX_0, (SYS_MODULE_INIT *)NULL);
+    sysObj.drvUsart1 = DRV_USART_Initialize(DRV_USART_INDEX_1, (SYS_MODULE_INIT *)NULL);
 
     /* Initialize System Services */
 
@@ -161,6 +162,7 @@ void SYS_Initialize ( void* data )
 
     /* Initialize the Application */
     USART_OUTPUT_Initialize();
+    WIFLY_Initialize();
 }
 
 

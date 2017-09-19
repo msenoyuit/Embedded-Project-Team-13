@@ -212,8 +212,7 @@ void dbgFatalError(dbgErrorType errorType)
     int messageIndex = 0;
     taskENTER_CRITICAL();
     dbgOutputVal(errorType);
-    while(1)
-    {
+    while(1) {
         dbgUARTVal(ERROR_STRING[messageIndex]);
         messageIndex = (messageIndex + 1);
         if(messageIndex >= ERROR_STRING_LENGTH)

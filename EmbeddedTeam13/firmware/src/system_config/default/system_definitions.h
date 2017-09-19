@@ -57,6 +57,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "FreeRTOS.h"
 #include "task.h"
 #include "usart_output.h"
+#include "wifly.h"
 
 
 // DOM-IGNORE-BEGIN
@@ -91,6 +92,7 @@ extern "C" {
 typedef struct
 {
     SYS_MODULE_OBJ  drvUsart0;
+    SYS_MODULE_OBJ  drvUsart1;
 
 } SYSTEM_OBJECTS;
 
