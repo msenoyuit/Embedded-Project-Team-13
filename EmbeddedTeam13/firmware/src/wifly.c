@@ -101,12 +101,16 @@ void wiflyUsartTransmitEventHandler(const SYS_MODULE_INDEX index) {
  */
 void startMsgSend(WiflyMsg msg) {
     unsigned int sentChars = 0;
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, START_CHAR);
     while (msg.text[sentChars] != 0) {
         // Wait till the tx buffer is free and transmit
         xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
         DRV_USART_WriteByte(wiflyData.usartHandle,
                             msg.text[sentChars++]);
     }
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, START_CHAR);
     dbgOutputLoc(DBG_WIFLY_AFTER_USART_WRITE);
 }
 
