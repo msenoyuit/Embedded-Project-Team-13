@@ -6,6 +6,7 @@
 
 #include "wifly.h"
 #include "wifly_public.h"
+#include "master_control_public.h"
 #include "debug.h"
 #include <string.h>
 
@@ -48,12 +49,13 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
     char readByte = DRV_USART_ReadByte(wiflyData.usartHandle);
     if (readByte == STOP_CHAR) {
         wiflyData.rxBuff[wiflyData.rxMsgLen] = 0; // null terminate
-        // TODO: pull out the message into an appropriate type and send it off
-        //       to whatever queue it should go to
-        /* if (xQueueSendToBackFromISR(wiflyData.rxMsgQ, msg, */
-        /*                             &higherPriorityTaskWoken) != pdTRUE) { */
-        /*     dbgFatalError(DBG_ERROR_WIFLY_RUN); */
-        /* } */
+        MasterControlQueueMessage message = {
+            MASTER_CONTROL_MSG_WIFLY, 0, 0
+        };
+        if (usartOutputSendMsgToQFromISR(&message, &higherPriorityTaskWoken)
+            != pdTRUE) {
+            dbgFatalError(DBG_ERROR_WIFLY_RUN);
+        }
         wiflyData.rxMsgLen = 0;
     } else if (readByte == START_CHAR) {
         wiflyData.rxMsgLen = 0;
