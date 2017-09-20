@@ -97,6 +97,17 @@ void IntHandlerDrvUsartInstance1(void)
 
  
  
+void IntHandlerDrvAdc(void)
+{
+    PLIB_ADC_SampleAutoStartDisable(DRV_ADC_ID_1); // Prevent interrupt from firing
+                                                   // until we want another reading
+    APP_ADC_Average();  // Handle ADC data
+    /* Clear ADC Interrupt Flag */
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_ADC_1);
+}
+
+
+
  
 /*******************************************************************************
  End of File
