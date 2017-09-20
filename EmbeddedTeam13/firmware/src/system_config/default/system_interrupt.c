@@ -60,7 +60,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 
 #include "system/common/sys_common.h"
-#include "usart_output.h"
+#include "master_control.h"
 #include "wifly.h"
 #include "system_definitions.h"
 

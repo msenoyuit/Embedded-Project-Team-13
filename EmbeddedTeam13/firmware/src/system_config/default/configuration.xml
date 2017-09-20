@@ -238,38 +238,38 @@
         <Path dnOrder="1">Header&amp;#160;Files/app</Path>
       </Template>
       <Template dnOrder="3">
+        <Name dnOrder="0">master_control.h</Name>
+        <Path dnOrder="1">Header&amp;#160;Files/app</Path>
+      </Template>
+      <Template dnOrder="4">
         <Name dnOrder="0">drv_usart_mapping.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default/framework/driver/usart/src</Path>
         <Checksum dnOrder="2">9947B63A7DB8BFF9BC7CAD380CFDBC02</Checksum>
       </Template>
-      <Template dnOrder="4">
+      <Template dnOrder="5">
         <Name dnOrder="0">sys_devcon_local.h</Name>
         <Path dnOrder="1">Header&amp;#160;Files/app/system_config/default/framework/system/devcon/src</Path>
         <Checksum dnOrder="2">B66F9B4DBD85DA7F9DE775E864E01395</Checksum>
       </Template>
-      <Template dnOrder="5">
+      <Template dnOrder="6">
         <Name dnOrder="0">sys_devcon.h</Name>
         <Path dnOrder="1">Header&amp;#160;Files/app/system_config/default/framework/system/devcon</Path>
         <Checksum dnOrder="2">07580DCDEF89D9C79B062544109C5367</Checksum>
       </Template>
-      <Template dnOrder="6">
+      <Template dnOrder="7">
         <Name dnOrder="0">FreeRTOSConfig.h</Name>
         <Path dnOrder="1">Header&amp;#160;Files/app/system_config/default</Path>
         <Checksum dnOrder="2">1FAFA29DDC4E8B33435278CC356B13E9</Checksum>
       </Template>
-      <Template dnOrder="7">
+      <Template dnOrder="8">
         <Name dnOrder="0">drv_usart_static_byte_model.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default/framework/driver/usart/src</Path>
         <Checksum dnOrder="2">E6DE7EE1D56EDEA8299F150B5EFE34E0</Checksum>
       </Template>
-      <Template dnOrder="8">
-        <Name dnOrder="0">usart_output.c</Name>
-        <Path dnOrder="1">Source&amp;#160;Files/app</Path>
-      </Template>
       <Template dnOrder="9">
         <Name dnOrder="0">system_interrupt.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">C99DC68138454CC92C4F362578D693EB</Checksum>
+        <Checksum dnOrder="2">CAFCC27C570A9546F0E7C1F844E099C6</Checksum>
       </Template>
       <Template dnOrder="10">
         <Name dnOrder="0">drv_usart_static.c</Name>
@@ -279,34 +279,34 @@
       <Template dnOrder="11">
         <Name dnOrder="0">system_init.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">87B7AD88494F4C8478827AA19400AEC8</Checksum>
+        <Checksum dnOrder="2">094DB6F96FC2ABD36E1D47BAA95B11E1</Checksum>
       </Template>
       <Template dnOrder="12">
         <Name dnOrder="0">main.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app</Path>
       </Template>
       <Template dnOrder="13">
-        <Name dnOrder="0">wifly.c</Name>
+        <Name dnOrder="0">master_control.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app</Path>
       </Template>
       <Template dnOrder="14">
-        <Name dnOrder="0">system_definitions.h</Name>
-        <Path dnOrder="1">Header&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">3462970446502D928CB03B302E655316</Checksum>
+        <Name dnOrder="0">wifly.c</Name>
+        <Path dnOrder="1">Source&amp;#160;Files/app</Path>
       </Template>
       <Template dnOrder="15">
+        <Name dnOrder="0">system_definitions.h</Name>
+        <Path dnOrder="1">Header&amp;#160;Files/app/system_config/default</Path>
+        <Checksum dnOrder="2">BE5C192600BCB53D7C6BFE100B41A91D</Checksum>
+      </Template>
+      <Template dnOrder="16">
         <Name dnOrder="0">system_exceptions.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default</Path>
         <Checksum dnOrder="2">C6886A1D85FB1927A101D5B41BED7630</Checksum>
       </Template>
-      <Template dnOrder="16">
+      <Template dnOrder="17">
         <Name dnOrder="0">sys_devcon.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default/framework/system/devcon/src</Path>
         <Checksum dnOrder="2">54ADBD4A35BCA03C42C74182FCE41849</Checksum>
-      </Template>
-      <Template dnOrder="17">
-        <Name dnOrder="0">usart_output.h</Name>
-        <Path dnOrder="1">Header&amp;#160;Files/app</Path>
       </Template>
       <Template dnOrder="18">
         <Name dnOrder="0">drv_usart_static.h</Name>
@@ -316,7 +316,7 @@
       <Template dnOrder="19">
         <Name dnOrder="0">system_tasks.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">BC1608852ACC25688B0F4EA2F447747A</Checksum>
+        <Checksum dnOrder="2">C20E5DD2502972B83800D386D9D8F08F</Checksum>
       </Template>
       <Template dnOrder="20">
         <Name dnOrder="0">sys_devcon_pic32mx.c</Name>

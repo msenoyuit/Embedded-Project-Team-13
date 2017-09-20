@@ -54,7 +54,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "system_config.h"
 #include "system_definitions.h"
-#include "usart_output.h"
+#include "master_control.h"
 #include "wifly.h"
 
 
@@ -69,7 +69,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 static void _SYS_Tasks ( void );
  
  
-static void _USART_OUTPUT_Tasks(void);
+static void _MASTER_CONTROL_Tasks(void);
 static void _WIFLY_Tasks(void);
 
 
@@ -96,9 +96,9 @@ void SYS_Tasks ( void )
 
  
  
-    /* Create OS Thread for USART_OUTPUT Tasks. */
-    xTaskCreate((TaskFunction_t) _USART_OUTPUT_Tasks,
-                "USART_OUTPUT Tasks",
+    /* Create OS Thread for MASTER_CONTROL Tasks. */
+    xTaskCreate((TaskFunction_t) _MASTER_CONTROL_Tasks,
+                "MASTER_CONTROL Tasks",
                 1024, NULL, 1, NULL);
 
     /* Create OS Thread for WIFLY Tasks. */
@@ -141,17 +141,17 @@ static void _SYS_Tasks ( void)
 
 /*******************************************************************************
   Function:
-    void _USART_OUTPUT_Tasks ( void )
+    void _MASTER_CONTROL_Tasks ( void )
 
   Summary:
-    Maintains state machine of USART_OUTPUT.
+    Maintains state machine of MASTER_CONTROL.
 */
 
-static void _USART_OUTPUT_Tasks(void)
+static void _MASTER_CONTROL_Tasks(void)
 {
     while(1)
     {
-        USART_OUTPUT_Tasks();
+        MASTER_CONTROL_Tasks();
     }
 }
 

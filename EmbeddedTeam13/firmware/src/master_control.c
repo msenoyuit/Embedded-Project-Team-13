@@ -5,7 +5,7 @@
     Microchip Technology Inc.
   
   File Name:
-    usart_output.c
+    master_control.c
 
   Summary:
     This file contains the source code for the MPLAB Harmony application.
@@ -53,9 +53,10 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 
-#include "usart_output.h"
-#include "usart_output_public.h"
+#include "master_control.h"
+#include "master_control_public.h"
 #include "wifly_public.h"
+#include <stdio.h>
 
 // *****************************************************************************
 // *****************************************************************************
@@ -64,9 +65,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 
 // Queue related constants
-#define QUEUE_LENGTH 10
-#define QUEUE_ITEM_SIZE sizeof(QueueMessage)
-#define TIMER_FREQUENCY_MS 50
+#define MASTER_CONTROL_QUEUE_LEN 10
+#define TIMER_FREQUENCY_MS 1000
 
 // Message to be output over UART and IO lines
 #define MESSAGE_LENGTH 7
@@ -88,7 +88,7 @@ static unsigned int messageIndex = 0;
     Application strings and buffers are be defined outside this structure.
 */
 
-USART_OUTPUT_DATA usartOutputData;
+MASTER_CONTROL_DATA usartOutputData;
 
 // *****************************************************************************
 // *****************************************************************************
@@ -98,13 +98,16 @@ USART_OUTPUT_DATA usartOutputData;
 
 void timerCallbackFn(TimerHandle_t timer) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
-    QueueMessage message;
-    message.id = 0;
+    // Pretent to be the IR sensor
+    MasterControlQueueMessage message = {
+        MASTER_CONTROL_MSG_IR_READING,
+        1234,
+        0
+    };
     dbgOutputLoc(DBG_ISR_BEFORE_QUEUE_SEND);
     if(usartOutputSendMsgToQFromISR(&message, &higherPriorityTaskWoken)
        != pdTRUE) {
-        // Queue is full, preventing data from being added
-        dbgOutputVal('e');
+        dbgFatalError(DBG_ERROR_MAIN_TASK_RUN);
     }
     dbgOutputLoc(DBG_ISR_AFTER_QUEUE_SEND);
     portEND_SWITCHING_ISR(higherPriorityTaskWoken);
@@ -116,7 +119,7 @@ void timerCallbackFn(TimerHandle_t timer) {
 // *****************************************************************************
 // *****************************************************************************
 
-BaseType_t usartOutputSendMsgToQFromISR(QueueMessage * message,
+BaseType_t usartOutputSendMsgToQFromISR(MasterControlQueueMessage * message,
                                         BaseType_t * higherPriorityTaskWoken) {
     return xQueueSendToBackFromISR(usartOutputData.queue, message,
                                    higherPriorityTaskWoken);
@@ -131,21 +134,21 @@ BaseType_t usartOutputSendMsgToQFromISR(QueueMessage * message,
 
 /*******************************************************************************
   Function:
-    void USART_OUTPUT_Initialize ( void )
+    void MASTER_CONTROL_Initialize ( void )
 
   Remarks:
-    See prototype in usart_output.h.
+    See prototype in master_control.h.
  */
-void USART_OUTPUT_Initialize ( void ) {
+void MASTER_CONTROL_Initialize ( void ) {
     /* Initialize debugging utilities */
     dbgInit();
     dbgOutputLoc(DBG_TASK_ENTRY);
 
     /* Configure Queue */
-    usartOutputData.queue = xQueueCreate(QUEUE_LENGTH, QUEUE_ITEM_SIZE);
+    usartOutputData.queue = xQueueCreate(MASTER_CONTROL_QUEUE_LEN,
+                                         sizeof(MasterControlQueueMessage));
     if(usartOutputData.queue == NULL) {
-        // Queue could not be created
-        dbgOutputVal('e');
+        dbgFatalError(DBG_ERROR_MAIN_TASK_INIT);
     }
     
     /* Configure Timer */
@@ -153,17 +156,12 @@ void USART_OUTPUT_Initialize ( void ) {
                                   pdMS_TO_TICKS(TIMER_FREQUENCY_MS), pdTRUE,
                                   ( void * ) 0, timerCallbackFn);
     if(usartOutputData.timer == NULL) {
-        // Timer could not be created
-        dbgOutputVal('e');
+        dbgFatalError(DBG_ERROR_MAIN_TASK_INIT);
     }
     // Start the timer
     if(xTimerStart(usartOutputData.timer, 0) != pdPASS) {
-        // Timer could not be set into active state
-        dbgOutputVal('e');
+        dbgFatalError(DBG_ERROR_MAIN_TASK_INIT);
     }
-
-    // Clear error LED
-    dbgClrErrorLed();
     
     dbgOutputLoc(DBG_TASK_BEFORE_LOOP);
 }
@@ -171,26 +169,32 @@ void USART_OUTPUT_Initialize ( void ) {
 
 /******************************************************************************
   Function:
-    void USART_OUTPUT_Tasks ( void )
+    void MASTER_CONTROL_Tasks ( void )
 
   Remarks:
-    See prototype in usart_output.h.
+    See prototype in master_control.h.
  */
 
-void USART_OUTPUT_Tasks ( void ){
-    WiflyMsg msg = {"Sent over Wifly!"};
-    QueueMessage receivedMessage;
-    // Block and wait for a message
+void MASTER_CONTROL_Tasks ( void ){
+    MasterControlQueueMessage receivedMessage;
+
     dbgOutputLoc(DBG_TASK_BEFORE_QUEUE_RECEIVE);
     xQueueReceive(usartOutputData.queue, &receivedMessage, portMAX_DELAY);
     dbgOutputLoc(DBG_TASK_AFTER_QUEUE_RECEIVE);
     // Handle the message
-    SYS_PORTS_PinToggle(0, PORT_CHANNEL_A, 3);
-    dbgOutputLoc(DBG_TASK_BEFORE_MSG_SEND);
-    if (wiflySendMsg(&msg, 0) != pdTRUE) {
-        dbgFatalError(DBG_ERROR_MAIN_TASK);
+
+    switch (receivedMessage.type) {
+    case MASTER_CONTROL_MSG_WIFLY:
+        // We've received a wifly message, do something about this
+        SYS_PORTS_PinToggle(0, PORT_CHANNEL_A, 3);
+        break;
+    case MASTER_CONTROL_MSG_IR_READING:
+        ;
+        WiflyMsg msg;
+        sprintf(msg.text, "%d\n", receivedMessage.data1);
+        wiflySendMsg(&msg, 0);
+        break;
     }
-    dbgOutputLoc(DBG_TASK_AFTER_MSG_SEND);
 }
 
  

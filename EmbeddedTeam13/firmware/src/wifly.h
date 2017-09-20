@@ -30,8 +30,8 @@ extern "C" {
 
 #define WIFLY_USART_INDEX DRV_USART_INDEX_0
 #define WIFLY_QUEUE_LENGTH 10
-const char START_CHAR = 0x80;
-const char STOP_CHAR = 0x81;
+const char START_CHAR = 0xFF;
+const char STOP_CHAR = 0xFE;
 
 // *****************************************************************************
 /* Application Data
