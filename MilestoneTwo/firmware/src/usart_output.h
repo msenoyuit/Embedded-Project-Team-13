@@ -103,9 +103,8 @@ typedef struct {
     /* Handle to the timer */
     TimerHandle_t timer;
     
+    /* Store the average of the ADC data */
     uint64_t ADC_avg;
-    
-    bool dataReady;
 
 } USART_OUTPUT_DATA;
 
@@ -189,6 +188,35 @@ void USART_OUTPUT_Initialize ( void );
  */
 
 void USART_OUTPUT_Tasks( void );
+
+/*******************************************************************************
+  Function:
+    void APP_ADC_Average ( void ) 
+
+  Summary:
+    Averages ADC data.
+
+  Description:
+    This routine is the Harmony Demo application's tasks function.  It
+    defines the application's state machine and core logic.
+
+  Precondition:
+    This should only be called from within the ADC ISR ("IntHandlerDrvAdc").
+
+  Parameters:
+    None.
+
+  Returns:
+    None.
+
+  Example:
+    <code>
+    APP_ADC_Average();
+    </code>
+
+  Remarks:
+    This routine must be called from IntHandlerDrvADC() routine.
+ */
 
 void APP_ADC_Average ( void ) ;
 

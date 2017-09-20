@@ -141,7 +141,7 @@ void USART_OUTPUT_Initialize ( void ) {
     dbgInit();
     dbgOutputLoc(DBG_TASK_ENTRY);
     
-    usartOutputData.dataReady = false;
+    //usartOutputData.dataReady = false;
     
     /* Configure Queue */
     usartOutputData.queue = xQueueCreate(QUEUE_LENGTH, QUEUE_ITEM_SIZE);
@@ -186,25 +186,28 @@ void USART_OUTPUT_Tasks ( void ){
     //dbgUARTVal(message[messageIndex]);
     dbgOutputVal(message[messageIndex]);
     messageIndex = (messageIndex + 1) % MESSAGE_LENGTH;
+    // Enable the ADC
     DRV_ADC_Open();
-    //SYS_PORTS_PinSet(0, PORT_CHANNEL_A, 3);
 }
 
+
+/*******************************************************************************
+  Function:
+    void APP_ADC_Average ( void )
+
+  Remarks:
+    See prototype in usart_output.h.
+ */
+
 void APP_ADC_Average (void) {
-    //dbgUARTVal('a');
     int i;
-    usartOutputData.dataReady = true;
-    //int firstADC = PLIB_ADC_ResultGetByIndex(ADC_ID_1, 0);
+    //usartOutputData.dataReady = true;
     for (i = 0; i < 16; i++) {
         usartOutputData.ADC_avg += PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
     }
     usartOutputData.ADC_avg = usartOutputData.ADC_avg / 16;
-    //usartOutputData.ADC_avg = PLIB_ADC_ResultGetByIndex(ADC_ID_1, 0);
     usartOutputData.ADC_avg = usartOutputData.ADC_avg >> 2;
-    //dbgUARTVal(usartOutputData.ADC_avg);
-    //firstADC = firstADC >> 2;
     dbgUARTVal(usartOutputData.ADC_avg);
-    //PLIB_ADC_SampleAutoStartEnable(ADC_ID_1);
 }
 
 /*******************************************************************************
