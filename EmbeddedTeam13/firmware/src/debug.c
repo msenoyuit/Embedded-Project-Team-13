@@ -128,8 +128,10 @@ void dbgOutputLoc(unsigned char outVal){
  * Sends a single character out of the UART
  */
 void dbgUARTVal(unsigned char outVal){
+    taskENTER_CRITICAL();
     // Write a byte to the UART
     DRV_USART_WriteByte(dbgUsartHandle, outVal);
+    taskEXIT_CRITICAL();
 }
 
 

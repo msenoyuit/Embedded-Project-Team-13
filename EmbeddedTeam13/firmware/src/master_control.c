@@ -98,7 +98,11 @@ MASTER_CONTROL_DATA usartOutputData;
 
 void timerCallbackFn(TimerHandle_t timer) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
-    // Pretent to be the IR sensor
+    
+    //Indicate life
+    SYS_PORTS_PinToggle(0, PORT_CHANNEL_A, 3);
+    /*  TODO: Remove this block
+    // Pretend to be the IR sensor
     MasterControlQueueMessage message = {
         MASTER_CONTROL_MSG_IR_READING,
         1234,
@@ -109,8 +113,42 @@ void timerCallbackFn(TimerHandle_t timer) {
        != pdTRUE) {
         dbgFatalError(DBG_ERROR_MAIN_TASK_RUN);
     }
-    dbgOutputLoc(DBG_ISR_AFTER_QUEUE_SEND);
+    dbgOutputLoc(DBG_ISR_AFTER_QUEUE_SEND);*/
+    
+    // Start getting the next ADC reading
+    PLIB_ADC_SampleAutoStartEnable(ADC_ID_1);
+    
     portEND_SWITCHING_ISR(higherPriorityTaskWoken);
+}
+
+// TODO: Rename this function to something more descriptive/better
+/*******************************************************************************
+  Function:
+    void APP_ADC_Average ( void )
+
+  Remarks:
+    See prototype in usart_output.h.
+ */
+
+void APP_ADC_Average (void) {
+    int i;
+    for (i = 0; i < 16; i++) {
+        usartOutputData.ADC_avg += PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
+    }
+    usartOutputData.ADC_avg = usartOutputData.ADC_avg / 16;
+    
+    BaseType_t higherPriorityTaskWoken = pdFALSE;
+    MasterControlQueueMessage message = {
+        MASTER_CONTROL_MSG_IR_READING,
+        usartOutputData.ADC_avg,
+        0
+    };
+    dbgOutputLoc(DBG_ISR_BEFORE_QUEUE_SEND);
+    if(usartOutputSendMsgToQFromISR(&message, &higherPriorityTaskWoken)
+       != pdTRUE) {
+        dbgFatalError(DBG_ERROR_MAIN_TASK_RUN); // TODO: Change to something better
+    }
+    dbgOutputLoc(DBG_ISR_AFTER_QUEUE_SEND);
 }
 
 // *****************************************************************************
@@ -162,6 +200,9 @@ void MASTER_CONTROL_Initialize ( void ) {
     if(xTimerStart(usartOutputData.timer, 0) != pdPASS) {
         dbgFatalError(DBG_ERROR_MAIN_TASK_INIT);
     }
+    
+    // Enable the ADC
+    DRV_ADC_Open();
     
     dbgOutputLoc(DBG_TASK_BEFORE_LOOP);
 }
