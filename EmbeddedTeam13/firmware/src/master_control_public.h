@@ -1,12 +1,12 @@
-#ifndef _USART_OUTPUT_PUBLIC_H
-#define _USART_OUTPUT_PUBLIC_H
+#ifndef _MASTER_CONTROL_PUBLIC_H
+#define _MASTER_CONTROL_PUBLIC_H
 
 #include "FreeRTOS.h"
 #include "queue.h"
 
-#include "usart_output.h"
+#include "master_control.h"
 
 BaseType_t usartOutputSendMsgToQFromISR(QueueMessage * message,
                                         BaseType_t * higherPriorityTaskWoken);
 
-#endif // _USART_OUTPUT_PUBLIC_H
+#endif // _MASTER_CONTROL_PUBLIC_H

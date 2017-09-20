@@ -5,7 +5,7 @@
     Microchip Technology Inc.
 
   File Name:
-    usart_output.h
+    master_control.h
 
   Summary:
     This header file provides prototypes and definitions for the application.
@@ -43,8 +43,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  *******************************************************************************/
 //DOM-IGNORE-END
 
-#ifndef _USART_OUTPUT_H
-#define _USART_OUTPUT_H
+#ifndef _MASTER_CONTROL_H
+#define _MASTER_CONTROL_H
 
 // *****************************************************************************
 // *****************************************************************************
@@ -103,7 +103,7 @@ typedef struct {
     /* Handle to the timer */
     TimerHandle_t timer;
 
-} USART_OUTPUT_DATA;
+} MASTER_CONTROL_DATA;
 
 
 // *****************************************************************************
@@ -122,7 +122,7 @@ typedef struct {
 
 /*******************************************************************************
   Function:
-    void USART_OUTPUT_Initialize ( void )
+    void MASTER_CONTROL_Initialize ( void )
 
   Summary:
      MPLAB Harmony application initialization routine.
@@ -144,19 +144,19 @@ typedef struct {
 
   Example:
     <code>
-    USART_OUTPUT_Initialize();
+    MASTER_CONTROL_Initialize();
     </code>
 
   Remarks:
     This routine must be called from the SYS_Initialize function.
 */
 
-void USART_OUTPUT_Initialize ( void );
+void MASTER_CONTROL_Initialize ( void );
 
 
 /*******************************************************************************
   Function:
-    void USART_OUTPUT_Tasks ( void )
+    void MASTER_CONTROL_Tasks ( void )
 
   Summary:
     MPLAB Harmony Demo application tasks function
@@ -177,17 +177,17 @@ void USART_OUTPUT_Initialize ( void );
 
   Example:
     <code>
-    USART_OUTPUT_Tasks();
+    MASTER_CONTROL_Tasks();
     </code>
 
   Remarks:
     This routine must be called from SYS_Tasks() routine.
  */
 
-void USART_OUTPUT_Tasks( void );
+void MASTER_CONTROL_Tasks( void );
 
 
-#endif /* _USART_OUTPUT_H */
+#endif /* _MASTER_CONTROL_H */
 
 //DOM-IGNORE-BEGIN
 #ifdef __cplusplus

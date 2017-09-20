@@ -5,7 +5,7 @@
     Microchip Technology Inc.
   
   File Name:
-    usart_output.c
+    master_control.c
 
   Summary:
     This file contains the source code for the MPLAB Harmony application.
@@ -53,8 +53,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 
-#include "usart_output.h"
-#include "usart_output_public.h"
+#include "master_control.h"
+#include "master_control_public.h"
 #include "wifly_public.h"
 
 // *****************************************************************************
@@ -88,7 +88,7 @@ static unsigned int messageIndex = 0;
     Application strings and buffers are be defined outside this structure.
 */
 
-USART_OUTPUT_DATA usartOutputData;
+MASTER_CONTROL_DATA usartOutputData;
 
 // *****************************************************************************
 // *****************************************************************************
@@ -131,12 +131,12 @@ BaseType_t usartOutputSendMsgToQFromISR(QueueMessage * message,
 
 /*******************************************************************************
   Function:
-    void USART_OUTPUT_Initialize ( void )
+    void MASTER_CONTROL_Initialize ( void )
 
   Remarks:
-    See prototype in usart_output.h.
+    See prototype in master_control.h.
  */
-void USART_OUTPUT_Initialize ( void ) {
+void MASTER_CONTROL_Initialize ( void ) {
     /* Initialize debugging utilities */
     dbgInit();
     dbgOutputLoc(DBG_TASK_ENTRY);
@@ -171,13 +171,13 @@ void USART_OUTPUT_Initialize ( void ) {
 
 /******************************************************************************
   Function:
-    void USART_OUTPUT_Tasks ( void )
+    void MASTER_CONTROL_Tasks ( void )
 
   Remarks:
-    See prototype in usart_output.h.
+    See prototype in master_control.h.
  */
 
-void USART_OUTPUT_Tasks ( void ){
+void MASTER_CONTROL_Tasks ( void ){
     WiflyMsg msg = {"Sent over Wifly!"};
     QueueMessage receivedMessage;
     // Block and wait for a message

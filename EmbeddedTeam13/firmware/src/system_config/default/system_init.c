@@ -165,7 +165,7 @@ void SYS_Initialize ( void* data )
     /* Initialize Middleware */
 
     /* Initialize the Application */
-    USART_OUTPUT_Initialize();
+    MASTER_CONTROL_Initialize();
     WIFLY_Initialize();
 }
 
