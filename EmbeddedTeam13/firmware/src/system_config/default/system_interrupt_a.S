@@ -89,9 +89,9 @@ _IntHandlerDrvUsartInstance0:
 
    .extern  IntHandlerDrvUsartInstance1
 
-   .section	.vector_24,code, keep
-   .equ     __vector_dispatch_24, IntVectorDrvUsartInstance1
-   .global  __vector_dispatch_24
+   .section	.vector_32,code, keep
+   .equ     __vector_dispatch_32, IntVectorDrvUsartInstance1
+   .global  __vector_dispatch_32
    .set     nomicromips
    .set     noreorder
    .set     nomips16

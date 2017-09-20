@@ -231,7 +231,7 @@
       <Template dnOrder="1">
         <Name dnOrder="0">system_interrupt_a.S</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">56B232C778B13507DD3821B6D07D4131</Checksum>
+        <Checksum dnOrder="2">12ABD3B8984693E74326CA77853775A8</Checksum>
       </Template>
       <Template dnOrder="2">
         <Name dnOrder="0">wifly.h</Name>
@@ -260,7 +260,7 @@
       <Template dnOrder="7">
         <Name dnOrder="0">drv_usart_static_byte_model.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default/framework/driver/usart/src</Path>
-        <Checksum dnOrder="2">D5A8B2381D7E0B6FBD9DF8B9617F9674</Checksum>
+        <Checksum dnOrder="2">E6DE7EE1D56EDEA8299F150B5EFE34E0</Checksum>
       </Template>
       <Template dnOrder="8">
         <Name dnOrder="0">usart_output.c</Name>
@@ -274,12 +274,12 @@
       <Template dnOrder="10">
         <Name dnOrder="0">drv_usart_static.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default/framework/driver/usart/src</Path>
-        <Checksum dnOrder="2">189CB798B313FD2C310D5C0E8F02A22F</Checksum>
+        <Checksum dnOrder="2">4F8293835610EA945839D3D7D1E8F0F1</Checksum>
       </Template>
       <Template dnOrder="11">
         <Name dnOrder="0">system_init.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">2E59FE2EA7BBC36EAAB37019F94AF3D6</Checksum>
+        <Checksum dnOrder="2">87B7AD88494F4C8478827AA19400AEC8</Checksum>
       </Template>
       <Template dnOrder="12">
         <Name dnOrder="0">main.c</Name>
@@ -326,7 +326,7 @@
       <Template dnOrder="21">
         <Name dnOrder="0">system_config.h</Name>
         <Path dnOrder="1">Header&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">D98D451D0D7653707D6C4803F70FF332</Checksum>
+        <Checksum dnOrder="2">C0DCC936D189F4A66755EB458765C5EE</Checksum>
       </Template>
       <Template dnOrder="22">
         <Name dnOrder="0">rtos_hooks.c</Name>

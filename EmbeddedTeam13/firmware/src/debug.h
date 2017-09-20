@@ -29,19 +29,29 @@
  */
 typedef enum dbgLocation {
     // Within individual tasks:
-            DBG_TASK_ENTRY = 0,             // Immediately upon entering a task
-            DBG_TASK_BEFORE_LOOP = 1,           // Before task's while(1)
-            DBG_TASK_BEFORE_QUEUE_SEND = 2,     // Before sending to a queue
-            DBG_TASK_BEFORE_QUEUE_RECEIVE = 3,  // Before receiving from a queue
-            DBG_TASK_AFTER_QUEUE_SEND = 4,      // After sending to a queue
-            DBG_TASK_AFTER_QUEUE_RECEIVE = 5,   // After receiving from a queue
+    DBG_TASK_ENTRY = 0,             // Immediately upon entering a task
+    DBG_TASK_BEFORE_LOOP = 1,           // Before task's while(1)
+    DBG_TASK_BEFORE_QUEUE_SEND = 2,     // Before sending to a queue
+    DBG_TASK_BEFORE_QUEUE_RECEIVE = 3,  // Before receiving from a queue
+    DBG_TASK_AFTER_QUEUE_SEND = 4,      // After sending to a queue
+    DBG_TASK_AFTER_QUEUE_RECEIVE = 5,   // After receiving from a queue
     // Within ISRs:
-            DBG_ISR_ENTRY = 6,                  // Immediately upon entering ISR
-            DBG_ISR_EXIT = 7,                   // Immediately before leaving ISR
-            DBG_ISR_BEFORE_QUEUE_SEND = 8,      // Before sending to a queue
-            DBG_ISR_BEFORE_QUEUE_RECEIVE = 9,   // Before receiving from a queue
-            DBG_ISR_AFTER_QUEUE_SEND = 10,       // After sending to a queue
-            DBG_ISR_AFTER_QUEUE_RECEIVE = 11     // After receiving from a queue
+    DBG_ISR_ENTRY = 6,                  // Immediately upon entering ISR
+    DBG_ISR_EXIT = 7,                   // Immediately before leaving ISR
+    DBG_ISR_BEFORE_QUEUE_SEND = 8,      // Before sending to a queue
+    DBG_ISR_BEFORE_QUEUE_RECEIVE = 9,   // Before receiving from a queue
+    DBG_ISR_AFTER_QUEUE_SEND = 10,       // After sending to a queue
+    DBG_ISR_AFTER_QUEUE_RECEIVE = 11,     // After receiving from a queue
+
+    DBG_WIFLY_BEFORE_QUEUE_RECEIVE = 12,
+    DBG_WIFLY_AFTER_QUEUE_RECEIVE = 13,
+    DBG_WIFLY_AFTER_MSG_SEND_SEMAPHORE_TAKE = 14,
+    DBG_WIFLY_AFTER_USART_WRITE = 15,
+    DBG_WIFLY_AFTER_MSG_SEND = 16,
+
+    DBG_TASK_BEFORE_MSG_SEND = 17,
+    DBG_TASK_AFTER_MSG_SEND = 18,
+    
 } dbgLocationType;
 
 
@@ -51,7 +61,8 @@ typedef enum dbgError {
     DBG_ERROR_WIFLY_INIT = 1,
     DBG_ERROR_WIFLY_RUN = 2,
     DBG_ERROR_WIFLY_SEND_MSG_TOO_LONG = 3,
-    TEST_ERROR = 15,
+    DBG_ERROR_MAIN_TASK = 4,
+    DBG_ERROR_TEST = 15,
 } dbgErrorType;
 // *****************************************************************************
 // *****************************************************************************

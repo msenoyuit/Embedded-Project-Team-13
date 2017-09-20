@@ -174,7 +174,7 @@ uint8_t DRV_USART1_ReadByte(void)
     }
 
     /* Receive one byte */
-    readValue = PLIB_USART_ReceiverByteReceive(USART_ID_1);
+    readValue = PLIB_USART_ReceiverByteReceive(USART_ID_2);
 
     OSAL_MUTEX_Unlock(&(gDrvUSART1Obj.mutexDriverInstance));
 
@@ -199,8 +199,8 @@ void DRV_USART1_WriteByte(const uint8_t byte)
     }
 
     /* Send one byte */
-    PLIB_USART_TransmitterByteSend(USART_ID_1, byte);
-    SYS_INT_SourceEnable(INT_SOURCE_USART_1_TRANSMIT);
+    PLIB_USART_TransmitterByteSend(USART_ID_2, byte);
+    SYS_INT_SourceEnable(INT_SOURCE_USART_2_TRANSMIT);
 
     OSAL_MUTEX_Unlock(&(dObj->mutexDriverInstance));
 }
@@ -218,13 +218,13 @@ unsigned int DRV_USART1_TransmitBufferSizeGet(void)
 bool DRV_USART1_ReceiverBufferIsEmpty( void )
 {
     /* Check the status of receiver buffer */
-    return(!PLIB_USART_ReceiverDataIsAvailable(USART_ID_1));
+    return(!PLIB_USART_ReceiverDataIsAvailable(USART_ID_2));
 }
 
 bool DRV_USART1_TransmitBufferIsFull(void)
 {
     /* Check the status of transmitter buffer */
-    return(PLIB_USART_TransmitterBufferIsFull(USART_ID_1));
+    return(PLIB_USART_TransmitterBufferIsFull(USART_ID_2));
 }
 
 void DRV_USART1_ByteTransmitCallbackSet(const DRV_USART_BYTE_EVENT_HANDLER eventHandler)

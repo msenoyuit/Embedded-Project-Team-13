@@ -92,7 +92,7 @@ extern "C" {
 #define SYS_PORT_CNPUE          0x0
 #define SYS_PORT_CNEN           0x0
 #define SYS_PORT_A_TRIS         0xFFF7
-#define SYS_PORT_A_LAT          0x0008
+#define SYS_PORT_A_LAT          0x0000
 #define SYS_PORT_A_ODC          0x0000
 
 #define SYS_PORT_B_TRIS         0xFFDF
@@ -100,7 +100,7 @@ extern "C" {
 #define SYS_PORT_B_ODC          0x0000
 
 #define SYS_PORT_C_TRIS         0xFFFD
-#define SYS_PORT_C_LAT          0x0002
+#define SYS_PORT_C_LAT          0x0000
 #define SYS_PORT_C_ODC          0x0000
 
 #define SYS_PORT_D_TRIS         0xF29F

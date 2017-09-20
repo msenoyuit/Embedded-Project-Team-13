@@ -107,12 +107,14 @@ void wiflyUsartTransmitEventHandler(const SYS_MODULE_INDEX index) {
 void startMsgSend(WiflyMsg msg) {
     // Obtain tx uart
     xSemaphoreTake(pdTRUE, portMAX_DELAY);
+    dbgOutputLoc(DBG_WIFLY_AFTER_MSG_SEND_SEMAPHORE_TAKE);
     // Copy the string into the buffer
     strcpy(wiflyData.txBuff, msg.text);
     wiflyData.txSentChars = 0;
     // Start transmitting
     DRV_USART_WriteByte(wiflyData.usartHandle,
                         wiflyData.txBuff[wiflyData.txSentChars++]);
+    dbgOutputLoc(DBG_WIFLY_AFTER_USART_WRITE);
     // Once this byte gets succesfully sent, the wiflyUsartTransmitEventHandler
     // will take over sending the rest
 }
@@ -173,9 +175,11 @@ void WIFLY_Initialize ( void ) {
 
 void WIFLY_Tasks ( void ) {
     WiflyMsg toSend;
+    dbgOutputLoc(DBG_WIFLY_BEFORE_QUEUE_RECEIVE);
     xQueueReceive(wiflyData.toSendQ, &toSend, portMAX_DELAY);
+    dbgOutputLoc(DBG_WIFLY_AFTER_QUEUE_RECEIVE);
     startMsgSend(toSend);
-    // deallocate message?
+    dbgOutputLoc(DBG_WIFLY_AFTER_MSG_SEND);
 }
 
  

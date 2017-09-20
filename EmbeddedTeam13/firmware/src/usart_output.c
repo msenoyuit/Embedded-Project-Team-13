@@ -55,6 +55,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "usart_output.h"
 #include "usart_output_public.h"
+#include "wifly_public.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -160,6 +161,10 @@ void USART_OUTPUT_Initialize ( void ) {
         // Timer could not be set into active state
         dbgOutputVal('e');
     }
+
+    // Clear error LED
+    dbgClrErrorLed();
+    
     dbgOutputLoc(DBG_TASK_BEFORE_LOOP);
 }
 
@@ -173,6 +178,7 @@ void USART_OUTPUT_Initialize ( void ) {
  */
 
 void USART_OUTPUT_Tasks ( void ){
+    WiflyMsg msg = {"Sent over Wifly!"};
     QueueMessage receivedMessage;
     // Block and wait for a message
     dbgOutputLoc(DBG_TASK_BEFORE_QUEUE_RECEIVE);
@@ -180,9 +186,11 @@ void USART_OUTPUT_Tasks ( void ){
     dbgOutputLoc(DBG_TASK_AFTER_QUEUE_RECEIVE);
     // Handle the message
     SYS_PORTS_PinToggle(0, PORT_CHANNEL_A, 3);
-    dbgUARTVal(message[messageIndex]);
-    dbgOutputVal(message[messageIndex]);
-    messageIndex = (messageIndex + 1) % MESSAGE_LENGTH;
+    dbgOutputLoc(DBG_TASK_BEFORE_MSG_SEND);
+    if (wiflySendMsg(&msg, 0) != pdTRUE) {
+        dbgFatalError(DBG_ERROR_MAIN_TASK);
+    }
+    dbgOutputLoc(DBG_TASK_AFTER_MSG_SEND);
 }
 
  

@@ -207,11 +207,21 @@ void dbgOutputLoc(unsigned char outVal){
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, PORTS_BIT_POS_9, RG9);
 }
 
-void dbgFatalError(dbgErrorType errorType)
-{
+
+void dbgSetErrorLed() {
+    SYS_PORTS_PinSet(0, PORT_CHANNEL_C, 1);
+}
+
+void dbgClrErrorLed() {
+    SYS_PORTS_PinClear(0, PORT_CHANNEL_C, 1);
+}
+
+void dbgFatalError(dbgErrorType errorType) {
     int messageIndex = 0;
     taskENTER_CRITICAL();
+    dbgSetErrorLed();
     dbgOutputVal(errorType);
+    SYS_PORTS_PinToggle(0, PORT_CHANNEL_A, 3);
     while(1) {
         dbgUARTVal(ERROR_STRING[messageIndex]);
         messageIndex = (messageIndex + 1);
