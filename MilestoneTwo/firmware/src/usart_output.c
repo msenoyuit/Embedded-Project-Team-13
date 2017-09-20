@@ -141,8 +141,6 @@ void USART_OUTPUT_Initialize ( void ) {
     dbgInit();
     dbgOutputLoc(DBG_TASK_ENTRY);
     
-    //usartOutputData.dataReady = false;
-    
     /* Configure Queue */
     usartOutputData.queue = xQueueCreate(QUEUE_LENGTH, QUEUE_ITEM_SIZE);
     if(usartOutputData.queue == NULL) {
@@ -201,7 +199,6 @@ void USART_OUTPUT_Tasks ( void ){
 
 void APP_ADC_Average (void) {
     int i;
-    //usartOutputData.dataReady = true;
     for (i = 0; i < 16; i++) {
         usartOutputData.ADC_avg += PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
     }
