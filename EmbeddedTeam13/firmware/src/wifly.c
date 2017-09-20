@@ -45,29 +45,38 @@ WIFLY_DATA wiflyData;
  */
 void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
+
+    dbgOutputLoc(DBG_WIFLY_RECEIVE_CALLBACK_START);
     
-    char readByte = DRV_USART_ReadByte(wiflyData.usartHandle);
-    if (readByte == STOP_CHAR) {
-        wiflyData.rxBuff[wiflyData.rxMsgLen] = 0; // null terminate
-        MasterControlQueueMessage message = {
-            MASTER_CONTROL_MSG_WIFLY, 0, 0
-        };
-        if (usartOutputSendMsgToQFromISR(&message, &higherPriorityTaskWoken)
-            != pdTRUE) {
-            dbgFatalError(DBG_ERROR_WIFLY_RUN);
-        }
-        wiflyData.rxMsgLen = 0;
-    } else if (readByte == START_CHAR) {
-        wiflyData.rxMsgLen = 0;
-    } else {
-        if (wiflyData.rxMsgLen >= WIFLY_MAX_MSG_LEN) {
-            // We've overflowed; start writing over the begining
-            // TODO: Make this fail non-silently, without halting the system
-            //       either
-            wiflyData.rxMsgLen = 0;
-        }
-        wiflyData.rxBuff[wiflyData.rxMsgLen++] = readByte;
+    if (DRV_USART_ReceiverBufferIsEmpty(wiflyData.usartHandle)) {
+        dbgOutputLoc(DBG_WIFLY_RECEIVE_CALLBACK_EMPTY_BUFFER);
+        return;                 /* Nothing to read */
     }
+    char readByte = DRV_USART_ReadByte(wiflyData.usartHandle);
+    dbgOutputLoc(DBG_WIFLY_RECEIVE_CALLBACK_MIDDLE);
+    /* if (readByte == STOP_CHAR) { */
+    /*     wiflyData.rxBuff[wiflyData.rxMsgLen] = 0; // null terminate */
+    /*     MasterControlQueueMessage message = { */
+    /*         MASTER_CONTROL_MSG_WIFLY, 0, 0 */
+    /*     }; */
+    /*     if (usartOutputSendMsgToQFromISR(&message, &higherPriorityTaskWoken) */
+    /*         != pdTRUE) { */
+    /*         dbgFatalError(DBG_ERROR_WIFLY_RUN); */
+    /*     } */
+    /*     wiflyData.rxMsgLen = 0; */
+    /* } else if (readByte == START_CHAR) { */
+    /*     wiflyData.rxMsgLen = 0; */
+    /* } else { */
+    /*     if (wiflyData.rxMsgLen >= WIFLY_MAX_MSG_LEN) { */
+    /*         // We've overflowed; start writing over the begining */
+    /*         // TODO: Make this fail non-silently, without halting the system */
+    /*         //       either */
+    /*         wiflyData.rxMsgLen = 0; */
+    /*     } */
+    /*     wiflyData.rxBuff[wiflyData.rxMsgLen++] = readByte; */
+    /* } */
+
+    dbgOutputLoc(DBG_WIFLY_RECEIVE_CALLBACK_END);
         
     portEND_SWITCHING_ISR(higherPriorityTaskWoken);
 }

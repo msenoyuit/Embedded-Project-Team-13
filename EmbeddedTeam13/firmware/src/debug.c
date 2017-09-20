@@ -118,7 +118,7 @@ void dbgInit(){
     82      39              RD5  - ground
 */
 
-void dbgOutputVal(unsigned char outVal){
+void dbgOutputLoc(unsigned char outVal){
     PORTS_DATA_MASK mask = (PORTS_DATA_MASK)0x00FF;
     SYS_PORTS_Clear(PORTS_ID_0, PORT_CHANNEL_E, mask);
     SYS_PORTS_Set(PORTS_ID_0, PORT_CHANNEL_E, outVal, mask);
@@ -135,7 +135,7 @@ void dbgUARTVal(unsigned char outVal){
 
 // *****************************************************************************
 /* Function:
-    void dbgOutputLoc(unsigned char outVal)
+    void dbgOutputVal(unsigned char outVal)
 
   Summary:
     Output an 8-bit value over 8 PIC i/o lines
@@ -170,7 +170,7 @@ void dbgUARTVal(unsigned char outVal){
  * Sends a value to a different set of PIC i/o lines than those used by 
  * dbgOutputVal. The value should be a constant defined in dbgLocationType
  */
-void dbgOutputLoc(unsigned char outVal){
+void dbgOutputVal(unsigned char outVal){
     bool RF1 = (outVal & 0x80);
     bool RD6 = (outVal & 0x40);
     bool RD8 = (outVal & 0x20);
