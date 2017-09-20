@@ -75,18 +75,11 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
  */
 void wiflyUsartTransmitEventHandler(const SYS_MODULE_INDEX index) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
-    
-    if (wiflyData.txBuff[wiflyData.txSentChars] == 0) {
-        // End of message; give back the tx buffer
-        xSemaphoreGiveFromISR(wiflyData.txBufferSemaphoreHandle,
-                              &higherPriorityTaskWoken);
-    } else {
-        // Fill the hardware transmit buffer
-        while(!DRV_USART_TransmitBufferIsFull(wiflyData.usartHandle)) {
-            DRV_USART_WriteByte(wiflyData.usartHandle,
-                                wiflyData.txBuff[wiflyData.txSentChars++]);
-        }
-    }
+
+    dbgOutputLoc(DBG_WIFLY_TRANSMIT_CALLBACK_START);
+    xSemaphoreGiveFromISR(wiflyData.txBufferSemaphoreHandle,
+                          &higherPriorityTaskWoken);
+    dbgOutputLoc(DBG_WIFLY_TRANSMIT_CALLBACK_END);
 
     portEND_SWITCHING_ISR(higherPriorityTaskWoken);
 }
@@ -105,21 +98,18 @@ void wiflyUsartTransmitEventHandler(const SYS_MODULE_INDEX index) {
  * There should not be a message currently being sent
  */
 void startMsgSend(WiflyMsg msg) {
-    // Obtain tx uart
-    xSemaphoreTake(pdTRUE, portMAX_DELAY);
-    dbgOutputLoc(DBG_WIFLY_AFTER_MSG_SEND_SEMAPHORE_TAKE);
-    // Copy the string into the buffer
-    strcpy(wiflyData.txBuff, msg.text);
-    wiflyData.txSentChars = 0;
-    // Start transmitting
-    DRV_USART_WriteByte(wiflyData.usartHandle,
-                        wiflyData.txBuff[wiflyData.txSentChars++]);
+    unsigned int sentChars = 0;
+    while (msg.text[sentChars] != 0) {
+        // Wait till the tx buffer is free and transmit
+        xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+        DRV_USART_WriteByte(wiflyData.usartHandle,
+                            msg.text[sentChars++]);
+    }
     dbgOutputLoc(DBG_WIFLY_AFTER_USART_WRITE);
-    // Once this byte gets succesfully sent, the wiflyUsartTransmitEventHandler
-    // will take over sending the rest
 }
 
 BaseType_t wiflySendMsg(WiflyMsg * message, TickType_t ticksToWait) {
+    
     return xQueueSendToBack(wiflyData.toSendQ, message, ticksToWait);
 }
     

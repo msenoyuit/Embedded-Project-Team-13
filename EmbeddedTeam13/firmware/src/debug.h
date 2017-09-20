@@ -51,6 +51,9 @@ typedef enum dbgLocation {
 
     DBG_TASK_BEFORE_MSG_SEND = 17,
     DBG_TASK_AFTER_MSG_SEND = 18,
+
+    DBG_WIFLY_TRANSMIT_CALLBACK_START = 19,
+    DBG_WIFLY_TRANSMIT_CALLBACK_END = 20,
     
 } dbgLocationType;
 

@@ -54,8 +54,6 @@ typedef struct {
 
     SemaphoreHandle_t txBufferSemaphoreHandle;
     QueueHandle_t toSendQ;
-    char txBuff[WIFLY_MAX_MSG_LEN];
-    unsigned int txSentChars;
 } WIFLY_DATA;
 
 
