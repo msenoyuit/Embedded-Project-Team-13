@@ -20,6 +20,8 @@
 /* ************************************************************************** */
 /* ************************************************************************** */
 
+#define DBG_USART_INDEX DRV_USART_INDEX_1
+
 /*
  * dbgLocationType:
  *      These constants should be used in calls to dbgOutputLoc to specify 

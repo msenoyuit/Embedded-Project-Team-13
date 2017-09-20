@@ -71,7 +71,7 @@ void dbgInit(){
      * USART configuration:
      */
     
-    dbgUsartHandle = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_WRITE);
+    dbgUsartHandle = DRV_USART_Open(DBG_USART_INDEX, DRV_IO_INTENT_WRITE);
 
 }
 // *****************************************************************************
