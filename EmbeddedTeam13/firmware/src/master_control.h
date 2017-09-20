@@ -62,6 +62,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "timers.h"
+
+
+#include "master_control_public.h"
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
 
@@ -77,11 +80,6 @@ extern "C" {
 // *****************************************************************************
 
 // *****************************************************************************
-
-/* Message type for this tasks queue */
-typedef struct QueueMessage {
-    int id;                     /* Meaningless content ATM */
-} QueueMessage;
 
 // *****************************************************************************
 /* Application Data

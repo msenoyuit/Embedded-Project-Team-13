@@ -46,7 +46,8 @@ static DRV_HANDLE dbgUsartHandle = 0; // Handle for the USART driver
  * 
  */
 void dbgInit(){
-    
+    dbgClrErrorLed();
+
     /*
      * Port/Pin configuration:
      */

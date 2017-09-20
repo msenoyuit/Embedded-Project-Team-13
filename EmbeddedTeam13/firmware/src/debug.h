@@ -64,7 +64,8 @@ typedef enum dbgError {
     DBG_ERROR_WIFLY_INIT = 1,
     DBG_ERROR_WIFLY_RUN = 2,
     DBG_ERROR_WIFLY_SEND_MSG_TOO_LONG = 3,
-    DBG_ERROR_MAIN_TASK = 4,
+    DBG_ERROR_MAIN_TASK_INIT = 4,
+    DBG_ERROR_MAIN_TASK_RUN = 5,
     DBG_ERROR_TEST = 15,
 } dbgErrorType;
 // *****************************************************************************
@@ -104,6 +105,10 @@ void dbgUARTVal(unsigned char outVal);
 void dbgOutputLoc(unsigned char outVal);
 
 void dbgFatalError(dbgErrorType errorType);
+
+void dbgClrErrorLed();
+
+void dbgSetErrorLed();
 
 #endif /* _DEBUG_H */
 
