@@ -223,15 +223,17 @@ void MASTER_CONTROL_Tasks ( void ){
     xQueueReceive(usartOutputData.queue, &receivedMessage, portMAX_DELAY);
     dbgOutputLoc(DBG_TASK_AFTER_QUEUE_RECEIVE);
     // Handle the message
-
+    WiflyMsg msg;
     switch (receivedMessage.type) {
     case MASTER_CONTROL_MSG_WIFLY:
         // We've received a wifly message, do something about this
-        SYS_PORTS_PinToggle(0, PORT_CHANNEL_A, 3);
+        SYS_PORTS_PinToggle(0, PORT_CHANNEL_C, 1);
+        ;   
+        sprintf(msg.text, "%d\n", receivedMessage.data1);
+        wiflySendMsg(&msg, 0);
         break;
     case MASTER_CONTROL_MSG_IR_READING:
         ;
-        WiflyMsg msg;
         sprintf(msg.text, "%d\n", receivedMessage.data1);
         wiflySendMsg(&msg, 0);
         break;
