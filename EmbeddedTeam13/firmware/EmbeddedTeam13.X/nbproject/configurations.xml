@@ -231,7 +231,7 @@
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC32</languageToolchain>
         <languageToolchainVersion>1.44</languageToolchainVersion>
-        <platform>4</platform>
+        <platform>3</platform>
       </toolsSet>
       <compileType>
         <linkerTool>
@@ -266,7 +266,7 @@
         <property key="enable-unroll-loops" value="false"/>
         <property key="exclude-floating-point" value="false"/>
         <property key="extra-include-directories"
-                  value="../../../../microchip/harmony/v2_04/framework;../../../../microchip/harmony/v2_04/third_party/rtos/FreeRTOS/Source/include;../../../../microchip/harmony/v2_04/third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX;../src;../src/default;../../../../../../../../Applications/microchip/harmony/v2_04/framework;../src/system_config/default/framework;../src/system_config/default"/>
+                  value="../../../../../../../../Applications/microchip/harmony/v2_04/framework;../src;../src/system_config/default;../src/default;../../../../microchip/harmony/v2_04/framework;../src/system_config/default/framework;../../../../microchip/harmony/v2_04/third_party/rtos/FreeRTOS/Source/include;../../../../microchip/harmony/v2_04/third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="true"/>

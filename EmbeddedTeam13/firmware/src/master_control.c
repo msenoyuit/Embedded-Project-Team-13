@@ -136,7 +136,7 @@ void APP_ADC_Average (void) {
         usartOutputData.ADC_avg += PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
     }
     usartOutputData.ADC_avg = usartOutputData.ADC_avg / 16;
-    
+    usartOutputData.ADC_avg = 625881/(usartOutputData.ADC_avg*200 - 3413);
     BaseType_t higherPriorityTaskWoken = pdFALSE;
     MasterControlQueueMessage message = {
         MASTER_CONTROL_MSG_IR_READING,
@@ -229,18 +229,19 @@ void MASTER_CONTROL_Tasks ( void ){
         // We've received a wifly message, do something about this
         SYS_PORTS_PinToggle(0, PORT_CHANNEL_C, 1);
         ;   
-        sprintf(msg.text, "%d\n", receivedMessage.data1);
+        msg.text[0] = receivedMessage.data1;
+        msg.text[1] = '\n';
+        msg.text[2] = '\r';
+        msg.text[3] = 0;
         wiflySendMsg(&msg, 0);
         break;
     case MASTER_CONTROL_MSG_IR_READING:
         ;
-        sprintf(msg.text, "%d\n", receivedMessage.data1);
+        sprintf(msg.text, "%d\n\r", receivedMessage.data1);
         wiflySendMsg(&msg, 0);
         break;
     }
 }
-
- 
 
 /*******************************************************************************
  End of File
