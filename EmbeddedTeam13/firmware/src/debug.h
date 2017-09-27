@@ -72,6 +72,8 @@ typedef enum dbgError {
     DBG_ERROR_MAIN_TASK_INIT = 4,
     DBG_ERROR_MAIN_TASK_RUN = 5,
     DBG_ERROR_QUEUE_TYPE_WRONG = 6,
+    DBG_ERROR_IR_INIT = 7,
+    DBG_ERROR_IR_RUN = 8,
     DBG_ERROR_TEST = 15,
 } dbgErrorType;
 // *****************************************************************************

@@ -97,12 +97,6 @@ extern "C" {
 typedef struct {
     /* Handle to the queue */
     QueueHandle_t queue;
-    
-    /* Handle to the timer */
-    TimerHandle_t timer;
-    
-    /* Store the average of the ADC data */
-    uint64_t ADC_avg;
 
 } MASTER_CONTROL_DATA;
 
