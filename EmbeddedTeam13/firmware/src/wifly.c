@@ -8,6 +8,7 @@
 #include "wifly_public.h"
 #include "master_control_public.h"
 #include "debug.h"
+#include "queue_utils.h"
 #include <string.h>
 
 // *****************************************************************************
@@ -60,10 +61,11 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
 
      if (readByte == readByte) { 
          wiflyData.rxBuff[wiflyData.rxMsgLen] = 0; // null terminate 
-         MasterControlQueueMessage message = { 
+         StandardQueueMessage message = {0};
+         /* 
              MASTER_CONTROL_MSG_WIFLY, readByte, readByte 
-         }; 
-         if (usartOutputSendMsgToQFromISR(&message, &higherPriorityTaskWoken) 
+         }; */
+         if (masterControlSendMsgToQFromISR(&message, &higherPriorityTaskWoken) 
              != pdTRUE) { 
              dbgFatalError(DBG_ERROR_WIFLY_RUN); 
          } 

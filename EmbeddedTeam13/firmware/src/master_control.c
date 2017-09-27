@@ -57,6 +57,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "master_control_public.h"
 #include "wifly_public.h"
 #include "ir_sensor.h"
+#include "queue_utils.h"
 #include <stdio.h>
 
 // *****************************************************************************
@@ -96,14 +97,13 @@ MASTER_CONTROL_DATA masterControlData;
 // *****************************************************************************
 // *****************************************************************************
 
-
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Local Functions
 // *****************************************************************************
 // *****************************************************************************
 
-BaseType_t usartOutputSendMsgToQFromISR(MasterControlQueueMessage * message,
+BaseType_t masterControlSendMsgToQFromISR(StandardQueueMessage * message,
                                         BaseType_t * higherPriorityTaskWoken) {
     return xQueueSendToBackFromISR(masterControlData.queue, message,
                                    higherPriorityTaskWoken);
@@ -133,7 +133,7 @@ void MASTER_CONTROL_Initialize ( void ) {
 
     /* Configure Queue */
     masterControlData.queue = xQueueCreate(MASTER_CONTROL_QUEUE_LEN,
-                                         sizeof(MasterControlQueueMessage));
+                                         sizeof(StandardQueueMessage));
     if(masterControlData.queue == NULL) {
         dbgFatalError(DBG_ERROR_MAIN_TASK_INIT);
     }
@@ -151,7 +151,7 @@ void MASTER_CONTROL_Initialize ( void ) {
  */
 
 void MASTER_CONTROL_Tasks ( void ){
-    MasterControlQueueMessage receivedMessage;
+    StandardQueueMessage receivedMessage;
 
     dbgOutputLoc(DBG_TASK_BEFORE_QUEUE_RECEIVE);
     xQueueReceive(masterControlData.queue, &receivedMessage, portMAX_DELAY);
@@ -159,11 +159,10 @@ void MASTER_CONTROL_Tasks ( void ){
     // Handle the message
     WiflyMsg msg;
     switch (receivedMessage.type) {
-    case MASTER_CONTROL_MSG_WIFLY:
-        // We've received a wifly message, do something about this
-        SYS_PORTS_PinToggle(0, PORT_CHANNEL_C, 1);
-        ;   
-        msg.text[0] = receivedMessage.data1;
+    case MESSAGE_WIFLY_MESSAGE:
+        /* TODO: Handle wifly messages in a less terrible way */
+        SYS_PORTS_PinToggle(0, PORT_CHANNEL_C, 1); 
+        msg.text[0] = receivedMessage.wiflyMessage.text[0];
         msg.text[1] = '\n';
         msg.text[2] = '\r';
         msg.text[3] = 0;
@@ -171,7 +170,7 @@ void MASTER_CONTROL_Tasks ( void ){
         break;
     case MASTER_CONTROL_MSG_IR_READING:
         ;
-        sprintf(msg.text, "%d\n\r", receivedMessage.data1);
+        sprintf(msg.text, "%d\n\r", receivedMessage.distanceReading);
         wiflySendMsg(&msg, 0);
         break;
     }

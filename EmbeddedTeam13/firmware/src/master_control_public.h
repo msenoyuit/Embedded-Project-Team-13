@@ -18,7 +18,7 @@ typedef struct {
 } MasterControlQueueMessage;
 
 
-BaseType_t usartOutputSendMsgToQFromISR(MasterControlQueueMessage * message,
+BaseType_t masterControlSendMsgToQFromISR(MasterControlQueueMessage * message,
                                         BaseType_t * higherPriorityTaskWoken);
 
 #endif // _MASTER_CONTROL_PUBLIC_H

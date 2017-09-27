@@ -8,6 +8,8 @@
 #ifndef QUEUE_UTILS_H
 #define	QUEUE_UTILS_H
 
+#include 
+
 typedef enum {
     MESSAGE_COLOR_READING, MESSAGE_DISTANCE_READING,
 } MessageType;
@@ -18,6 +20,7 @@ typedef struct {
     union {
         struct { int red; int green; int blue; int clear; }; /* Color reading */
         struct { int distance; }; /* Distance reading */
+        
     };
 } StandardQueueMessage;
 

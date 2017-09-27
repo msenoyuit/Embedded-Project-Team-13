@@ -1,4 +1,4 @@
-#include "queue-utils.h"
+#include "queue_utils.h"
 #include "debug.h"
 
 static checkMessageType(StandardQueueMessage msg, MessageType type) {

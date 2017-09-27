@@ -58,6 +58,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <stdlib.h>
 #include "system_config.h"
 #include "system_definitions.h"
+#include "debug.h"
+#include "FreeRTOS.h"
+#include "queue.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -113,7 +116,8 @@ typedef struct
     /* The application's current state */
     DRIVE_CONTROL_STATES state;
 
-    /* TODO: Define any additional data used by the application. */
+    /* Queue handle */
+    QueueHandle_t queue;
 
 } DRIVE_CONTROL_DATA;
 

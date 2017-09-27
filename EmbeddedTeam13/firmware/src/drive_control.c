@@ -76,7 +76,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
     Application strings and buffers are be defined outside this structure.
 */
 
-DRIVE_CONTROL_DATA drive_controlData;
+DRIVE_CONTROL_DATA driveControlData;
 
 // *****************************************************************************
 // *****************************************************************************
@@ -115,7 +115,7 @@ DRIVE_CONTROL_DATA drive_controlData;
 void DRIVE_CONTROL_Initialize ( void )
 {
     /* Place the App state machine in its initial state. */
-    drive_controlData.state = DRIVE_CONTROL_STATE_INIT;
+    driveControlData.state = DRIVE_CONTROL_STATE_INIT;
 
     
     /* TODO: Initialize your application's state machine and other
@@ -136,7 +136,7 @@ void DRIVE_CONTROL_Tasks ( void )
 {
 
     /* Check the application's current state. */
-    switch ( drive_controlData.state )
+    switch ( driveControlData.state )
     {
         /* Application's initial state. */
         case DRIVE_CONTROL_STATE_INIT:
@@ -147,7 +147,7 @@ void DRIVE_CONTROL_Tasks ( void )
             if (appInitialized)
             {
             
-                drive_controlData.state = DRIVE_CONTROL_STATE_SERVICE_TASKS;
+                driveControlData.state = DRIVE_CONTROL_STATE_SERVICE_TASKS;
             }
             break;
         }
