@@ -49,3 +49,17 @@ int getDistance(StandardQueueMessage msg) {
     checkMessageType(msg, MESSAGE_DISTANCE_READING);
     return msg.distanceReading.distance;
 }
+
+StandardQueueMessage makeLineReading(int line) {
+    StandardQueueMessage msg = {
+        .type = MESSAGE_LINE_READING,
+        .lineReading.line = line,
+    };
+    return msg;
+    
+}
+
+int getLine(StandardQueueMessage msg) {
+    checkMessageType(msg, MESSAGE_LINE_READING);
+    return msg.lineReading.line;
+}

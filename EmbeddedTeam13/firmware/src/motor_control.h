@@ -58,6 +58,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include <stdlib.h>
 #include "system_config.h"
 #include "system_definitions.h"
+#include "motor_control_public.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -65,6 +66,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 extern "C" {
 
 #endif
+    
+#define MOTOR_CONTROL_QUEUE_LEN 10
 // DOM-IGNORE-END 
 
 // *****************************************************************************
@@ -112,10 +115,13 @@ typedef struct
 {
     /* The application's current state */
     MOTOR_CONTROL_STATES state;
-
+    // the applications queue
+    QueueHandle_t queue;
     /* TODO: Define any additional data used by the application. */
 
 } MOTOR_CONTROL_DATA;
+
+
 
 
 // *****************************************************************************

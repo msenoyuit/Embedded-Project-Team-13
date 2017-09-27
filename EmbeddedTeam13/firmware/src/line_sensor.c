@@ -13,7 +13,7 @@ static void lineTimerCallback(TimerHandle_t timer) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
 
     // Pretend to read sensor
-    StandardQueueMessage msg = makeDistanceReading(0);
+    StandardQueueMessage msg = makeLineReading(0);
     // TODO: Fix this call to actually work
     if(masterControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken) != pdTRUE) {
         dbgFatalError(DBG_ERROR_LINE_RUN);

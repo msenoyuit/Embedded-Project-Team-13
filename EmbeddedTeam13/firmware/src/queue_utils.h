@@ -11,16 +11,21 @@
 #include "wifly_public.h"
 
 typedef enum {
-    MESSAGE_COLOR_READING, MESSAGE_DISTANCE_READING, MESSAGE_WIFLY_MESSAGE,
+    MESSAGE_COLOR_READING, 
+    MESSAGE_DISTANCE_READING,
+    MESSAGE_LINE_READING,
+    MESSAGE_WIFLY_MESSAGE, 
 } MessageType;
     
 typedef struct { int red; int green; int blue; int clear; } ColorReading; 
 typedef struct { int distance; } DistanceReading;
+typedef struct { int line; } LineReading;
 typedef struct {
     MessageType type;
     union {
         ColorReading colorReading; /* Color reading */
         DistanceReading distanceReading; /* Distance reading */
+        LineReading lineReading;
         WiflyMsg wiflyMessage;
     };
 } StandardQueueMessage;
@@ -34,6 +39,9 @@ int getClear(StandardQueueMessage msg);
 
 StandardQueueMessage makeDistanceReading(int distance);
 int getDistance(StandardQueueMessage msg);
+
+StandardQueueMessage makeLineReading(int line);
+int getLine(StandardQueueMessage msg);
 
 #endif	/* QUEUE_UTILS_H */
 

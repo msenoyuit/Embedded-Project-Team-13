@@ -76,7 +76,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
     Application strings and buffers are be defined outside this structure.
 */
 
-MOTOR_CONTROL_DATA motor_controlData;
+MOTOR_CONTROL_DATA motorControlData;
+
 
 // *****************************************************************************
 // *****************************************************************************
@@ -115,14 +116,26 @@ MOTOR_CONTROL_DATA motor_controlData;
 void MOTOR_CONTROL_Initialize ( void )
 {
     /* Place the App state machine in its initial state. */
-    motor_controlData.state = MOTOR_CONTROL_STATE_INIT;
-
+    motorControlData.state = MOTOR_CONTROL_STATE_INIT;
+    motorControlData.queue = xQueueCreate(MOTOR_CONTROL_QUEUE_LEN,
+                                         sizeof(StandardQueueMessage)); 
     
     /* TODO: Initialize your application's state machine and other
      * parameters.
      */
 }
 
+BaseType_t motorControlSendMsgToQFromISR(StandardQueueMessage * message,
+                                        BaseType_t * higherPriorityTaskWoken) {
+    return xQueueSendToBackFromISR(motorControlData.queue, message,
+                                   higherPriorityTaskWoken);
+}
+    
+BaseType_t motorControlSendMsgToQR(StandardQueueMessage * message,
+                                        TickType_t time) {
+    return xQueueSendToBack(motorControlData.queue, message,
+                                   time);
+}
 
 /******************************************************************************
   Function:
@@ -136,7 +149,7 @@ void MOTOR_CONTROL_Tasks ( void )
 {
 
     /* Check the application's current state. */
-    switch ( motor_controlData.state )
+    switch ( motorControlData.state )
     {
         /* Application's initial state. */
         case MOTOR_CONTROL_STATE_INIT:
@@ -147,7 +160,7 @@ void MOTOR_CONTROL_Tasks ( void )
             if (appInitialized)
             {
             
-                motor_controlData.state = MOTOR_CONTROL_STATE_SERVICE_TASKS;
+                motorControlData.state = MOTOR_CONTROL_STATE_SERVICE_TASKS;
             }
             break;
         }
