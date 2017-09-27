@@ -3,6 +3,7 @@
 
 #include "FreeRTOS.h"
 #include "queue.h"
+#include "queue_utils.h"
 
 typedef enum {
     MASTER_CONTROL_MSG_WIFLY,
@@ -18,7 +19,7 @@ typedef struct {
 } MasterControlQueueMessage;
 
 
-BaseType_t masterControlSendMsgToQFromISR(MasterControlQueueMessage * message,
+BaseType_t masterControlSendMsgToQFromISR(StandardQueueMessage * message,
                                         BaseType_t * higherPriorityTaskWoken);
 
 #endif // _MASTER_CONTROL_PUBLIC_H

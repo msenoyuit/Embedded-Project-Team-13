@@ -8,19 +8,20 @@
 #ifndef QUEUE_UTILS_H
 #define	QUEUE_UTILS_H
 
-#include 
+#include "wifly_public.h"
 
 typedef enum {
-    MESSAGE_COLOR_READING, MESSAGE_DISTANCE_READING,
+    MESSAGE_COLOR_READING, MESSAGE_DISTANCE_READING, MESSAGE_WIFLY_MESSAGE,
 } MessageType;
     
-    
+typedef struct { int red; int green; int blue; int clear; } ColorReading; 
+typedef struct { int distance; } DistanceReading;
 typedef struct {
     MessageType type;
     union {
-        struct { int red; int green; int blue; int clear; }; /* Color reading */
-        struct { int distance; }; /* Distance reading */
-        
+        ColorReading colorReading; /* Color reading */
+        DistanceReading distanceReading; /* Distance reading */
+        WiflyMsg wiflyMessage;
     };
 } StandardQueueMessage;
 
