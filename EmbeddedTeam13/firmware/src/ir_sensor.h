@@ -9,6 +9,8 @@
 #define	IR_SENSOR_H
 
 void irSensorInit(void);
+void IR_ADC_Average (void);
+static void irTimerCallback(TimerHandle_t timer);
 
 #endif	/* IR_SENSOR_H */
 

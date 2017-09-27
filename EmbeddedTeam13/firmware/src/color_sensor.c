@@ -1,7 +1,7 @@
 #include "color_sensor.h"
 
 #include "FreeRTOS.h"
-#include "timer.h"
+#include "timers.h"
 
 #include "master_control_public.h"
 #include "debug.h"
@@ -15,7 +15,7 @@ static void colorTimerCallback(TimerHandle_t timer) {
     // Pretend to read sensor
     StandardQueueMessage msg = makeColorReading(0, 0, 0);
     // TODO: Fix this call to actually work
-    if(usartOutputSendMsgToQFromISR(&msg, &higherPriorityTaskWoken) != pdTRUE) {
+    if(masterControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken) != pdTRUE) {
         dbgFatalError(DBG_ERROR_COLOR_RUN);
     }
 
@@ -24,10 +24,10 @@ static void colorTimerCallback(TimerHandle_t timer) {
 
 void colorSensorInit(void) {
     /* Configure Timer */
-    ir_timer = xTimerCreate("Color Timer",
+    color_timer = xTimerCreate("Color Timer",
                             pdMS_TO_TICKS(COLOR_READ_FREQUENCY_MS),
                             pdTRUE, ( void * ) 0, colorTimerCallback);
-    if(timer == NULL) {
+    if(color_timer == NULL) {
         dbgFatalError(DBG_ERROR_COLOR_INIT);
     }
 
@@ -35,7 +35,7 @@ void colorSensorInit(void) {
     DRV_ADC_Open();
 
     // Start the timer
-    if(xTimerStart(ir_timer, 0) != pdPASS) {
+    if(xTimerStart(color_timer, 0) != pdPASS) {
         dbgFatalError(DBG_ERROR_COLOR_INIT);
     }
 }

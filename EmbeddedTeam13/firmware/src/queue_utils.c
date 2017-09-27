@@ -10,42 +10,42 @@ static checkMessageType(StandardQueueMessage msg, MessageType type) {
 StandardQueueMessage makeColorReading(int red, int green, int blue) {
     StandardQueueMessage msg = {
         .type = MESSAGE_COLOR_READING,
-        .red = red,
-        .green = green,
-        .blue = blue,
+        .colorReading.red = red,
+        .colorReading.green = green,
+        .colorReading.blue = blue,
     };
     return msg;
 }
 
 int getRed(StandardQueueMessage msg) {
     checkMessageType(msg, MESSAGE_COLOR_READING);
-    return msg.red;
+    return msg.colorReading.red;
 }
 
 int getGreen(StandardQueueMessage msg) {
     checkMessageType(msg, MESSAGE_COLOR_READING);
-    return msg.green;
+    return msg.colorReading.green;
 }
 
 int getBlue(StandardQueueMessage msg) {
     checkMessageType(msg, MESSAGE_COLOR_READING);
-    return msg.blue;
+    return msg.colorReading.blue;
 }
 
 int getClear(StandardQueueMessage msg) {
     checkMessageType(msg, MESSAGE_COLOR_READING);
-    return msg.clear;
+    return msg.colorReading.clear;
 }
 
 StandardQueueMessage makeDistanceReading(int distance) {
     StandardQueueMessage msg = {
         .type = MESSAGE_DISTANCE_READING,
-        .distance = distance,
+        .distanceReading.distance = distance,
     };
     return msg;
 }
 
 int getDistance(StandardQueueMessage msg) {
     checkMessageType(msg, MESSAGE_DISTANCE_READING);
-    return msg.distance;
+    return msg.distanceReading.distance;
 }

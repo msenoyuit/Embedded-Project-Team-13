@@ -1,6 +1,6 @@
 #ifndef _WIFLY_PUBLIC_H
 #define _WIFLY_PUBLIC_H
-
+#include "FreeRTOS.h"
 #include "queue.h"
 #include "semphr.h"
 

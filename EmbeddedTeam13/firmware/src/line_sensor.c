@@ -1,7 +1,7 @@
 #include "line_sensor.h"
 
 #include "FreeRTOS.h"
-#include "timer.h"
+#include "timers.h"
 
 #include "master_control_public.h"
 #include "debug.h"
@@ -13,9 +13,9 @@ static void lineTimerCallback(TimerHandle_t timer) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
 
     // Pretend to read sensor
-    StandardQueueMessage msg = makeLineReading(0);
+    StandardQueueMessage msg = makeDistanceReading(0);
     // TODO: Fix this call to actually work
-    if(usartOutputSendMsgToQFromISR(&msg, &higherPriorityTaskWoken) != pdTRUE) {
+    if(masterControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken) != pdTRUE) {
         dbgFatalError(DBG_ERROR_LINE_RUN);
     }
 
@@ -24,9 +24,9 @@ static void lineTimerCallback(TimerHandle_t timer) {
 
 void lineSensorInit(void) {
     /* Configure Timer */
-    ir_timer = xTimerCreate("Line Timer", pdMS_TO_TICKS(LINE_READ_FREQUENCY_MS),
+    line_timer = xTimerCreate("Line Timer", pdMS_TO_TICKS(LINE_READ_FREQUENCY_MS),
                             pdTRUE, ( void * ) 0, lineTimerCallback);
-    if(timer == NULL) {
+    if(line_timer == NULL) {
         dbgFatalError(DBG_ERROR_LINE_INIT);
     }
 
@@ -34,7 +34,7 @@ void lineSensorInit(void) {
     DRV_ADC_Open();
 
     // Start the timer
-    if(xTimerStart(ir_timer, 0) != pdPASS) {
+    if(xTimerStart(line_timer, 0) != pdPASS) {
         dbgFatalError(DBG_ERROR_LINE_INIT);
     }
 }

@@ -60,6 +60,7 @@ typedef enum dbgLocation {
     DBG_WIFLY_RECEIVE_CALLBACK_MIDDLE = 22,
     DBG_WIFLY_RECEIVE_CALLBACK_EMPTY_BUFFER = 23,
     
+
 } dbgLocationType;
 
 
@@ -76,6 +77,9 @@ typedef enum dbgError {
     DBG_ERROR_IR_RUN = 8,
     DBG_ERROR_LINE_INIT = 9,
     DBG_ERROR_LINE_RUN = 10,
+    DBG_ERROR_COLOR_INIT = 11,
+    DBG_ERROR_COLOR_RUN = 12,
+    
     DBG_ERROR_TEST = 15,
 } dbgErrorType;
 // *****************************************************************************
