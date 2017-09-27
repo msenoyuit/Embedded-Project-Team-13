@@ -60,6 +60,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "task.h"
 #include "master_control.h"
 #include "wifly.h"
+#include "drive_control.h"
+#include "motor_control.h"
 
 
 // DOM-IGNORE-BEGIN

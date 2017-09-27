@@ -171,6 +171,8 @@ void SYS_Initialize ( void* data )
     /* Initialize the Application */
     MASTER_CONTROL_Initialize();
     WIFLY_Initialize();
+    DRIVE_CONTROL_Initialize();
+    MOTOR_CONTROL_Initialize();
 }
 
 

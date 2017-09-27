@@ -5,7 +5,7 @@
     Microchip Technology Inc.
   
   File Name:
-    master_control.c
+    motor_control.c
 
   Summary:
     This file contains the source code for the MPLAB Harmony application.
@@ -53,25 +53,13 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 
-#include "master_control.h"
-#include "master_control_public.h"
-#include "wifly_public.h"
-#include <stdio.h>
+#include "motor_control.h"
 
 // *****************************************************************************
 // *****************************************************************************
 // Section: Global Data Definitions
 // *****************************************************************************
 // *****************************************************************************
-
-// Queue related constants
-#define MASTER_CONTROL_QUEUE_LEN 10
-#define TIMER_FREQUENCY_MS 1000
-
-// Message to be output over UART and IO lines
-#define MESSAGE_LENGTH 7
-static unsigned char message[MESSAGE_LENGTH] = "Team 13";
-static unsigned int messageIndex = 0;
 
 // *****************************************************************************
 /* Application Data
@@ -88,7 +76,7 @@ static unsigned int messageIndex = 0;
     Application strings and buffers are be defined outside this structure.
 */
 
-MASTER_CONTROL_DATA masterControlData;
+MOTOR_CONTROL_DATA motor_controlData;
 
 // *****************************************************************************
 // *****************************************************************************
@@ -96,60 +84,8 @@ MASTER_CONTROL_DATA masterControlData;
 // *****************************************************************************
 // *****************************************************************************
 
-void timerCallbackFn(TimerHandle_t timer) {
-    BaseType_t higherPriorityTaskWoken = pdFALSE;
-    
-    //Indicate life
-    SYS_PORTS_PinToggle(0, PORT_CHANNEL_A, 3);
-    /*  TODO: Remove this block
-    // Pretend to be the IR sensor
-    MasterControlQueueMessage message = {
-        MASTER_CONTROL_MSG_IR_READING,
-        1234,
-        0
-    };
-    dbgOutputLoc(DBG_ISR_BEFORE_QUEUE_SEND);
-    if(usartOutputSendMsgToQFromISR(&message, &higherPriorityTaskWoken)
-       != pdTRUE) {
-        dbgFatalError(DBG_ERROR_MAIN_TASK_RUN);
-    }
-    dbgOutputLoc(DBG_ISR_AFTER_QUEUE_SEND);*/
-    
-    // Start getting the next ADC reading
-    PLIB_ADC_SampleAutoStartEnable(ADC_ID_1);
-    
-    portEND_SWITCHING_ISR(higherPriorityTaskWoken);
-}
-
-// TODO: Rename this function to something more descriptive/better
-/*******************************************************************************
-  Function:
-    void APP_ADC_Average ( void )
-
-  Remarks:
-    See prototype in usart_output.h.
- */
-
-void APP_ADC_Average (void) {
-    int i;
-    for (i = 0; i < 16; i++) {
-        masterControlData.ADC_avg += PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
-    }
-    masterControlData.ADC_avg = masterControlData.ADC_avg / 16;
-    masterControlData.ADC_avg = 625881/(masterControlData.ADC_avg*200 - 3413);
-    BaseType_t higherPriorityTaskWoken = pdFALSE;
-    MasterControlQueueMessage message = {
-        MASTER_CONTROL_MSG_IR_READING,
-        masterControlData.ADC_avg,
-        0
-    };
-    dbgOutputLoc(DBG_ISR_BEFORE_QUEUE_SEND);
-    if(usartOutputSendMsgToQFromISR(&message, &higherPriorityTaskWoken)
-       != pdTRUE) {
-        dbgFatalError(DBG_ERROR_MAIN_TASK_RUN); // TODO: Change to something better
-    }
-    dbgOutputLoc(DBG_ISR_AFTER_QUEUE_SEND);
-}
+/* TODO:  Add any necessary callback functions.
+*/
 
 // *****************************************************************************
 // *****************************************************************************
@@ -157,12 +93,10 @@ void APP_ADC_Average (void) {
 // *****************************************************************************
 // *****************************************************************************
 
-BaseType_t usartOutputSendMsgToQFromISR(MasterControlQueueMessage * message,
-                                        BaseType_t * higherPriorityTaskWoken) {
-    return xQueueSendToBackFromISR(masterControlData.queue, message,
-                                   higherPriorityTaskWoken);
-    
-}
+
+/* TODO:  Add any necessary local functions.
+*/
+
 
 // *****************************************************************************
 // *****************************************************************************
@@ -172,76 +106,71 @@ BaseType_t usartOutputSendMsgToQFromISR(MasterControlQueueMessage * message,
 
 /*******************************************************************************
   Function:
-    void MASTER_CONTROL_Initialize ( void )
+    void MOTOR_CONTROL_Initialize ( void )
 
   Remarks:
-    See prototype in master_control.h.
+    See prototype in motor_control.h.
  */
-void MASTER_CONTROL_Initialize ( void ) {
-    /* Initialize debugging utilities */
-    dbgInit();
-    dbgOutputLoc(DBG_TASK_ENTRY);
 
-    /* Configure Queue */
-    masterControlData.queue = xQueueCreate(MASTER_CONTROL_QUEUE_LEN,
-                                         sizeof(MasterControlQueueMessage));
-    if(masterControlData.queue == NULL) {
-        dbgFatalError(DBG_ERROR_MAIN_TASK_INIT);
-    }
+void MOTOR_CONTROL_Initialize ( void )
+{
+    /* Place the App state machine in its initial state. */
+    motor_controlData.state = MOTOR_CONTROL_STATE_INIT;
+
     
-    /* Configure Timer */
-    masterControlData.timer = xTimerCreate("50 ms Timer",
-                                  pdMS_TO_TICKS(TIMER_FREQUENCY_MS), pdTRUE,
-                                  ( void * ) 0, timerCallbackFn);
-    if(masterControlData.timer == NULL) {
-        dbgFatalError(DBG_ERROR_MAIN_TASK_INIT);
-    }
-    // Start the timer
-    if(xTimerStart(masterControlData.timer, 0) != pdPASS) {
-        dbgFatalError(DBG_ERROR_MAIN_TASK_INIT);
-    }
-    
-    // Enable the ADC
-    DRV_ADC_Open();
-    
-    dbgOutputLoc(DBG_TASK_BEFORE_LOOP);
+    /* TODO: Initialize your application's state machine and other
+     * parameters.
+     */
 }
 
 
 /******************************************************************************
   Function:
-    void MASTER_CONTROL_Tasks ( void )
+    void MOTOR_CONTROL_Tasks ( void )
 
   Remarks:
-    See prototype in master_control.h.
+    See prototype in motor_control.h.
  */
 
-void MASTER_CONTROL_Tasks ( void ){
-    MasterControlQueueMessage receivedMessage;
+void MOTOR_CONTROL_Tasks ( void )
+{
 
-    dbgOutputLoc(DBG_TASK_BEFORE_QUEUE_RECEIVE);
-    xQueueReceive(masterControlData.queue, &receivedMessage, portMAX_DELAY);
-    dbgOutputLoc(DBG_TASK_AFTER_QUEUE_RECEIVE);
-    // Handle the message
-    WiflyMsg msg;
-    switch (receivedMessage.type) {
-    case MASTER_CONTROL_MSG_WIFLY:
-        // We've received a wifly message, do something about this
-        SYS_PORTS_PinToggle(0, PORT_CHANNEL_C, 1);
-        ;   
-        msg.text[0] = receivedMessage.data1;
-        msg.text[1] = '\n';
-        msg.text[2] = '\r';
-        msg.text[3] = 0;
-        wiflySendMsg(&msg, 0);
-        break;
-    case MASTER_CONTROL_MSG_IR_READING:
-        ;
-        sprintf(msg.text, "%d\n\r", receivedMessage.data1);
-        wiflySendMsg(&msg, 0);
-        break;
+    /* Check the application's current state. */
+    switch ( motor_controlData.state )
+    {
+        /* Application's initial state. */
+        case MOTOR_CONTROL_STATE_INIT:
+        {
+            bool appInitialized = true;
+       
+        
+            if (appInitialized)
+            {
+            
+                motor_controlData.state = MOTOR_CONTROL_STATE_SERVICE_TASKS;
+            }
+            break;
+        }
+
+        case MOTOR_CONTROL_STATE_SERVICE_TASKS:
+        {
+        
+            break;
+        }
+
+        /* TODO: implement your application state machine.*/
+        
+
+        /* The default state should never be executed. */
+        default:
+        {
+            /* TODO: Handle error in application's state machine. */
+            break;
+        }
     }
 }
+
+ 
 
 /*******************************************************************************
  End of File
