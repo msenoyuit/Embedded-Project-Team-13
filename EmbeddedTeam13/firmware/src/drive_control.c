@@ -60,6 +60,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: Global Data Definitions
 // *****************************************************************************
 // *****************************************************************************
+#define DRIVE_CONTROL_QUEUE_LEN 10
 
 // *****************************************************************************
 /* Application Data
@@ -116,13 +117,23 @@ void DRIVE_CONTROL_Initialize ( void )
 {
     /* Place the App state machine in its initial state. */
     driveControlData.state = DRIVE_CONTROL_STATE_INIT;
-
+    driveControlData.queue = xQueueCreate(DRIVE_CONTROL_QUEUE_LEN,
+                                         sizeof(StandardQueueMessage));
     
     /* TODO: Initialize your application's state machine and other
      * parameters.
      */
 }
 
+BaseType_t driveControlSendMsgToQFromISR(StandardQueueMessage * message,
+                                        BaseType_t * higherPriorityTaskWoken) {
+    return xQueueSendToBackFromISR(driveControlData.queue, message,
+                                   higherPriorityTaskWoken);
+}
+
+BaseType_t driveControlSendMsgToQ(StandardQueueMessage * message, TickType_t time) {
+    return xQueueSendToBack(driveControlData.queue, message, time);
+}
 
 /******************************************************************************
   Function:
