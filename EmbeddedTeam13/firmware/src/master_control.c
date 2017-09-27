@@ -57,6 +57,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "master_control_public.h"
 #include "wifly_public.h"
 #include "ir_sensor.h"
+#include "color_sensor.h"
+#include "line_sensor.h"
 #include <stdio.h>
 
 // *****************************************************************************
@@ -128,8 +130,10 @@ void MASTER_CONTROL_Initialize ( void ) {
     dbgInit();
     dbgOutputLoc(DBG_TASK_ENTRY);
 
-    /* Initialize IR Sensor */
+    /* Initialize Sensors */
     irSensorInit();
+    colorSensorInit();
+    lineSensorInit();
 
     /* Configure Queue */
     masterControlData.queue = xQueueCreate(MASTER_CONTROL_QUEUE_LEN,

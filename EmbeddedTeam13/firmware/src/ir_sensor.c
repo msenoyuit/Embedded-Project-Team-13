@@ -4,7 +4,7 @@
 #include "ir_sensor.h"
 
 #include "master_control_public.h"
-#include "debug"
+#include "debug.h"
 
 #define IR_READ_FREQUENCY_MS 50
 
@@ -45,19 +45,19 @@ void IR_ADC_Average (void) {
 }
 
 
-void irSensorInit() {
+void irSensorInit(void) {
     /* Configure Timer */
     ir_timer = xTimerCreate("IR Timer", pdMS_TO_TICKS(IR_READ_FREQUENCY_MS),
-                         pdTRUE, ( void * ) 0, timerCallbackFn);
+                         pdTRUE, ( void * ) 0, irTimerCallback);
     if(timer == NULL) {
+        dbgFatalError(DBG_ERROR_IR_INIT);
+    }
+    // Start the timer
+    if(xTimerStart(ir_timer, 0) != pdPASS) {
         dbgFatalError(DBG_ERROR_IR_INIT);
     }
 
     // Enable the ADC
     DRV_ADC_Open();
 
-    // Start the timer
-    if(xTimerStart(ir_timer, 0) != pdPASS) {
-        dbgFatalError(DBG_ERROR_IR_INIT);
-    }
 }
