@@ -56,6 +56,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_definitions.h"
 #include "master_control.h"
 #include "wifly.h"
+#include "drive_control.h"
+#include "motor_control.h"
 
 
 // *****************************************************************************
@@ -71,6 +73,8 @@ static void _SYS_Tasks ( void );
  
 static void _MASTER_CONTROL_Tasks(void);
 static void _WIFLY_Tasks(void);
+static void _DRIVE_CONTROL_Tasks(void);
+static void _MOTOR_CONTROL_Tasks(void);
 
 
 // *****************************************************************************
@@ -104,6 +108,16 @@ void SYS_Tasks ( void )
     /* Create OS Thread for WIFLY Tasks. */
     xTaskCreate((TaskFunction_t) _WIFLY_Tasks,
                 "WIFLY Tasks",
+                1024, NULL, 1, NULL);
+
+    /* Create OS Thread for DRIVE_CONTROL Tasks. */
+    xTaskCreate((TaskFunction_t) _DRIVE_CONTROL_Tasks,
+                "DRIVE_CONTROL Tasks",
+                1024, NULL, 1, NULL);
+
+    /* Create OS Thread for MOTOR_CONTROL Tasks. */
+    xTaskCreate((TaskFunction_t) _MOTOR_CONTROL_Tasks,
+                "MOTOR_CONTROL Tasks",
                 1024, NULL, 1, NULL);
 
     /**************
@@ -169,6 +183,40 @@ static void _WIFLY_Tasks(void)
     while(1)
     {
         WIFLY_Tasks();
+    }
+}
+
+
+/*******************************************************************************
+  Function:
+    void _DRIVE_CONTROL_Tasks ( void )
+
+  Summary:
+    Maintains state machine of DRIVE_CONTROL.
+*/
+
+static void _DRIVE_CONTROL_Tasks(void)
+{
+    while(1)
+    {
+        DRIVE_CONTROL_Tasks();
+    }
+}
+
+
+/*******************************************************************************
+  Function:
+    void _MOTOR_CONTROL_Tasks ( void )
+
+  Summary:
+    Maintains state machine of MOTOR_CONTROL.
+*/
+
+static void _MOTOR_CONTROL_Tasks(void)
+{
+    while(1)
+    {
+        MOTOR_CONTROL_Tasks();
     }
 }
 

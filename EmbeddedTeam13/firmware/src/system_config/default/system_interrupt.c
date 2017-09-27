@@ -62,6 +62,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system/common/sys_common.h"
 #include "master_control.h"
 #include "wifly.h"
+#include "drive_control.h"
+#include "motor_control.h"
 #include "system_definitions.h"
 
 // *****************************************************************************
