@@ -8,7 +8,7 @@
 #ifndef IR_SENSOR_H
 #define	IR_SENSOR_H
 
-void irSensorInit();
+void irSensorInit(void);
 
 #endif	/* IR_SENSOR_H */
 
