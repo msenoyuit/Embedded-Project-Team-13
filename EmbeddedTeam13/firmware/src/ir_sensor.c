@@ -29,10 +29,12 @@ static void irTimerCallback(TimerHandle_t timer) {
  */
 
 void IR_ADC_Average (void) {
+    ADC_avg = 0;
     int i;
     for (i = 0; i < 16; i++) {
         ADC_avg += PLIB_ADC_ResultGetByIndex(ADC_ID_1, i);
     }
+    ADC_avg /= 16;
     ADC_avg = 625881/(ADC_avg*200 - 3413);
     BaseType_t higherPriorityTaskWoken = pdFALSE;
     StandardQueueMessage msg = makeDistanceReading(ADC_avg);

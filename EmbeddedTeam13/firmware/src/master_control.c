@@ -172,10 +172,9 @@ void MASTER_CONTROL_Tasks ( void ){
         msg.text[3] = 0;
         wiflySendMsg(&msg, 0);
         break;
-    case MASTER_CONTROL_MSG_IR_READING:
-        ;
-        sprintf(msg.text, "%d\n\r", receivedMessage.distanceReading);
-        wiflySendMsg(&msg, 0);
+    case MESSAGE_DISTANCE_READING:
+        sprintf(msg.text, "%d\n\r", receivedMessage.distanceReading.distance);
+        wiflySendMsg(&msg, 1);
         break;
     }
 }

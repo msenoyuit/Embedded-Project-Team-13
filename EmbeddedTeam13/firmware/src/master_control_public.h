@@ -5,18 +5,18 @@
 #include "queue.h"
 #include "queue_utils.h"
 
-typedef enum {
+/*typedef enum {
     MASTER_CONTROL_MSG_WIFLY,
     MASTER_CONTROL_MSG_IR_READING,
 } MasterControlMessageType;
-
+*/
 
 /* Message type for this tasks queue */
-typedef struct {
+/*typedef struct {
     MasterControlMessageType type;
     int data1;
     int data2;
-} MasterControlQueueMessage;
+} MasterControlQueueMessage;*/
 
 
 BaseType_t masterControlSendMsgToQFromISR(StandardQueueMessage * message,
