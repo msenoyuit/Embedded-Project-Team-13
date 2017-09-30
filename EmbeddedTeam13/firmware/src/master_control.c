@@ -112,6 +112,13 @@ BaseType_t masterControlSendMsgToQFromISR(StandardQueueMessage * message,
     
 }
 
+BaseType_t masterControlSendMsgToQ(StandardQueueMessage * message,
+                                        TickType_t time) {
+    return xQueueSendToBack(masterControlData.queue, message,
+                                   time);
+    
+}
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Initialization and State Machine Functions
@@ -166,11 +173,16 @@ void MASTER_CONTROL_Tasks ( void ){
     case MESSAGE_WIFLY_MESSAGE:
         /* TODO: Handle wifly messages in a less terrible way */
         SYS_PORTS_PinToggle(0, PORT_CHANNEL_C, 1); 
-        msg.text[0] = receivedMessage.wiflyMessage.text[0];
-        msg.text[1] = '\n';
-        msg.text[2] = '\r';
-        msg.text[3] = 0;
-        wiflySendMsg(&msg, 0);
+        int i = 0;
+        while(receivedMessage.wiflyMessage.text[i] != 0)
+        {
+            msg.text[i] = receivedMessage.wiflyMessage.text[i];
+            i++;
+        }
+        msg.text[i++] = '\n';
+        msg.text[i++] = '\r';
+        msg.text[i++] = 0;
+        wiflySendMsg(&msg, portMAX_DELAY);
         break;
     case MESSAGE_DISTANCE_READING:
         sprintf(msg.text, "%d\n\r", receivedMessage.distanceReading.distance);
