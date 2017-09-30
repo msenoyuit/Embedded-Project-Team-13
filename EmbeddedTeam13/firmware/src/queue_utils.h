@@ -7,7 +7,8 @@
 
 #ifndef QUEUE_UTILS_H
 #define	QUEUE_UTILS_H
-
+#include "FreeRTOS.h"
+#include "queue.h"
 #include "wifly_public.h"
 
 typedef enum {
@@ -30,6 +31,10 @@ typedef struct StandardQueueMessage {
     };
 } StandardQueueMessage;
 
+// Wrappers for FreeRTOS queue functions
+BaseType_t sendStandardQueueMessageToBack(QueueHandle_t xQueue, StandardQueueMessage * msg, TickType_t xTicksToWait);
+BaseType_t sendStandardQueueMessageToBackFromISR(QueueHandle_t xQueue, StandardQueueMessage * msg, BaseType_t *pxHigherPriorityTaskWoken);
+BaseType_t standardQueueMessageReceive(QueueHandle_t xQueue, StandardQueueMessage * msg, TickType_t xTicksToWait);
 
 StandardQueueMessage makeColorReading(int reg, int green, int blue, int clear);
 int getRed(const StandardQueueMessage * msg);

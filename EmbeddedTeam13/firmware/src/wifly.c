@@ -136,7 +136,7 @@ void sendMsg(StandardQueueMessage msg) {
 
 BaseType_t wiflySendMsg(StandardQueueMessage * message,
                         TickType_t ticksToWait) {
-    return xQueueSendToBack(wiflyData.toSendQ, message, ticksToWait);
+    return sendStandardQueueMessageToBack(wiflyData.toSendQ, message, ticksToWait);
 }
     
 
@@ -193,7 +193,7 @@ void WIFLY_Initialize ( void ) {
 void WIFLY_Tasks ( void ) {
     StandardQueueMessage toSend;
     dbgOutputLoc(DBG_WIFLY_BEFORE_QUEUE_RECEIVE);
-    xQueueReceive(wiflyData.toSendQ, &toSend, portMAX_DELAY);
+    standardQueueMessageReceive(wiflyData.toSendQ, &toSend, portMAX_DELAY);
     dbgOutputLoc(DBG_WIFLY_AFTER_QUEUE_RECEIVE);
     sendMsg(toSend);
     dbgOutputLoc(DBG_WIFLY_AFTER_MSG_SEND);

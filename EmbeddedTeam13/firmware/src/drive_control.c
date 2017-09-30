@@ -125,13 +125,13 @@ void DRIVE_CONTROL_Initialize ( void ) {
 
 BaseType_t driveControlSendMsgToQFromISR(StandardQueueMessage * message,
                                         BaseType_t * higherPriorityTaskWoken) {
-    return xQueueSendToBackFromISR(driveControlData.queue, message,
+    return sendStandardQueueMessageToBackFromISR(driveControlData.queue, message,
                                    higherPriorityTaskWoken);
 }
 
 BaseType_t driveControlSendMsgToQ(StandardQueueMessage * message,
                                   TickType_t time) {
-    return xQueueSendToBack(driveControlData.queue, message, time);
+    return sendStandardQueueMessageToBack(driveControlData.queue, message, time);
 }
 
 /******************************************************************************
