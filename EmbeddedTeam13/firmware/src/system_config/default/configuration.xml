@@ -353,7 +353,7 @@
       <Template dnOrder="27">
         <Name dnOrder="0">system_config.h</Name>
         <Path dnOrder="1">Header&amp;#160;Files/app/system_config/default</Path>
-        <Checksum dnOrder="2">F1AECBF322C6E73E5F049EF749DE699F</Checksum>
+        <Checksum dnOrder="2">D91120211134344523EEEB0F3832B36E</Checksum>
       </Template>
       <Template dnOrder="28">
         <Name dnOrder="0">rtos_hooks.c</Name>
