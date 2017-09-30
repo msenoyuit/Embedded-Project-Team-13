@@ -179,6 +179,19 @@ void MASTER_CONTROL_Tasks ( void ){
                                     getDistance(&receivedMessage));
         wiflySendMsg(&toSend, portMAX_DELAY);
         break;
+    case MESSAGE_LINE_READING:
+        toSend = printfWiflyMessage("Line Reading: 0x%x\n\r",
+                                    getLine(&receivedMessage));
+        wiflySendMsg(&toSend, portMAX_DELAY);
+        break;
+    case MESSAGE_COLOR_READING:
+        toSend = printfWiflyMessage("Color Reading: R %d, G %d, B %d, C %d\n\r",
+                                    getRed(&receivedMessage),
+                                    getGreen(&receivedMessage),
+                                    getBlue(&receivedMessage),
+                                    getClear(&receivedMessage));
+        wiflySendMsg(&toSend, portMAX_DELAY);
+        break;
     }
 }
 
