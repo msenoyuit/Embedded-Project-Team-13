@@ -163,30 +163,34 @@ void MASTER_CONTROL_Initialize ( void ) {
 
 void MASTER_CONTROL_Tasks ( void ){
     StandardQueueMessage receivedMessage;
+    StandardQueueMessage toSend;
 
     dbgOutputLoc(DBG_TASK_BEFORE_QUEUE_RECEIVE);
     xQueueReceive(masterControlData.queue, &receivedMessage, portMAX_DELAY);
     dbgOutputLoc(DBG_TASK_AFTER_QUEUE_RECEIVE);
     // Handle the message
-    WiflyMsg msg;
     switch (receivedMessage.type) {
     case MESSAGE_WIFLY_MESSAGE:
-        /* TODO: Handle wifly messages in a less terrible way */
-        SYS_PORTS_PinToggle(0, PORT_CHANNEL_C, 1); 
-        int i = 0;
-        while(receivedMessage.wiflyMessage.text[i] != 0)
-        {
-            msg.text[i] = receivedMessage.wiflyMessage.text[i];
-            i++;
-        }
-        msg.text[i++] = '\n';
-        msg.text[i++] = '\r';
-        msg.text[i++] = 0;
-        wiflySendMsg(&msg, portMAX_DELAY);
+        toSend = printfWiflyMessage("%s\n\r", getWiflyText(&receivedMessage));
+        wiflySendMsg(&toSend, portMAX_DELAY);
         break;
     case MESSAGE_DISTANCE_READING:
-        sprintf(msg.text, "%d\n\r", receivedMessage.distanceReading.distance);
-        wiflySendMsg(&msg, 1);
+        toSend = printfWiflyMessage("Distance (cm): %d\n\r",
+                                    getDistance(&receivedMessage));
+        wiflySendMsg(&toSend, portMAX_DELAY);
+        break;
+    case MESSAGE_LINE_READING:
+        toSend = printfWiflyMessage("Line Reading: 0x%x\n\r",
+                                    getLine(&receivedMessage));
+        wiflySendMsg(&toSend, portMAX_DELAY);
+        break;
+    case MESSAGE_COLOR_READING:
+        toSend = printfWiflyMessage("Color Reading: R %d, G %d, B %d, C %d\n\r",
+                                    getRed(&receivedMessage),
+                                    getGreen(&receivedMessage),
+                                    getBlue(&receivedMessage),
+                                    getClear(&receivedMessage));
+        wiflySendMsg(&toSend, portMAX_DELAY);
         break;
     }
 }
