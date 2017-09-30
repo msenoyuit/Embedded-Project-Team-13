@@ -43,7 +43,6 @@
         <itemPath>../src/color_sensor.h</itemPath>
         <itemPath>../src/line_sensor.h</itemPath>
         <itemPath>../src/queue_utils.h</itemPath>
-        <itemPath>../src/color_sensor.h</itemPath>
         <itemPath>../src/motor_control_public.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">

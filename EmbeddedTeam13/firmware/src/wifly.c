@@ -114,28 +114,29 @@ void wiflyUsartTransmitEventHandler(const SYS_MODULE_INDEX index) {
 // *****************************************************************************
 
 /* 
- * Initiate sending a message over UART
+ * Send message over UART
  * 
  * Precondition:
  * There should not be a message currently being sent
  */
-void startMsgSend(WiflyMsg msg) {
+void sendMsg(StandardQueueMessage msg) {
     unsigned int sentChars = 0;
     xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
     DRV_USART_WriteByte(wiflyData.usartHandle, START_CHAR);
-    while (msg.text[sentChars] != 0) {
+    const char * text = getWiflyText(&msg);
+    while (text[sentChars] != 0) {
         // Wait till the tx buffer is free and transmit
         xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
         DRV_USART_WriteByte(wiflyData.usartHandle,
-                            msg.text[sentChars++]);
+                            text[sentChars++]);
     }
     xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
     DRV_USART_WriteByte(wiflyData.usartHandle, START_CHAR);
     dbgOutputLoc(DBG_WIFLY_AFTER_USART_WRITE);
 }
 
-BaseType_t wiflySendMsg(WiflyMsg * message, TickType_t ticksToWait) {
-    
+BaseType_t wiflySendMsg(StandardQueueMessage * message,
+                        TickType_t ticksToWait) {
     return xQueueSendToBack(wiflyData.toSendQ, message, ticksToWait);
 }
     
@@ -169,7 +170,8 @@ void WIFLY_Initialize ( void ) {
                                       wiflyUsartTransmitEventHandler);
 
     // Queue of things 
-    wiflyData.toSendQ = xQueueCreate(WIFLY_QUEUE_LENGTH, sizeof(WiflyMsg));
+    wiflyData.toSendQ = xQueueCreate(WIFLY_QUEUE_LENGTH,
+                                     sizeof(StandardQueueMessage));
 
     // Initialize the semaphore for the tx buffer
     wiflyData.txBufferSemaphoreHandle = xSemaphoreCreateBinary();
@@ -190,11 +192,11 @@ void WIFLY_Initialize ( void ) {
  */
 
 void WIFLY_Tasks ( void ) {
-    WiflyMsg toSend;
+    StandardQueueMessage toSend;
     dbgOutputLoc(DBG_WIFLY_BEFORE_QUEUE_RECEIVE);
     xQueueReceive(wiflyData.toSendQ, &toSend, portMAX_DELAY);
     dbgOutputLoc(DBG_WIFLY_AFTER_QUEUE_RECEIVE);
-    startMsgSend(toSend);
+    sendMsg(toSend);
     dbgOutputLoc(DBG_WIFLY_AFTER_MSG_SEND);
 }
 

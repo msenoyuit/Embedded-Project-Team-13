@@ -20,7 +20,7 @@ typedef enum {
 typedef struct { int red; int green; int blue; int clear; } ColorReading; 
 typedef struct { int distance; } DistanceReading;
 typedef struct { int line; } LineReading;
-typedef struct {
+typedef struct StandardQueueMessage {
     MessageType type;
     union {
         ColorReading colorReading; /* Color reading */
@@ -32,16 +32,20 @@ typedef struct {
 
 
 StandardQueueMessage makeColorReading(int reg, int green, int blue);
-int getRed(StandardQueueMessage msg);
-int getGreen(StandardQueueMessage msg);
-int getBlue(StandardQueueMessage msg);
-int getClear(StandardQueueMessage msg);
+int getRed(const StandardQueueMessage * msg);
+int getGreen(const StandardQueueMessage * msg);
+int getBlue(const StandardQueueMessage * msg);
+int getClear(const StandardQueueMessage * msg);
 
 StandardQueueMessage makeDistanceReading(int distance);
-int getDistance(StandardQueueMessage msg);
+int getDistance(const StandardQueueMessage * msg);
 
 StandardQueueMessage makeLineReading(int line);
-int getLine(StandardQueueMessage msg);
+int getLine(const StandardQueueMessage * msg);
+
+StandardQueueMessage makeWiflyMessage(const char * text);
+StandardQueueMessage printfWiflyMessage(const char * fmt, ...);
+const char * getWiflyText(const StandardQueueMessage * msg);
 
 #endif	/* QUEUE_UTILS_H */
 

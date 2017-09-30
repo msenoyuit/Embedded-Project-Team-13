@@ -12,11 +12,14 @@ extern "C" {
 
 #define WIFLY_MAX_MSG_LEN 100
 
+struct StandardQueueMessage;
+
 typedef struct {
     char text[WIFLY_MAX_MSG_LEN];
 } WiflyMsg;
 
-BaseType_t wiflySendMsg(WiflyMsg * message, TickType_t ticksToWait);
+BaseType_t wiflySendMsg(struct StandardQueueMessage * message,
+                        TickType_t ticksToWait);
 
 #endif // WIFLY_PUBLIC_H
 
