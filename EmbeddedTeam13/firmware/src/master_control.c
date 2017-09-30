@@ -179,6 +179,10 @@ void MASTER_CONTROL_Tasks ( void ){
                                     getDistance(&receivedMessage));
         wiflySendMsg(&toSend, portMAX_DELAY);
         break;
+    case MESSAGE_COLOR_READING:
+        break;
+    case MESSAGE_LINE_READING:
+        break;
     }
 }
 

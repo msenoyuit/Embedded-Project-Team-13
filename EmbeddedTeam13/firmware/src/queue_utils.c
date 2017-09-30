@@ -7,6 +7,9 @@
 
 static void checkMessageType(const StandardQueueMessage * msg,
                              MessageType type) {
+    if (!msg) {
+        dbgFatalError(DBG_ERROR_NULL_POINTER);
+    }
     if (msg->type != type) {
         dbgFatalError(DBG_ERROR_QUEUE_TYPE_WRONG);
     }
