@@ -3,7 +3,7 @@
 #include "FreeRTOS.h"
 #include "timers.h"
 
-#include "master_control_public.h"
+#include "drive_control_public.h"
 #include "debug.h"
 
 #define LINE_READ_FREQUENCY_MS 50
@@ -14,8 +14,8 @@ static void lineTimerCallback(TimerHandle_t timer) {
 
     // Pretend to read sensor
     StandardQueueMessage msg = makeLineReading(0);
-    // TODO: Fix this call to actually work
-    if(masterControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken) != pdTRUE) {
+    if(driveControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
+       != pdTRUE) {
         dbgFatalError(DBG_ERROR_LINE_RUN);
     }
 
@@ -24,8 +24,9 @@ static void lineTimerCallback(TimerHandle_t timer) {
 
 void lineSensorInit(void) {
     /* Configure Timer */
-    line_timer = xTimerCreate("Line Timer", pdMS_TO_TICKS(LINE_READ_FREQUENCY_MS),
-                            pdTRUE, ( void * ) 0, lineTimerCallback);
+    line_timer = xTimerCreate("Line Timer",
+                              pdMS_TO_TICKS(LINE_READ_FREQUENCY_MS),
+                              pdTRUE, ( void * ) 0, lineTimerCallback);
     if(line_timer == NULL) {
         dbgFatalError(DBG_ERROR_LINE_INIT);
     }

@@ -106,16 +106,15 @@ MASTER_CONTROL_DATA masterControlData;
 // *****************************************************************************
 
 BaseType_t masterControlSendMsgToQFromISR(StandardQueueMessage * message,
-                                        BaseType_t * higherPriorityTaskWoken) {
+                                          BaseType_t * higherPriorityTaskWoken) {
     return xQueueSendToBackFromISR(masterControlData.queue, message,
                                    higherPriorityTaskWoken);
     
 }
 
 BaseType_t masterControlSendMsgToQ(StandardQueueMessage * message,
-                                        TickType_t time) {
-    return xQueueSendToBack(masterControlData.queue, message,
-                                   time);
+                                   TickType_t time) {
+    return xQueueSendToBack(masterControlData.queue, message, time);
     
 }
 

@@ -113,16 +113,14 @@ DRIVE_CONTROL_DATA driveControlData;
     See prototype in drive_control.h.
  */
 
-void DRIVE_CONTROL_Initialize ( void )
-{
-    /* Place the App state machine in its initial state. */
+void DRIVE_CONTROL_Initialize ( void ) {
     driveControlData.state = DRIVE_CONTROL_STATE_INIT;
     driveControlData.queue = xQueueCreate(DRIVE_CONTROL_QUEUE_LEN,
                                          sizeof(StandardQueueMessage));
+    if(driveControlData.queue == NULL) {
+        dbgFatalError(DBG_ERROR_DRIVE_CONTROL_INIT);
+    }
     
-    /* TODO: Initialize your application's state machine and other
-     * parameters.
-     */
 }
 
 BaseType_t driveControlSendMsgToQFromISR(StandardQueueMessage * message,
@@ -131,7 +129,8 @@ BaseType_t driveControlSendMsgToQFromISR(StandardQueueMessage * message,
                                    higherPriorityTaskWoken);
 }
 
-BaseType_t driveControlSendMsgToQ(StandardQueueMessage * message, TickType_t time) {
+BaseType_t driveControlSendMsgToQ(StandardQueueMessage * message,
+                                  TickType_t time) {
     return xQueueSendToBack(driveControlData.queue, message, time);
 }
 
@@ -143,41 +142,16 @@ BaseType_t driveControlSendMsgToQ(StandardQueueMessage * message, TickType_t tim
     See prototype in drive_control.h.
  */
 
-void DRIVE_CONTROL_Tasks ( void )
-{
+void DRIVE_CONTROL_Tasks ( void ) {
+    StandardQueueMessage receivedMessage;
 
-    /* Check the application's current state. */
-    switch ( driveControlData.state )
-    {
-        /* Application's initial state. */
-        case DRIVE_CONTROL_STATE_INIT:
-        {
-            bool appInitialized = true;
-       
-        
-            if (appInitialized)
-            {
-            
-                driveControlData.state = DRIVE_CONTROL_STATE_SERVICE_TASKS;
-            }
-            break;
-        }
+    xQueueReceive(driveControlData.queue, &receivedMessage, portMAX_DELAY);
 
-        case DRIVE_CONTROL_STATE_SERVICE_TASKS:
-        {
-        
-            break;
-        }
-
-        /* TODO: implement your application state machine.*/
-        
-
-        /* The default state should never be executed. */
-        default:
-        {
-            /* TODO: Handle error in application's state machine. */
-            break;
-        }
+    switch (receivedMessage.type) {
+    case MESSAGE_LINE_READING:
+        // Forward to master_control for now
+        masterControlSendMsgToQ(&receivedMessage, portMAX_DELAY);
+        break;
     }
 }
 

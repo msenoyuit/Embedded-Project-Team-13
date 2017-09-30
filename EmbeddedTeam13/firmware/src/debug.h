@@ -86,7 +86,7 @@ typedef enum dbgError {
     DBG_ERROR_COLOR_INIT = 11,
     DBG_ERROR_COLOR_RUN = 12,
     DBG_ERROR_NULL_POINTER = 13,
-    
+    DBG_ERROR_DRIVE_CONTROL_INIT = 14,
     DBG_ERROR_TEST = 15,
 } dbgErrorType;
 // *****************************************************************************
