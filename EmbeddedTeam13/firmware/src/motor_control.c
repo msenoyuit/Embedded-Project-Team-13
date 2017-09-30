@@ -127,13 +127,13 @@ void MOTOR_CONTROL_Initialize ( void )
 
 BaseType_t motorControlSendMsgToQFromISR(StandardQueueMessage * message,
                                         BaseType_t * higherPriorityTaskWoken) {
-    return xQueueSendToBackFromISR(motorControlData.queue, message,
+    return sendStandardQueueMessageToBackFromISR(motorControlData.queue, message,
                                    higherPriorityTaskWoken);
 }
     
 BaseType_t motorControlSendMsgToQR(StandardQueueMessage * message,
                                         TickType_t time) {
-    return xQueueSendToBack(motorControlData.queue, message,
+    return sendStandardQueueMessageToBack(motorControlData.queue, message,
                                    time);
 }
 
@@ -169,7 +169,7 @@ void MOTOR_CONTROL_Tasks ( void )
         {
             StandardQueueMessage receivedMessage;
             dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_BEFORE_QUEUE_RECEIVE);
-            xQueueReceive(motorControlData.queue, &receivedMessage, portMAX_DELAY);
+            standardQueueMessageReceive(motorControlData.queue, &receivedMessage, portMAX_DELAY);
             dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_AFTER_QUEUE_RECEIVE);
             StandardQueueMessage msg;
             msg.type = MESSAGE_WIFLY_MESSAGE;

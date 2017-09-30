@@ -107,14 +107,14 @@ MASTER_CONTROL_DATA masterControlData;
 
 BaseType_t masterControlSendMsgToQFromISR(StandardQueueMessage * message,
                                           BaseType_t * higherPriorityTaskWoken) {
-    return xQueueSendToBackFromISR(masterControlData.queue, message,
+    return sendStandardQueueMessageToBackFromISR(masterControlData.queue, message,
                                    higherPriorityTaskWoken);
     
 }
 
 BaseType_t masterControlSendMsgToQ(StandardQueueMessage * message,
                                    TickType_t time) {
-    return xQueueSendToBack(masterControlData.queue, message, time);
+    return sendStandardQueueMessageToBack(masterControlData.queue, message, time);
     
 }
 
@@ -165,7 +165,7 @@ void MASTER_CONTROL_Tasks ( void ){
     StandardQueueMessage toSend;
 
     dbgOutputLoc(DBG_TASK_BEFORE_QUEUE_RECEIVE);
-    xQueueReceive(masterControlData.queue, &receivedMessage, portMAX_DELAY);
+    standardQueueMessageReceive(masterControlData.queue, &receivedMessage, portMAX_DELAY);
     dbgOutputLoc(DBG_TASK_AFTER_QUEUE_RECEIVE);
     // Handle the message
     switch (receivedMessage.type) {
