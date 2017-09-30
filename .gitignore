@@ -84,3 +84,6 @@ funclist
 !**/nbproject/project.xml
 /MilestoneOne/firmware/EmbeddedTeam13.X/nbproject/private/
 /EmbeddedTeam13/firmware/EmbeddedTeam13.X/dist/default/
+
+# Emacs local directory files
+.dir-locals.el
