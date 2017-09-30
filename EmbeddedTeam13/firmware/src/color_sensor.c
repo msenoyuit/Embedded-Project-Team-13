@@ -13,9 +13,9 @@ static void colorTimerCallback(TimerHandle_t timer) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
 
     // Pretend to read sensor
-    StandardQueueMessage msg = makeColorReading(0, 0, 0);
-    // TODO: Fix this call to actually work
-    if(masterControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken) != pdTRUE) {
+    StandardQueueMessage msg = makeColorReading(0, 0, 0, 0);
+    if(masterControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
+       != pdTRUE) {
         dbgFatalError(DBG_ERROR_COLOR_RUN);
     }
 

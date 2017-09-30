@@ -31,7 +31,7 @@ typedef struct StandardQueueMessage {
 } StandardQueueMessage;
 
 
-StandardQueueMessage makeColorReading(int reg, int green, int blue);
+StandardQueueMessage makeColorReading(int reg, int green, int blue, int clear);
 int getRed(const StandardQueueMessage * msg);
 int getGreen(const StandardQueueMessage * msg);
 int getBlue(const StandardQueueMessage * msg);

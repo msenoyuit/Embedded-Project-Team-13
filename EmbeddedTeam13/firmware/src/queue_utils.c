@@ -12,12 +12,13 @@ static void checkMessageType(const StandardQueueMessage * msg,
     }
 }
 
-StandardQueueMessage makeColorReading(int red, int green, int blue) {
+StandardQueueMessage makeColorReading(int red, int green, int blue, int clear) {
     StandardQueueMessage msg = {
         .type = MESSAGE_COLOR_READING,
         .colorReading.red = red,
         .colorReading.green = green,
         .colorReading.blue = blue,
+        .colorReading.clear = clear,
     };
     return msg;
 }
