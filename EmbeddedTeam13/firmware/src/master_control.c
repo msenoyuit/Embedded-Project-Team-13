@@ -112,6 +112,13 @@ BaseType_t masterControlSendMsgToQFromISR(StandardQueueMessage * message,
     
 }
 
+BaseType_t masterControlSendMsgToQ(StandardQueueMessage * message,
+                                        TickType_t time) {
+    return xQueueSendToBack(masterControlData.queue, message,
+                                   time);
+    
+}
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Initialization and State Machine Functions

@@ -167,7 +167,27 @@ void MOTOR_CONTROL_Tasks ( void )
 
         case MOTOR_CONTROL_STATE_SERVICE_TASKS:
         {
-        
+            StandardQueueMessage receivedMessage;
+            dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_BEFORE_QUEUE_RECEIVE);
+            xQueueReceive(motorControlData.queue, &receivedMessage, portMAX_DELAY);
+            dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_AFTER_QUEUE_RECEIVE);
+            StandardQueueMessage msg;
+            msg.type = MESSAGE_WIFLY_MESSAGE;
+            switch(receivedMessage.type)
+            {
+                case MESSAGE_LINE_READING:
+                    msg.wiflyMessage.text[0] = 'M';
+                    msg.wiflyMessage.text[1] = 'o';
+                    msg.wiflyMessage.text[2] = 't';
+                    msg.wiflyMessage.text[3] = 'e';
+                    msg.wiflyMessage.text[4] = 'r';
+                    msg.wiflyMessage.text[5] = receivedMessage.distanceReading.distance;
+                    msg.wiflyMessage.text[6] = 0;
+                    dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_BEFORE_QUEUE_SEND);
+                    masterControlSendMsgToQ(&msg, portMAX_DELAY);
+                    dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_AFTER_QUEUE_SEND);
+                    break;
+            }
             break;
         }
 

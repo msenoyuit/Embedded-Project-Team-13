@@ -5,7 +5,7 @@
     <SystemStartScript dnOrder="1"/>
   </DisplayManager>
   <General>
-    <HarmonyPath dnOrder="0" path="../../../../../../Applications/microchip/harmony/v2_04"/>
+    <HarmonyPath dnOrder="0" path="../../microchip/harmony/v2_04"/>
     <Processor dnOrder="1" name="PIC32MX795F512L"/>
     <Board dnOrder="2" name=" "/>
     <ForceOptimization dnOrder="3" flag="true"/>
@@ -288,7 +288,7 @@
         <Name dnOrder="0">system_interrupt.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/default</Path>
         <Checksum dnOrder="2">D6A125610F330C1E33008CC57EFE913E</Checksum>
-        <ProjectFileChecksum dnOrder="3">353F71AF6EAFFEADD72DA52E301ACEBC</ProjectFileChecksum>
+        <ProjectFileChecksum dnOrder="3">C240263E7D0FDD599BE6E4E2E862DF9F</ProjectFileChecksum>
       </Template>
       <Template dnOrder="14">
         <Name dnOrder="0">drv_usart_static.c</Name>
@@ -373,24 +373,24 @@
     </Templates>
     <CompilerItems dnOrder="2">
       <C32-AS dnOrder="0">
-        <Include dnOrder="0" value="../../../../../../../../Applications/microchip/harmony/v2_04/third_party/rtos/FreeRTOS/Source/include"/>
-        <Include dnOrder="1" value="../../../../../../../../Applications/microchip/harmony/v2_04/third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX"/>
+        <Include dnOrder="0" value="../../../../microchip/harmony/v2_04/third_party/rtos/FreeRTOS/Source/include"/>
+        <Include dnOrder="1" value="../../../../microchip/harmony/v2_04/third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX"/>
         <Include dnOrder="2" value="../src/system_config/default"/>
       </C32-AS>
       <C32 dnOrder="1">
-        <Include dnOrder="0" value="/Users/nyle/school/EmbeddedSystemDesign/Embedded-Team-13/EmbeddedTeam13/firmware/src"/>
-        <Include dnOrder="1" value="/Users/nyle/school/EmbeddedSystemDesign/Embedded-Team-13/EmbeddedTeam13/firmware/src/system_config/default"/>
-        <Include dnOrder="2" value="/Users/nyle/school/EmbeddedSystemDesign/Embedded-Team-13/EmbeddedTeam13/firmware/src/default"/>
-        <Include dnOrder="3" value="/Applications/microchip/harmony/v2_04/framework"/>
-        <Include dnOrder="4" value="/Users/nyle/school/EmbeddedSystemDesign/Embedded-Team-13/EmbeddedTeam13/firmware/src/system_config/default/framework"/>
-        <Include dnOrder="5" value="../../../../../../../../Applications/microchip/harmony/v2_04/third_party/rtos/FreeRTOS/Source/include"/>
-        <Include dnOrder="6" value="../../../../../../../../Applications/microchip/harmony/v2_04/third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX"/>
+        <Include dnOrder="0" value="C:\Embedded-Team-13\EmbeddedTeam13\firmware\src"/>
+        <Include dnOrder="1" value="C:\Embedded-Team-13\EmbeddedTeam13\firmware\src\system_config\default"/>
+        <Include dnOrder="2" value="C:\Embedded-Team-13\EmbeddedTeam13\firmware\src\default"/>
+        <Include dnOrder="3" value="C:\microchip\harmony\v2_04\framework"/>
+        <Include dnOrder="4" value="C:\Embedded-Team-13\EmbeddedTeam13\firmware\src\system_config\default\framework"/>
+        <Include dnOrder="5" value="../../../../microchip/harmony/v2_04/third_party/rtos/FreeRTOS/Source/include"/>
+        <Include dnOrder="6" value="../../../../microchip/harmony/v2_04/third_party/rtos/FreeRTOS/Source/portable/MPLAB/PIC32MX"/>
         <Include dnOrder="7" value="../src/system_config/default"/>
         <Define dnOrder="8" value="__XC"/>
       </C32>
     </CompilerItems>
     <Libraries dnOrder="3">
-      <Library dnOrder="0" value="../../../../../../../../Applications/microchip/harmony/v2_04/bin/framework/peripheral/PIC32MX795F512L_peripherals.a"/>
+      <Library dnOrder="0" value="../../../../microchip/harmony/v2_04/bin/framework/peripheral/PIC32MX795F512L_peripherals.a"/>
     </Libraries>
   </Manifest>
 </Configuration>
