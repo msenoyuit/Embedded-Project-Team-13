@@ -56,7 +56,6 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
     
     //char readByte = DRV_USART_ReadByte(wiflyData.usartHandle);
     char readByte = PLIB_USART_ReceiverByteReceive(USART_ID_1);
-    dbgOutputVal(readByte);
     dbgOutputLoc(DBG_WIFLY_RECEIVE_CALLBACK_MIDDLE);
 
     /* TODO: Make all of this not terrible */
@@ -131,7 +130,7 @@ void sendMsg(StandardQueueMessage msg) {
                             text[sentChars++]);
     }
     xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
-    DRV_USART_WriteByte(wiflyData.usartHandle, START_CHAR);
+    DRV_USART_WriteByte(wiflyData.usartHandle, STOP_CHAR);
     dbgOutputLoc(DBG_WIFLY_AFTER_USART_WRITE);
 }
 
