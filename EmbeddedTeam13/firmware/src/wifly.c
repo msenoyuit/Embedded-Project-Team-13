@@ -59,12 +59,9 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
     dbgOutputLoc(DBG_WIFLY_RECEIVE_CALLBACK_MIDDLE);
 
     /* TODO: Make all of this not terrible */
-     if (readByte == readByte) { 
+     if (readByte == STOP_CHAR) { 
          wiflyData.rxBuff[wiflyData.rxMsgLen] = 0; // null terminate 
-         StandardQueueMessage message = {0};
-         message.type = MESSAGE_WIFLY_MESSAGE;
-         message.wiflyMessage.text[0] = readByte;
-         message.wiflyMessage.text[1] = 0; // null terminate
+         StandardQueueMessage message = makeWiflyMessage(wiflyData.rxBuff);
          /* 
              MASTER_CONTROL_MSG_WIFLY, readByte, readByte 
          }; */
