@@ -88,6 +88,9 @@ typedef enum dbgError {
     DBG_ERROR_NULL_POINTER = 13,
     DBG_ERROR_DRIVE_CONTROL_INIT = 14,
     DBG_ERROR_TEST = 15,
+    DBG_ERROR_MOTOR_CONTROL_INIT = 16,
+    DBG_ERROR_ENCODER_ISR = 17,
+    DBG_ERROR_MOTOR_CONTROL_RUN = 18,
 } dbgErrorType;
 // *****************************************************************************
 // *****************************************************************************

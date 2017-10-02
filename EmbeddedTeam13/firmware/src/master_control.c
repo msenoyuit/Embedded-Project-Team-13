@@ -185,6 +185,13 @@ void MASTER_CONTROL_Tasks ( void ){
                                     getClear(&receivedMessage));
         wiflySendMsg(&toSend, portMAX_DELAY);
         break;
+    case MESSAGE_ENCODER_READING:
+        toSend = printfWiflyMessage("%s encoder: %d counts\n\r",
+                                    (getEncoderId(&receivedMessage) ==
+                                     L_ENCODER ? "Left" : "Right"),
+                                    getEncoderCount(&receivedMessage));
+        wiflySendMsg(&toSend, portMAX_DELAY);
+        break;
     }
 }
 
