@@ -8,9 +8,9 @@
 /*  
  * Wrapper function for xQueueSendToBack to enforce correct type
  */
-BaseType_t sendStandardQueueMessageToBack(  QueueHandle_t xQueue, 
-                                            StandardQueueMessage * msg, 
-                                            TickType_t xTicksToWait) {
+BaseType_t sendStandardQueueMessageToBack(QueueHandle_t xQueue, 
+                                          StandardQueueMessage * msg, 
+                                          TickType_t xTicksToWait) {
     if (!xQueue || !msg) {
         dbgFatalError(DBG_ERROR_NULL_POINTER);
     }
@@ -25,15 +25,17 @@ BaseType_t sendStandardQueueMessageToBack(  QueueHandle_t xQueue,
 /*  
  * Wrapper function for xQueueSendToBackFromISR to enforce correct type
  */
-BaseType_t sendStandardQueueMessageToBackFromISR(   QueueHandle_t xQueue, 
-                                                    StandardQueueMessage * msg, 
-                                                    BaseType_t *pxHigherPriorityTaskWoken) {
+BaseType_t
+sendStandardQueueMessageToBackFromISR(QueueHandle_t xQueue, 
+                                      StandardQueueMessage * msg, 
+                                      BaseType_t *pxHigherPriorityTaskWoken) {
     if (!xQueue || !msg) {
         dbgFatalError(DBG_ERROR_NULL_POINTER);
     }
     
     dbgOutputLoc(DBG_ISR_BEFORE_QUEUE_SEND);
-    BaseType_t toReturn = xQueueSendToBackFromISR(xQueue, msg, pxHigherPriorityTaskWoken);
+    BaseType_t toReturn = xQueueSendToBackFromISR(xQueue, msg,
+                                                  pxHigherPriorityTaskWoken);
     dbgOutputLoc(DBG_ISR_AFTER_QUEUE_SEND);
     
     return toReturn;
@@ -56,8 +58,7 @@ BaseType_t standardQueueMessageReceive( QueueHandle_t xQueue,
     return toReturn;
 }
 
-static void checkMessageType(const StandardQueueMessage * msg,
-                             MessageType type) {
+void checkMessageType(const StandardQueueMessage * msg, MessageType type) {
     if (!msg) {
         dbgFatalError(DBG_ERROR_NULL_POINTER);
     }

@@ -59,6 +59,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 #include "motor_control_public.h"
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "timers.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -77,25 +80,6 @@ extern "C" {
 // *****************************************************************************
 
 // *****************************************************************************
-/* Application states
-
-  Summary:
-    Application states enumeration
-
-  Description:
-    This enumeration defines the valid application states.  These states
-    determine the behavior of the application at various times.
-*/
-
-typedef enum
-{
-	/* Application's state machine's initial state. */
-	MOTOR_CONTROL_STATE_INIT=0,
-	MOTOR_CONTROL_STATE_SERVICE_TASKS,
-
-	/* TODO: Define states used by the application state machine. */
-
-} MOTOR_CONTROL_STATES;
 
 
 // *****************************************************************************
@@ -111,14 +95,10 @@ typedef enum
     Application strings and buffers are be defined outside this structure.
  */
 
-typedef struct
-{
-    /* The application's current state */
-    MOTOR_CONTROL_STATES state;
+typedef struct {
     // the applications queue
     QueueHandle_t queue;
-    /* TODO: Define any additional data used by the application. */
-
+    TimerHandle_t encoderReadTimer;
 } MOTOR_CONTROL_DATA;
 
 

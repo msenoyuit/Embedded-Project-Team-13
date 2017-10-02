@@ -10,12 +10,14 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "wifly_public.h"
+#include "motor_control_public.h"
 
 typedef enum {
     MESSAGE_COLOR_READING, 
     MESSAGE_DISTANCE_READING,
     MESSAGE_LINE_READING,
-    MESSAGE_WIFLY_MESSAGE, 
+    MESSAGE_WIFLY_MESSAGE,
+    MESSAGE_ENCODER_READING,
 } MessageType;
     
 typedef struct { int red; int green; int blue; int clear; } ColorReading; 
@@ -24,17 +26,28 @@ typedef struct { int line; } LineReading;
 typedef struct StandardQueueMessage {
     MessageType type;
     union {
-        ColorReading colorReading; /* Color reading */
-        DistanceReading distanceReading; /* Distance reading */
+        ColorReading colorReading;
+        DistanceReading distanceReading;
         LineReading lineReading;
         WiflyMsg wiflyMessage;
+        EncoderReading encoderReading;
     };
 } StandardQueueMessage;
 
 // Wrappers for FreeRTOS queue functions
-BaseType_t sendStandardQueueMessageToBack(QueueHandle_t xQueue, StandardQueueMessage * msg, TickType_t xTicksToWait);
-BaseType_t sendStandardQueueMessageToBackFromISR(QueueHandle_t xQueue, StandardQueueMessage * msg, BaseType_t *pxHigherPriorityTaskWoken);
-BaseType_t standardQueueMessageReceive(QueueHandle_t xQueue, StandardQueueMessage * msg, TickType_t xTicksToWait);
+BaseType_t sendStandardQueueMessageToBack(QueueHandle_t xQueue,
+                                          StandardQueueMessage * msg,
+                                          TickType_t xTicksToWait);
+BaseType_t
+sendStandardQueueMessageToBackFromISR(QueueHandle_t xQueue,
+                                      StandardQueueMessage * msg,
+                                      BaseType_t *pxHigherPriorityTaskWoken);
+BaseType_t standardQueueMessageReceive(QueueHandle_t xQueue,
+                                       StandardQueueMessage * msg,
+                                       TickType_t xTicksToWait);
+
+/* Check given message before pulling out information */
+void checkMessageType(const StandardQueueMessage * msg, MessageType type);
 
 StandardQueueMessage makeColorReading(int reg, int green, int blue, int clear);
 int getRed(const StandardQueueMessage * msg);

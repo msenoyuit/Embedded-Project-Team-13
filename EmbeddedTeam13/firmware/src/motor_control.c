@@ -53,13 +53,20 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 
+
 #include "motor_control.h"
+#include "motor_control_public.h"
+#include "encoders.h"
+
 
 // *****************************************************************************
 // *****************************************************************************
 // Section: Global Data Definitions
 // *****************************************************************************
 // *****************************************************************************
+
+#define ENCODER_READ_FREQUENCY_MS 100
+
 
 // *****************************************************************************
 /* Application Data
@@ -85,8 +92,30 @@ MOTOR_CONTROL_DATA motorControlData;
 // *****************************************************************************
 // *****************************************************************************
 
-/* TODO:  Add any necessary callback functions.
-*/
+static void encoderReadCallback(TimerHandle_t timer) {
+    BaseType_t higherPriorityTaskWoken = pdFALSE;
+
+    unsigned int reading = 0;
+    if (getLeftEncoderCountISR(&reading, &higherPriorityTaskWoken) != pdTRUE) {
+        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_RUN);
+    }
+    StandardQueueMessage msg = makeEncoderReading(L_ENCODER, reading);
+    if(driveControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
+       != pdTRUE) {
+        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_RUN);
+    }
+
+    if (getRightEncoderCountISR(&reading, &higherPriorityTaskWoken) != pdTRUE) {
+        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_RUN);
+    }
+    msg = makeEncoderReading(R_ENCODER, reading);
+    if(driveControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
+       != pdTRUE) {
+        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_RUN);
+    }
+    
+    portEND_SWITCHING_ISR(higherPriorityTaskWoken);
+}
 
 // *****************************************************************************
 // *****************************************************************************
@@ -95,9 +124,37 @@ MOTOR_CONTROL_DATA motorControlData;
 // *****************************************************************************
 
 
-/* TODO:  Add any necessary local functions.
-*/
+BaseType_t motorControlSendMsgToQFromISR(StandardQueueMessage * message,
+                                        BaseType_t * higherPriorityTaskWoken) {
+    return sendStandardQueueMessageToBackFromISR(motorControlData.queue,
+                                                 message,
+                                                 higherPriorityTaskWoken);
+}
+    
+BaseType_t motorControlSendMsgToQR(StandardQueueMessage * message,
+                                        TickType_t time) {
+    return sendStandardQueueMessageToBack(motorControlData.queue, message,
+                                          time);
+}
 
+struct StandardQueueMessage makeEncoderReading(EncoderId encoder, int counts) {
+    StandardQueueMessage msg = {
+        .type = MESSAGE_ENCODER_READING,
+        .encoderReading.encoder = encoder,
+        .encoderReading.counts = counts,
+    };
+    return msg;
+}
+
+EncoderId getEncoderId(const struct StandardQueueMessage * msg) {
+    checkMessageType(msg, MESSAGE_ENCODER_READING);
+    return msg->encoderReading.encoder;
+}
+
+int getEncoderCount(const struct StandardQueueMessage * msg) {
+    checkMessageType(msg, MESSAGE_ENCODER_READING);
+    return msg->encoderReading.counts;
+}
 
 // *****************************************************************************
 // *****************************************************************************
@@ -113,28 +170,22 @@ MOTOR_CONTROL_DATA motorControlData;
     See prototype in motor_control.h.
  */
 
-void MOTOR_CONTROL_Initialize ( void )
-{
-    /* Place the App state machine in its initial state. */
-    motorControlData.state = MOTOR_CONTROL_STATE_INIT;
+void MOTOR_CONTROL_Initialize ( void ) {
     motorControlData.queue = xQueueCreate(MOTOR_CONTROL_QUEUE_LEN,
                                          sizeof(StandardQueueMessage)); 
-    
-    /* TODO: Initialize your application's state machine and other
-     * parameters.
-     */
-}
+    if(motorControlData.queue == NULL) {
+        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
+    }
 
-BaseType_t motorControlSendMsgToQFromISR(StandardQueueMessage * message,
-                                        BaseType_t * higherPriorityTaskWoken) {
-    return sendStandardQueueMessageToBackFromISR(motorControlData.queue, message,
-                                   higherPriorityTaskWoken);
-}
-    
-BaseType_t motorControlSendMsgToQR(StandardQueueMessage * message,
-                                        TickType_t time) {
-    return sendStandardQueueMessageToBack(motorControlData.queue, message,
-                                   time);
+    motorControlData.encoderReadTimer =
+        xTimerCreate("Encoder read timer",
+                     pdMS_TO_TICKS(ENCODER_READ_FREQUENCY_MS), pdTRUE,
+                     ( void * ) 0, encoderReadCallback);
+    if(motorControlData.encoderReadTimer == NULL) {
+        dbgFatalError(DBG_ERROR_COLOR_INIT);
+    }
+
+    encodersInit();
 }
 
 /******************************************************************************
@@ -145,61 +196,19 @@ BaseType_t motorControlSendMsgToQR(StandardQueueMessage * message,
     See prototype in motor_control.h.
  */
 
-void MOTOR_CONTROL_Tasks ( void )
-{
-
-    /* Check the application's current state. */
-    switch ( motorControlData.state )
-    {
-        /* Application's initial state. */
-        case MOTOR_CONTROL_STATE_INIT:
-        {
-            bool appInitialized = true;
-       
+void MOTOR_CONTROL_Tasks ( void ) {
+    StandardQueueMessage receivedMessage;
+    dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_BEFORE_QUEUE_RECEIVE);
+    standardQueueMessageReceive(motorControlData.queue, &receivedMessage,
+                                portMAX_DELAY);
+    dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_AFTER_QUEUE_RECEIVE);
+    
+    StandardQueueMessage msg;
+    msg.type = MESSAGE_WIFLY_MESSAGE;
+    switch(receivedMessage.type) {
+    case MESSAGE_LINE_READING:
         
-            if (appInitialized)
-            {
-            
-                motorControlData.state = MOTOR_CONTROL_STATE_SERVICE_TASKS;
-            }
-            break;
-        }
-
-        case MOTOR_CONTROL_STATE_SERVICE_TASKS:
-        {
-            StandardQueueMessage receivedMessage;
-            dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_BEFORE_QUEUE_RECEIVE);
-            standardQueueMessageReceive(motorControlData.queue, &receivedMessage, portMAX_DELAY);
-            dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_AFTER_QUEUE_RECEIVE);
-            StandardQueueMessage msg;
-            msg.type = MESSAGE_WIFLY_MESSAGE;
-            switch(receivedMessage.type)
-            {
-                case MESSAGE_LINE_READING:
-                    msg.wiflyMessage.text[0] = 'M';
-                    msg.wiflyMessage.text[1] = 'o';
-                    msg.wiflyMessage.text[2] = 't';
-                    msg.wiflyMessage.text[3] = 'e';
-                    msg.wiflyMessage.text[4] = 'r';
-                    msg.wiflyMessage.text[5] = receivedMessage.distanceReading.distance;
-                    msg.wiflyMessage.text[6] = 0;
-                    dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_BEFORE_QUEUE_SEND);
-                    masterControlSendMsgToQ(&msg, portMAX_DELAY);
-                    dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_AFTER_QUEUE_SEND);
-                    break;
-            }
-            break;
-        }
-
-        /* TODO: implement your application state machine.*/
-        
-
-        /* The default state should never be executed. */
-        default:
-        {
-            /* TODO: Handle error in application's state machine. */
-            break;
-        }
+        break;
     }
 }
 

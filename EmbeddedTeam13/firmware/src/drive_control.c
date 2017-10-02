@@ -152,6 +152,9 @@ void DRIVE_CONTROL_Tasks ( void ) {
         // Forward to master_control for now
         masterControlSendMsgToQ(&receivedMessage, portMAX_DELAY);
         break;
+    case MESSAGE_ENCODER_READING:
+        masterControlSendMsgToQ(&receivedMessage, portMAX_DELAY);
+        break;
     }
 }
 
