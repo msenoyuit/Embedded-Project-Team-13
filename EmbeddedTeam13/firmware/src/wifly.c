@@ -11,6 +11,8 @@
 #include "queue_utils.h"
 #include <string.h>
 
+#define USE_START_STOP 1
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Global Data Definitions
@@ -58,6 +60,7 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
     char readByte = PLIB_USART_ReceiverByteReceive(USART_ID_1);
     dbgOutputLoc(DBG_WIFLY_RECEIVE_CALLBACK_MIDDLE);
 
+#if USE_START_STOP
     /* TODO: Make all of this not terrible */
      if (readByte == STOP_CHAR) { 
          wiflyData.rxBuff[wiflyData.rxMsgLen] = 0; // null terminate 
@@ -74,15 +77,22 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
          wiflyData.rxMsgLen = 0; 
      } else { 
          if (wiflyData.rxMsgLen >= WIFLY_MAX_MSG_LEN) { 
-             // We've overflowed; start writing over the begining 
+             // We've overflowed; start writing over the beginning 
              // TODO: Make this fail non-silently, without halting the system 
              //       either 
              wiflyData.rxMsgLen = 0; 
          } 
-         wiflyData.rxBuff[wiflyData.rxMsgLen++] = readByte; 
+         wiflyData.rxBuff[wiflyData.rxMsgLen] = readByte;
+         wiflyData.rxMsgLen++;
      } 
-
-    
+#else
+    char tempBuffer[2] = {readByte, '\0'};
+    StandardQueueMessage message = makeWiflyMessage(tempBuffer);
+    if (masterControlSendMsgToQFromISR(&message, &higherPriorityTaskWoken) 
+        != pdTRUE) { 
+        dbgFatalError(DBG_ERROR_WIFLY_RUN); 
+    } 
+#endif   
     dbgOutputLoc(DBG_WIFLY_RECEIVE_CALLBACK_END);
         
     portEND_SWITCHING_ISR(higherPriorityTaskWoken);

@@ -129,6 +129,8 @@ StandardQueueMessage makeWiflyMessage(const char * text) {
         .type = MESSAGE_WIFLY_MESSAGE,
     };
     strncpy(msg.wiflyMessage.text, text, WIFLY_MAX_MSG_LEN);
+    
+    return msg;
 }
 
 StandardQueueMessage printfWiflyMessage(const char * fmt, ...) {

@@ -164,7 +164,7 @@ void MASTER_CONTROL_Tasks ( void ){
     // Handle the message
     switch (receivedMessage.type) {
     case MESSAGE_WIFLY_MESSAGE:
-        toSend = printfWiflyMessage("%s\n\r", getWiflyText(&receivedMessage));
+        toSend = printfWiflyMessage("Wifly Echo: %s\n\r", getWiflyText(&receivedMessage));
         wiflySendMsg(&toSend, portMAX_DELAY);
         break;
     case MESSAGE_DISTANCE_READING:
