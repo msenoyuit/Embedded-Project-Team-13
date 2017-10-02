@@ -71,11 +71,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Queue related constants
 #define MASTER_CONTROL_QUEUE_LEN 10
 
-// Message to be output over UART and IO lines
-#define MESSAGE_LENGTH 7
-static unsigned char message[MESSAGE_LENGTH] = "Team 13";
-static unsigned int messageIndex = 0;
-
 // *****************************************************************************
 /* Application Data
 
@@ -164,9 +159,8 @@ void MASTER_CONTROL_Tasks ( void ){
     StandardQueueMessage receivedMessage;
     StandardQueueMessage toSend;
 
-    dbgOutputLoc(DBG_TASK_BEFORE_QUEUE_RECEIVE);
     standardQueueMessageReceive(masterControlData.queue, &receivedMessage, portMAX_DELAY);
-    dbgOutputLoc(DBG_TASK_AFTER_QUEUE_RECEIVE);
+    
     // Handle the message
     switch (receivedMessage.type) {
     case MESSAGE_WIFLY_MESSAGE:

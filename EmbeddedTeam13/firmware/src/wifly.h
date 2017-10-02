@@ -54,6 +54,7 @@ typedef struct {
 
     SemaphoreHandle_t txBufferSemaphoreHandle;
     QueueHandle_t toSendQ;
+    uint32_t sendSequenceCount;
 } WIFLY_DATA;
 
 
