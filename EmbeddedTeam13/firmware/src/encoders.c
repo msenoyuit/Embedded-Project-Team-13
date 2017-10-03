@@ -51,7 +51,7 @@ void encodersInit(void) {
     if(lEncoderTimer == NULL) {
         dbgFatalError(DBG_ERROR_ENCODER_INIT);
     }
-    if(xTimerStart(lEncoderTimer, 0) != pdPASS) {
+    if(xTimerStart(rEncoderTimer, 0) != pdPASS) {
         dbgFatalError(DBG_ERROR_ENCODER_INIT);
     }
     
