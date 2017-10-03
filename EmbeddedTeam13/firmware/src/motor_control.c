@@ -85,7 +85,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 MOTOR_CONTROL_DATA motorControlData;
 
-
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Callback Functions
@@ -156,6 +155,25 @@ int getEncoderCount(const struct StandardQueueMessage * msg) {
     return msg->encoderReading.counts;
 }
 
+struct StandardQueueMessage makeMotorSpeeds(int left, int right) {
+    StandardQueueMessage msg = {
+        .type = MESSAGE_MOTOR_SPEEDS,
+        .motorSpeeds.leftSpeed = left,
+        .motorSpeeds.rightSpeed = right,
+    };
+    return msg;
+}
+
+int getLeftSpeed(struct StandardQueueMessage * msg) {
+    checkMessageType(msg, MESSAGE_MOTOR_SPEEDS);
+    return msg->motorSpeeds.leftSpeed;
+}
+
+int getRightSpeed(struct StandardQueueMessage * msg) {
+    checkMessageType(msg, MESSAGE_MOTOR_SPEEDS);
+    return msg->motorSpeeds.rightSpeed;
+}
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Initialization and State Machine Functions
@@ -210,7 +228,7 @@ void MOTOR_CONTROL_Tasks ( void ) {
     StandardQueueMessage msg;
     msg.type = MESSAGE_WIFLY_MESSAGE;
     switch(receivedMessage.type) {
-    case MESSAGE_LINE_READING:
+    case MESSAGE_MOTOR_SPEEDS:
         
         break;
     }
