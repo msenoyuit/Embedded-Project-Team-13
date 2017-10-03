@@ -182,7 +182,11 @@ void MOTOR_CONTROL_Initialize ( void ) {
                      pdMS_TO_TICKS(ENCODER_READ_FREQUENCY_MS), pdTRUE,
                      ( void * ) 0, encoderReadCallback);
     if(motorControlData.encoderReadTimer == NULL) {
-        dbgFatalError(DBG_ERROR_COLOR_INIT);
+        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
+    }
+    // Start the timer
+    if(xTimerStart(motorControlData.encoderReadTimer, 0) != pdPASS) {
+        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
     }
 
     encodersInit();

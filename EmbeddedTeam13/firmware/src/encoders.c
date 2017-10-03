@@ -39,19 +39,25 @@ void encodersInit(void) {
                                  pdMS_TO_TICKS(L_ENCODER_FREQUENCY_MS), pdTRUE,
                                  ( void * ) L_ENCODER, encoderCallback);
     if(lEncoderTimer == NULL) {
-        dbgFatalError(DBG_ERROR_COLOR_INIT);
+        dbgFatalError(DBG_ERROR_ENCODER_INIT);
+    }
+    if(xTimerStart(lEncoderTimer, 0) != pdPASS) {
+        dbgFatalError(DBG_ERROR_ENCODER_INIT);
     }
 
     rEncoderTimer = xTimerCreate("Right encoder timer",
                                  pdMS_TO_TICKS(R_ENCODER_FREQUENCY_MS), pdTRUE,
                                  ( void * ) R_ENCODER, encoderCallback);
     if(lEncoderTimer == NULL) {
-        dbgFatalError(DBG_ERROR_COLOR_INIT);
+        dbgFatalError(DBG_ERROR_ENCODER_INIT);
+    }
+    if(xTimerStart(lEncoderTimer, 0) != pdPASS) {
+        dbgFatalError(DBG_ERROR_ENCODER_INIT);
     }
     
     encoderSemaphore = xSemaphoreCreateBinary();
     if (encoderSemaphore == NULL) {
-        dbgFatalError(DBG_ERROR_COLOR_INIT);
+        dbgFatalError(DBG_ERROR_ENCODER_INIT);
     }
     xSemaphoreGive(encoderSemaphore);
 }
