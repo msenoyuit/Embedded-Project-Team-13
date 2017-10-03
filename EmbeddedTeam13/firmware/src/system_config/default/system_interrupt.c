@@ -111,6 +111,12 @@ void IntHandlerDrvAdc(void)
 
 
  
+
+void IntHandlerDrvTmrInstance0(void)
+{
+    DRV_TMR_Tasks(sysObj.drvTmr0);
+}
+ 
 /*******************************************************************************
  End of File
 */
