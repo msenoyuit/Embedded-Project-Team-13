@@ -97,7 +97,7 @@ class State(Enum):
 currentState = State.INIT
 
 while True:
-    time.sleep(.0001) 
+    # time.sleep(.0001)
     # Read in the next character
     char = readByte()
 
@@ -117,10 +117,11 @@ while True:
             # Send a reply message for each one received
             stringToSend = '0,' + '{0:03}'.format(sequenceCount) + ',10,' + 'TestString,' + '{0:03}'.format(calculateChecksum('TestString'))
             #print(stringToSend)
-            ser.write('+'.encode('ascii'))
-            ser.write(stringToSend.encode('ascii'))
-            ser.write('-'.encode('ascii'))
-            sequenceCount += 1
+            if 'Wilfy' not in message:
+                ser.write('+'.encode('ascii'))
+                ser.write(stringToSend.encode('ascii'))
+                ser.write('-'.encode('ascii'))
+                sequenceCount += 1
         else:
             message += chr(char)
 
