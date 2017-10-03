@@ -24,8 +24,10 @@ messageStartTime = 0
 
 sequenceCount = 0
 
+sendFreqCount = 0
+
 ser = serial.Serial(
-    port='COM6',\
+    port='COM5',\
     baudrate=57600,\
     parity=serial.PARITY_NONE,\
     stopbits=serial.STOPBITS_ONE,\
@@ -97,7 +99,7 @@ class State(Enum):
 currentState = State.INIT
 
 while True:
-    # time.sleep(.0001)
+    #time.sleep(.0001)
     # Read in the next character
     char = readByte()
 
@@ -117,11 +119,15 @@ while True:
             # Send a reply message for each one received
             stringToSend = '0,' + '{0:03}'.format(sequenceCount) + ',10,' + 'TestString,' + '{0:03}'.format(calculateChecksum('TestString'))
             #print(stringToSend)
-            if 'Wilfy' not in message:
+            print(sequenceCount)			
+            sendFreqCount += 1
+            if sendFreqCount % 20 == 0 and "Wifly" not in message:
                 ser.write('+'.encode('ascii'))
                 ser.write(stringToSend.encode('ascii'))
                 ser.write('-'.encode('ascii'))
                 sequenceCount += 1
+                sequenceCount %= 256
+
         else:
             message += chr(char)
 

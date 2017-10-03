@@ -77,8 +77,11 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
      } else if (readByte == START_CHAR) { 
          wiflyData.rxMsgLen = 0; 
          wiflyData.rxState = ROVER_ID;
+     } else if (wiflyData.rxState == OUT_OF_STATE){
+             //do nothing  
      } else { 
          //44 == ','
+
          if (readByte == 44) { 
              if(!wiflyData.stateFinished || wiflyData.rxState == CHECKSUM)
              {
