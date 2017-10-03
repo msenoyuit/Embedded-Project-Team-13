@@ -91,6 +91,13 @@ typedef enum dbgError {
     DBG_ERROR_MOTOR_CONTROL_INIT = 16,
     DBG_ERROR_ENCODER_ISR = 17,
     DBG_ERROR_MOTOR_CONTROL_RUN = 18,
+    DBG_ERROR_WIFLY_WRONG_ROVER_ID_RECIVED = 19,
+    DBG_ERROR_WIFLY_WRONG_SEQ_COUNT_RECIVED = 20,
+    DBG_ERROR_WIFLY_MESSAGE_TOO_LONG = 21,
+    DBG_ERROR_WIFLY_MESSAGE_LONGER_THAN_EXPECTED = 22,
+    DBG_ERROR_WIFLY_CHECKSUM_MISSMATCH = 23,
+    DBG_ERROR_WIFLY_INVALID_RX_STATE = 24,
+    DBG_ERROR_WIFLY_STATE_CHANGE_INVALID = 25,
 } dbgErrorType;
 // *****************************************************************************
 // *****************************************************************************

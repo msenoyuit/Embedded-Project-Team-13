@@ -64,6 +64,7 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
     /* TODO: Make all of this not terrible */
      if (readByte == STOP_CHAR) { 
          wiflyData.rxBuff[wiflyData.rxMsgLen] = 0; // null terminate 
+         wiflyData.rxState = OUT_OF_STATE;
          StandardQueueMessage message = makeWiflyMessage(wiflyData.rxBuff);
          /* 
              MASTER_CONTROL_MSG_WIFLY, readByte, readByte 
@@ -72,21 +73,121 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
              != pdTRUE) { 
              dbgFatalError(DBG_ERROR_WIFLY_RUN); 
          } 
-         wiflyData.rxMsgLen = 0; 
+         wiflyData.rxMsgLen = 0;  
      } else if (readByte == START_CHAR) { 
          wiflyData.rxMsgLen = 0; 
+         wiflyData.rxState = ROVER_ID;
      } else { 
-         if (wiflyData.rxMsgLen >= WIFLY_MAX_MSG_LEN) { 
-             // We've overflowed; start writing over the beginning 
-             // TODO: Make this fail non-silently, without halting the system 
-             //       either 
-             wiflyData.rxMsgLen = 0; 
+         //44 == ','
+         if (readByte == 44) { 
+             if(!wiflyData.stateFinished || wiflyData.rxState == CHECKSUM)
+             {
+                 dbgFatalError(DBG_ERROR_WIFLY_STATE_CHANGE_INVALID); 
+             }
+             wiflyData.rxState++;
+             wiflyData.stateFinished = false;
          } 
-         wiflyData.rxBuff[wiflyData.rxMsgLen] = readByte;
-         wiflyData.rxMsgLen++;
+         else
+         {
+         switch(wiflyData.rxState)
+         {
+             case ROVER_ID:
+                if(readByte != 48 + THIS_ROVER_ID)
+                {
+                    dbgFatalError(DBG_ERROR_WIFLY_WRONG_ROVER_ID_RECIVED);
+                }
+                wiflyData.stateFinished = true;
+                break;
+             case SEQUENCE_COUNT:
+                 if(wiflyData.rxBuffLen < 2)
+                 {
+                     wiflyData.rxStateBuff[wiflyData.rxBuffLen++] = readByte;
+                 }
+                 else
+                 {
+                     wiflyData.rxBuffLen = 0;
+                     int givenCount = (wiflyData.rxStateBuff[0] - 48)*100;
+                     givenCount += (wiflyData.rxStateBuff[1] - 48)*10;
+                     givenCount += (readByte - 48);
+                     if(givenCount != wiflyData.rxSequenceCount++)
+                     {
+                         dbgFatalError(DBG_ERROR_WIFLY_WRONG_SEQ_COUNT_RECIVED);
+                     }
+                     wiflyData.stateFinished = true;
+                 }
+                 break;
+             case MESSAGE_LENGTH:
+                 if(wiflyData.rxBuffLen < 1)
+                 {
+                     wiflyData.rxStateBuff[wiflyData.rxBuffLen++] = readByte;
+                 }
+                 else
+                 {
+                     wiflyData.rxBuffLen = 0;
+                     wiflyData.givenMessageLength = (wiflyData.rxStateBuff[0] - 48)*10;
+                     wiflyData.givenMessageLength += (readByte - 48);
+                     if(wiflyData.givenMessageLength > WIFLY_MAX_MSG_LEN)
+                     {
+                         dbgFatalError(DBG_ERROR_WIFLY_MESSAGE_TOO_LONG);
+                     }
+                     wiflyData.stateFinished = true;
+                 }
+                 break;
+             case MESSAGE_BODY:
+                 if(wiflyData.rxMsgLen >= wiflyData.givenMessageLength)
+                 {
+                     dbgFatalError(DBG_ERROR_WIFLY_MESSAGE_LONGER_THAN_EXPECTED);
+                 }
+                 wiflyData.rxBuff[wiflyData.rxMsgLen++] = readByte;
+                 if(wiflyData.rxMsgLen == wiflyData.givenMessageLength)
+                 {
+                     wiflyData.stateFinished = true;
+                 }
+                 break;
+             case CHECKSUM:
+                 if(wiflyData.rxBuffLen < 2)
+                 {
+                     wiflyData.rxStateBuff[wiflyData.rxBuffLen++] = readByte;
+                 }
+                 else
+                 {
+                     wiflyData.rxBuffLen = 0;
+                     int givenCheckSum = (wiflyData.rxStateBuff[0] - 48)*100;
+                     givenCheckSum += (wiflyData.rxStateBuff[1] - 48)*10;
+                     givenCheckSum += (readByte - 48);
+                     int i = 0;
+                     int messCheckSum = 0;
+                     while(i < wiflyData.rxMsgLen)
+                     {
+                         messCheckSum += wiflyData.rxBuff[i++];
+                     }
+                     messCheckSum = messCheckSum % 256;
+                     if(messCheckSum != givenCheckSum)
+                     {
+                         dbgFatalError(DBG_ERROR_WIFLY_CHECKSUM_MISSMATCH);
+                     }
+                     wiflyData.stateFinished = true;
+                 }
+                 break;
+             default:
+                 dbgFatalError(DBG_ERROR_WIFLY_INVALID_RX_STATE);
+         }
+                 
+                 
+                 
+         }
      } 
 #else
-    char tempBuffer[2] = {readByte, '\0'};
+    char tempBuffer[2] = {'a', '\0'};;
+    if(readByte == START_CHAR)
+    {
+        tempBuffer[0] = 'b';
+    }
+     if(readByte == STOP_CHAR)
+    {
+        tempBuffer[0] = 'c';
+    }
+    
     StandardQueueMessage message = makeWiflyMessage(tempBuffer);
     if (masterControlSendMsgToQFromISR(&message, &higherPriorityTaskWoken) 
         != pdTRUE) { 
@@ -184,6 +285,11 @@ void WIFLY_Initialize ( void ) {
     if (wiflyData.txBufferSemaphoreHandle == NULL) {
         dbgFatalError(DBG_ERROR_WIFLY_INIT);
     }
+    wiflyData.rxState = OUT_OF_STATE;
+    wiflyData.rxSequenceCount = 0;
+    wiflyData.givenMessageLength = 0;
+    wiflyData.rxBuffLen = 0;
+    wiflyData.stateFinished = false;
     // Initial 'giving' to make it available
     xSemaphoreGive(wiflyData.txBufferSemaphoreHandle);
 }

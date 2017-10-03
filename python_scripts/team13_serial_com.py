@@ -2,8 +2,8 @@ import serial
 import time
 from enum import Enum
 
-start_byte = 0xFF
-stop_byte = 0xFE
+start_byte = 43
+stop_byte = 45
 
 num_messages_per_avg = 10
 
@@ -25,7 +25,7 @@ messageStartTime = 0
 sequenceCount = 0
 
 ser = serial.Serial(
-    port='COM13',\
+    port='COM6',\
     baudrate=57600,\
     parity=serial.PARITY_NONE,\
     stopbits=serial.STOPBITS_ONE,\
@@ -97,6 +97,7 @@ class State(Enum):
 currentState = State.INIT
 
 while True:
+    time.sleep(.0001) 
     # Read in the next character
     char = readByte()
 
@@ -114,9 +115,11 @@ while True:
             updateStats(message)
             currentState = State.INIT
             # Send a reply message for each one received
-            stringToSend = '\xFF0,' + '{0:03}'.format(sequenceCount) + ',10,' + 'TestString,' + '{0:03}'.format(calculateChecksum('TestString')) + '\xFE'
+            stringToSend = '0,' + '{0:03}'.format(sequenceCount) + ',10,' + 'TestString,' + '{0:03}'.format(calculateChecksum('TestString'))
             #print(stringToSend)
+            ser.write('+'.encode('ascii'))
             ser.write(stringToSend.encode('ascii'))
+            ser.write('-'.encode('ascii'))
             sequenceCount += 1
         else:
             message += chr(char)

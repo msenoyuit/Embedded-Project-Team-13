@@ -30,8 +30,10 @@ extern "C" {
 
 #define WIFLY_USART_INDEX DRV_USART_INDEX_0
 #define WIFLY_QUEUE_LENGTH 10
-const char START_CHAR = 0xFF;
-const char STOP_CHAR = 0xFE;
+//rover 0 is the scout, rover 1 is the truck
+#define THIS_ROVER_ID 0
+const char START_CHAR = 43;
+const char STOP_CHAR = 45;
 
 // *****************************************************************************
 /* Application Data
@@ -46,6 +48,15 @@ const char STOP_CHAR = 0xFE;
     Application strings and buffers are be defined outside this structure.
  */
 
+typedef enum recMesState {
+    OUT_OF_STATE = 0,
+    ROVER_ID = 1,
+    SEQUENCE_COUNT = 2,
+    MESSAGE_LENGTH = 3,
+    MESSAGE_BODY = 4,
+    CHECKSUM = 5,
+} rxStateType;
+
 typedef struct {
     SYS_MODULE_OBJ usartHandle;
     char rxBuff[WIFLY_MAX_MSG_LEN];
@@ -55,6 +66,15 @@ typedef struct {
     SemaphoreHandle_t txBufferSemaphoreHandle;
     QueueHandle_t toSendQ;
     uint32_t sendSequenceCount;
+    
+    char rxStateBuff[WIFLY_MAX_MSG_LEN];
+    unsigned int rxBuffLen;
+    rxStateType rxState;
+    uint8_t rxSequenceCount;
+    unsigned int givenMessageLength;
+    bool stateFinished;
+    
+    
 } WIFLY_DATA;
 
 
