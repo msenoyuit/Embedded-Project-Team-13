@@ -121,7 +121,7 @@ while True:
             #print(stringToSend)
             print(sequenceCount)			
             sendFreqCount += 1
-            if sendFreqCount % 20 == 0 and "Wifly" not in message:
+            if sendFreqCount % 10 == 0 and "Wifly" not in message:
                 ser.write('+'.encode('ascii'))
                 ser.write(stringToSend.encode('ascii'))
                 ser.write('-'.encode('ascii'))
