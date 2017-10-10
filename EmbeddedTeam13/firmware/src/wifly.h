@@ -71,6 +71,7 @@ typedef struct {
     unsigned int rxBuffLen;
     rxStateType rxState;
     uint8_t rxSequenceCount;
+    unsigned int checkSum;
     unsigned int givenMessageLength;
     bool stateFinished;
     

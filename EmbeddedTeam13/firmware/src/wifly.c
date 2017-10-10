@@ -62,7 +62,14 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
 
 #if USE_START_STOP
     /* TODO: Make all of this not terrible */
-     if (readByte == STOP_CHAR) { 
+    
+     if (readByte == START_CHAR) {
+         wiflyData.rxMsgLen = 0; 
+         wiflyData.rxState = ROVER_ID;
+         wiflyData.checkSum = 0;
+     } else if (wiflyData.rxState == OUT_OF_STATE){
+             //do nothing  
+     } else  if (readByte == STOP_CHAR) { 
          wiflyData.rxBuff[wiflyData.rxMsgLen] = 0; // null terminate 
          wiflyData.rxState = OUT_OF_STATE;
          StandardQueueMessage message = makeWiflyMessage(wiflyData.rxBuff);
@@ -74,14 +81,8 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
              dbgFatalError(DBG_ERROR_WIFLY_RUN); 
          } 
          wiflyData.rxMsgLen = 0;  
-     } else if (readByte == START_CHAR) { 
-         wiflyData.rxMsgLen = 0; 
-         wiflyData.rxState = ROVER_ID;
-     } else if (wiflyData.rxState == OUT_OF_STATE){
-             //do nothing  
      } else { 
          //44 == ','
-
          if (readByte == 44) { 
              if(!wiflyData.stateFinished || wiflyData.rxState == CHECKSUM)
              {
@@ -142,6 +143,7 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
                      dbgFatalError(DBG_ERROR_WIFLY_MESSAGE_LONGER_THAN_EXPECTED);
                  }
                  wiflyData.rxBuff[wiflyData.rxMsgLen++] = readByte;
+                 wiflyData.checkSum += readByte;
                  if(wiflyData.rxMsgLen == wiflyData.givenMessageLength)
                  {
                      wiflyData.stateFinished = true;
@@ -158,14 +160,8 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
                      int givenCheckSum = (wiflyData.rxStateBuff[0] - 48)*100;
                      givenCheckSum += (wiflyData.rxStateBuff[1] - 48)*10;
                      givenCheckSum += (readByte - 48);
-                     int i = 0;
-                     int messCheckSum = 0;
-                     while(i < wiflyData.rxMsgLen)
-                     {
-                         messCheckSum += wiflyData.rxBuff[i++];
-                     }
-                     messCheckSum = messCheckSum % 256;
-                     if(messCheckSum != givenCheckSum)
+                     wiflyData.checkSum = wiflyData.checkSum % 256;
+                     if(wiflyData.checkSum != givenCheckSum)
                      {
                          dbgFatalError(DBG_ERROR_WIFLY_CHECKSUM_MISSMATCH);
                      }
@@ -293,6 +289,7 @@ void WIFLY_Initialize ( void ) {
     wiflyData.givenMessageLength = 0;
     wiflyData.rxBuffLen = 0;
     wiflyData.stateFinished = false;
+    wiflyData.checkSum = 0;
     // Initial 'giving' to make it available
     xSemaphoreGive(wiflyData.txBufferSemaphoreHandle);
 }
