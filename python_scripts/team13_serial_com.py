@@ -26,8 +26,21 @@ sequenceCount = 0
 
 sendFreqCount = 0
 
+
+
+def getPort():
+    ports = ['COM%s' % (i + 1) for i in range(256)]
+    for port in ports:
+        try:
+            s = serial.Serial(port)
+            s.close()
+            return port
+        except (OSError, serial.SerialException):
+            pass
+    raise Exception("NO PORTS CONNECTED")
+	
 ser = serial.Serial(
-    port='COM5',\
+    port=getPort(),\
     baudrate=57600,\
     parity=serial.PARITY_NONE,\
     stopbits=serial.STOPBITS_ONE,\
@@ -38,6 +51,9 @@ print("connected to: " + ser.portstr)
 
 def readByte():
     return int.from_bytes(ser.read(1),  byteorder='little')
+	
+	
+
 
 def updateStats(readMessage):
     global dTimeAvg
