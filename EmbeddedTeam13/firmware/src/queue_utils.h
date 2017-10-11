@@ -18,8 +18,18 @@ typedef enum {
     MESSAGE_LINE_READING,
     MESSAGE_WIFLY_MESSAGE,
     MESSAGE_ENCODER_READING,
+    MESSAGE_DRIVE_COMMAND,
 } MessageType;
+
+typedef enum moveCommand{
+    MOVE_FOWARD = 0,
+    MOVE_BACKWARD = 1,
+    TURN_LEFT = 2,
+    TURN_RIGHT = 3,
+    ALL_STOP = 4,
+} moveCommandType;
     
+typedef struct {moveCommandType command; int messageId;} DriveCommand;
 typedef struct { int red; int green; int blue; int clear; } ColorReading; 
 typedef struct { int distance; } DistanceReading;
 typedef struct { int line; } LineReading;
@@ -31,6 +41,7 @@ typedef struct StandardQueueMessage {
         LineReading lineReading;
         WiflyMsg wiflyMessage;
         EncoderReading encoderReading;
+        DriveCommand driveCommand;
     };
 } StandardQueueMessage;
 
@@ -60,6 +71,10 @@ int getDistance(const StandardQueueMessage * msg);
 
 StandardQueueMessage makeLineReading(int line);
 int getLine(const StandardQueueMessage * msg);
+
+StandardQueueMessage makeDriveCommand(moveCommandType command, int messageId);
+moveCommandType getCommand(const StandardQueueMessage * msg);
+int getMessageId(const StandardQueueMessage * msg);
 
 StandardQueueMessage makeWiflyMessage(const char * text);
 StandardQueueMessage printfWiflyMessage(const char * fmt, ...);
