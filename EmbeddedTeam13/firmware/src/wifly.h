@@ -48,7 +48,7 @@ const char STOP_CHAR = 45;
     Application strings and buffers are be defined outside this structure.
  */
 
-typedef enum recMesState {
+typedef enum recMesState{
     OUT_OF_STATE = 0,
     ROVER_ID = 1,
     SEQUENCE_COUNT = 2,
@@ -57,6 +57,32 @@ typedef enum recMesState {
     CHECKSUM = 5,
 } rxStateType;
 
+typedef enum piCommand{
+    MOVE_COMMAND = 0, //direction
+    READ_COMMAND = 1,   //direction
+    PICKUP_COMMAND = 2, //direction
+    STREAM_START = 3,//sensor
+    STREAM_STOP = 4, //sensor
+} piCommandType;
+
+typedef enum piSpecifier{
+    NORTH_MOVE = 0,
+    EAST_MOVE = 1,
+    SOUTH_MOVE = 2,
+    WEST_MOVE = 3,
+    LINE_SENSOR = 4,
+    COLOR_SENSOR = 5,
+    DISTANCE_SENSOR = 6,    
+}piSpecifierType;
+
+typedef enum piFlags {
+    COMMAND_RECEIVED = 0,
+    COMMAND_FINISHED = 1,
+    EVENT_ALERT = 2,
+}piFlagsType;
+//receive format - "command specifier"
+//send format - "flag command data"
+//flag - RECIVED, FINISHED, EVENT
 typedef struct {
     SYS_MODULE_OBJ usartHandle;
     char rxBuff[WIFLY_MAX_MSG_LEN];
