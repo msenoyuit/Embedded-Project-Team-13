@@ -53,6 +53,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 
+#include <math.h>
 
 #include "motor_control.h"
 #include "motor_control_public.h"
@@ -65,8 +66,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 
-#define ENCODER_READ_FREQUENCY_MS 100
-
+#define ENCODER_READ_FREQUENCY_MS 10
+#define MAX_SPEED 65535   /* = 2^16 - 1; In timer roll-overs;  */
 
 // *****************************************************************************
 /* Application Data
@@ -85,6 +86,14 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 MOTOR_CONTROL_DATA motorControlData;
 
+static unsigned int benchmarkL, benchmarkR;
+#define SWITCH_COUNTS 1000
+
+static int getLeftMotorSpeed();
+static void setLeftMotorSpeed(int speed);
+static int getRightMotorSpeed();
+static void setRightMotorSpeed(int speed);
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Callback Functions
@@ -94,25 +103,20 @@ MOTOR_CONTROL_DATA motorControlData;
 static void encoderReadCallback(TimerHandle_t timer) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
 
-    unsigned int reading = 0;
-    if (getLeftEncoderCountISR(&reading, &higherPriorityTaskWoken) != pdTRUE) {
-        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_RUN);
-    }
-    StandardQueueMessage msg = makeEncoderReading(L_ENCODER, reading);
-    if(driveControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
-       != pdTRUE) {
-        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_RUN);
-    }
-
-    if (getRightEncoderCountISR(&reading, &higherPriorityTaskWoken) != pdTRUE) {
-        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_RUN);
-    }
-    msg = makeEncoderReading(R_ENCODER, reading);
-    if(driveControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
-       != pdTRUE) {
-        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_RUN);
+    int readingL = getLeftEncoderCountISR();
+    
+    if (abs(readingL - benchmarkL) > SWITCH_COUNTS) {
+        setLeftMotorSpeed(-getLeftMotorSpeed());
+        benchmarkL = readingL;
     }
     
+    int readingR = getRightEncoderCountISR();
+    
+    if (abs(readingR - benchmarkR) > SWITCH_COUNTS) {
+        setRightMotorSpeed(-getRightMotorSpeed());
+        benchmarkR = readingR;
+    }
+        
     portEND_SWITCHING_ISR(higherPriorityTaskWoken);
 }
 
@@ -130,7 +134,7 @@ BaseType_t motorControlSendMsgToQFromISR(StandardQueueMessage * message,
                                                  higherPriorityTaskWoken);
 }
     
-BaseType_t motorControlSendMsgToQR(StandardQueueMessage * message,
+BaseType_t motorControlSendMsgToQ(StandardQueueMessage * message,
                                         TickType_t time) {
     return sendStandardQueueMessageToBack(motorControlData.queue, message,
                                           time);
@@ -174,6 +178,45 @@ int getRightSpeed(struct StandardQueueMessage * msg) {
     return msg->motorSpeeds.rightSpeed;
 }
 
+
+static int lSpeed, rSpeed;
+
+static void setLeftMotorAbsSpeed(unsigned int speed) {
+    DRV_OC0_PulseWidthSet(abs(speed));
+}
+
+static void setLeftMotorDir(bool forward) {
+    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_C, 14, forward);
+}
+
+static void setLeftMotorSpeed(int speed) {
+    setLeftMotorDir(speed > 0);
+    setLeftMotorAbsSpeed((unsigned int) abs(speed));
+    lSpeed = speed;
+}
+
+static int getLeftMotorSpeed() {
+    return lSpeed;
+}
+
+static void setRightMotorAbsSpeed(unsigned int speed) {
+    DRV_OC1_PulseWidthSet(speed);
+}
+
+static void setRightMotorDir(bool forward) {
+    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, 1, forward);
+}
+
+static void setRightMotorSpeed(int speed) {
+    setRightMotorDir(speed > 0);
+    setRightMotorAbsSpeed((unsigned int) abs(speed));
+    rSpeed = speed;
+}
+
+static int getRightMotorSpeed() {
+    return rSpeed;
+}
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Initialization and State Machine Functions
@@ -207,6 +250,21 @@ void MOTOR_CONTROL_Initialize ( void ) {
         dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
     }
 
+    SYS_PORTS_Clear(PORTS_ID_0, PORT_CHANNEL_C, 14);
+    SYS_PORTS_Clear(PORTS_ID_0, PORT_CHANNEL_G, 1);
+
+    // Initialize the output compare modules for PWM output
+    DRV_OC0_Enable();
+    DRV_OC1_Enable();
+    // Start the timer that drives the output compare modules
+    DRV_TMR0_Start();
+
+    setLeftMotorSpeed(MAX_SPEED);
+    setRightMotorSpeed(MAX_SPEED);
+
+    // Initialize testing variables
+    benchmarkL = benchmarkR = 0;
+
     encodersInit();
 }
 
@@ -220,6 +278,7 @@ void MOTOR_CONTROL_Initialize ( void ) {
 
 void MOTOR_CONTROL_Tasks ( void ) {
     StandardQueueMessage receivedMessage;
+    
     dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_BEFORE_QUEUE_RECEIVE);
     standardQueueMessageReceive(motorControlData.queue, &receivedMessage,
                                 portMAX_DELAY);
@@ -229,7 +288,8 @@ void MOTOR_CONTROL_Tasks ( void ) {
     msg.type = MESSAGE_WIFLY_MESSAGE;
     switch(receivedMessage.type) {
     case MESSAGE_MOTOR_SPEEDS:
-        
+        setLeftMotorSpeed(getLeftSpeed(&msg));
+        setRightMotorSpeed(getRightSpeed(&msg));
         break;
     }
 }
