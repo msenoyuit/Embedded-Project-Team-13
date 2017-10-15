@@ -125,6 +125,25 @@ int getLine(const StandardQueueMessage * msg) {
     return msg->lineReading.line;
 }
 
+
+StandardQueueMessage makeDriveCommand(moveCommandType command, int messageId){
+    StandardQueueMessage msg = {
+        .type = MESSAGE_DRIVE_COMMAND,
+        .driveCommand.command = command,
+        .driveCommand.messageId = messageId,
+    };
+    return msg;
+}
+moveCommandType getCommand(const StandardQueueMessage * msg){
+    checkMessageType(msg, MESSAGE_DRIVE_COMMAND);
+    return msg->driveCommand.command;
+}
+int getMessageId(const StandardQueueMessage * msg){
+    checkMessageType(msg, MESSAGE_DRIVE_COMMAND);
+    return msg->driveCommand.messageId;
+}
+
+
 StandardQueueMessage makeWiflyMessage(const char * text) {
     StandardQueueMessage msg = {
         .type = MESSAGE_WIFLY_MESSAGE,
