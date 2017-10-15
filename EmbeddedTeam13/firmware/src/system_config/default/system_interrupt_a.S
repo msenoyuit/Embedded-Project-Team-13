@@ -82,6 +82,75 @@ _IntHandlerDrvAdc:
 
 
 
+
+/* External Interrupt Instance 0 Interrupt */
+   .extern  IntHandlerExternalInterruptInstance0
+
+   .section	.vector_7,code, keep
+   .equ     __vector_dispatch_7, IntVectorExternalInterruptInstance0
+   .global  __vector_dispatch_7
+   .set     nomicromips
+   .set     noreorder
+   .set     nomips16
+   .set     noat
+   .ent  IntVectorExternalInterruptInstance0
+
+IntVectorExternalInterruptInstance0:
+    la    $26,  _IntHandlerExternalInterruptInstance0         
+    jr    $26
+    nop
+	.end	IntVectorExternalInterruptInstance0
+
+   .section	.ExternalInterruptInstance0_vector_text, code, keep
+   .set     nomicromips
+   .set     noreorder
+   .set     nomips16
+   .set     noat
+   .ent  _IntHandlerExternalInterruptInstance0
+
+_IntHandlerExternalInterruptInstance0:
+    portSAVE_CONTEXT
+    la    s6,  IntHandlerExternalInterruptInstance0
+    jalr  s6
+    nop
+    portRESTORE_CONTEXT
+    .end	_IntHandlerExternalInterruptInstance0
+
+
+/* External Interrupt Instance 1 Interrupt */
+   .extern  IntHandlerExternalInterruptInstance1
+
+   .section	.vector_11,code, keep
+   .equ     __vector_dispatch_11, IntVectorExternalInterruptInstance1
+   .global  __vector_dispatch_11
+   .set     nomicromips
+   .set     noreorder
+   .set     nomips16
+   .set     noat
+   .ent  IntVectorExternalInterruptInstance1
+
+IntVectorExternalInterruptInstance1:
+    la    $26,  _IntHandlerExternalInterruptInstance1         
+    jr    $26
+    nop
+	.end	IntVectorExternalInterruptInstance1
+
+   .section	.ExternalInterruptInstance1_vector_text, code, keep
+   .set     nomicromips
+   .set     noreorder
+   .set     nomips16
+   .set     noat
+   .ent  _IntHandlerExternalInterruptInstance1
+
+_IntHandlerExternalInterruptInstance1:
+    portSAVE_CONTEXT
+    la    s6,  IntHandlerExternalInterruptInstance1
+    jalr  s6
+    nop
+    portRESTORE_CONTEXT
+    .end	_IntHandlerExternalInterruptInstance1
+
+
  
 
 /* TMR Instance 0 Interrupt */

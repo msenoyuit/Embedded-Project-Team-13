@@ -6,120 +6,80 @@
 #include "queue_utils.h"
 #include "debug.h"
 
-#define L_ENCODER_FREQUENCY_MS 5
-#define R_ENCODER_FREQUENCY_MS 5
+#define SPEED_CALC_DELTA_T_MS 50
+#define ENCODER_TICKS_PER_INCH 300 /* TODO: Measure; This is a guess! */
+static volatile int lEncoderLastPos, rEncoderLastPos;
+static volatile int lEncoderSpeed, rEncoderSpeed;
 
-static unsigned int lEncoderCount, rEncoderCount;
-static SemaphoreHandle_t encoderSemaphore;
-static TimerHandle_t lEncoderTimer, rEncoderTimer;
+static volatile int lEncoderCount, rEncoderCount;
 
-static void encoderCallback(TimerHandle_t timer) {
-    BaseType_t higherPriorityTaskWoken = pdFALSE;
-    xSemaphoreTakeFromISR(encoderSemaphore, &higherPriorityTaskWoken);
-    switch ((EncoderId) pvTimerGetTimerID(timer)) {
-    case L_ENCODER:
-        lEncoderCount++;
-        break;
-    case R_ENCODER:
-        rEncoderCount++;
-        break;
-    default:
-        dbgFatalError(DBG_ERROR_ENCODER_ISR);
-        break;
-    }
-    
-    xSemaphoreGiveFromISR(encoderSemaphore, &higherPriorityTaskWoken);
-    portEND_SWITCHING_ISR(higherPriorityTaskWoken);
+// Functions for Reading Encoder Inputs ****************************************
+static bool getLeftA() {
+    return (SYS_PORTS_Read(PORTS_ID_0, PORT_CHANNEL_E) >> 8) & 1;
+}
+// NOT YET DETERMINED! For now we give the A reading, which will make it look
+// like we are always going the same direction
+static bool getLeftB() {
+    return (SYS_PORTS_Read(PORTS_ID_0, PORT_CHANNEL_E) >> 8) & 1;
 }
 
+static bool getRightA() {
+    return (SYS_PORTS_Read(PORTS_ID_0, PORT_CHANNEL_E) >> 9) & 1;
+}
+
+static bool getRightB() {
+    return (SYS_PORTS_Read(PORTS_ID_0, PORT_CHANNEL_A) >> 7) & 1;
+}
+
+// Interrupt Handlers **********************************************************
+// Handlers for when the A channel goes high. These are registered in
+// system_interrupt.c in the middle of the pregenerated code
+void lEncoderIsr() {
+    if (getLeftA() == getLeftB()) {
+        lEncoderCount++;
+    } else {
+        lEncoderCount--;
+    }
+}
+
+void rEncoderIsr() {
+    if (getRightA() == getRightB()) {
+        rEncoderCount++;
+    } else {
+        rEncoderCount--;
+    }
+}
+
+// Initialization **************************************************************
 void encodersInit(void) {
     lEncoderCount = rEncoderCount = 0;
-
-    lEncoderTimer = xTimerCreate("Left encoder timer",
-                                 pdMS_TO_TICKS(L_ENCODER_FREQUENCY_MS), pdTRUE,
-                                 ( void * ) L_ENCODER, encoderCallback);
-    if(lEncoderTimer == NULL) {
-        dbgFatalError(DBG_ERROR_ENCODER_INIT);
-    }
-    if(xTimerStart(lEncoderTimer, 0) != pdPASS) {
-        dbgFatalError(DBG_ERROR_ENCODER_INIT);
-    }
-
-    rEncoderTimer = xTimerCreate("Right encoder timer",
-                                 pdMS_TO_TICKS(R_ENCODER_FREQUENCY_MS), pdTRUE,
-                                 ( void * ) R_ENCODER, encoderCallback);
-    if(lEncoderTimer == NULL) {
-        dbgFatalError(DBG_ERROR_ENCODER_INIT);
-    }
-    if(xTimerStart(rEncoderTimer, 0) != pdPASS) {
-        dbgFatalError(DBG_ERROR_ENCODER_INIT);
-    }
-    
-    encoderSemaphore = xSemaphoreCreateBinary();
-    if (encoderSemaphore == NULL) {
-        dbgFatalError(DBG_ERROR_ENCODER_INIT);
-    }
-    xSemaphoreGive(encoderSemaphore);
 }
 
-unsigned int getLeftEncoderCount(void) {
-    xSemaphoreTake(encoderSemaphore, portMAX_DELAY);
+// External Access Functions ***************************************************
+int getLeftEncoderCount(void) {
+    taskENTER_CRITICAL();
     int count = lEncoderCount;
-    xSemaphoreGive(encoderSemaphore);
+    taskEXIT_CRITICAL();
     return count;
 }
 
-void setLeftEncoderCount(unsigned int count) {
-    xSemaphoreTake(encoderSemaphore, portMAX_DELAY);
-    lEncoderCount = count;
-    xSemaphoreGive(encoderSemaphore);
-}
-
-unsigned int getRightEncoderCount(void) {
-    xSemaphoreTake(encoderSemaphore, portMAX_DELAY);
+int getRightEncoderCount(void) {
+    taskENTER_CRITICAL();
     int count = rEncoderCount;
-    xSemaphoreGive(encoderSemaphore);
+    taskEXIT_CRITICAL();
     return count;
 }
 
-void setRightEncoderCount(unsigned int count) {
-    xSemaphoreTake(encoderSemaphore, portMAX_DELAY);
-    rEncoderCount = count;
-    xSemaphoreGive(encoderSemaphore);
+int getLeftEncoderCountISR(void) {
+    UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
+    int result = lEncoderCount;
+    taskEXIT_CRITICAL_FROM_ISR(mask);
+    return result;
 }
 
-BaseType_t getLeftEncoderCountISR(unsigned int * result,
-                                    BaseType_t * higherPriorityTaskWoken) {
-    if (!xSemaphoreTakeFromISR(encoderSemaphore, higherPriorityTaskWoken)) {
-        return pdFALSE;
-    }
-    *result = lEncoderCount;
-    return xSemaphoreGiveFromISR(encoderSemaphore, higherPriorityTaskWoken);
-}
-
-BaseType_t setLeftEncoderCountISR(unsigned int count,
-                                  BaseType_t * higherPriorityTaskWoken) {
-    if (!xSemaphoreTakeFromISR(encoderSemaphore, higherPriorityTaskWoken)) {
-        return pdFALSE;
-    }
-    lEncoderCount = count;
-    return xSemaphoreGiveFromISR(encoderSemaphore, higherPriorityTaskWoken);
-}
-
-BaseType_t getRightEncoderCountISR(unsigned int * result,
-                                     BaseType_t * higherPriorityTaskWoken) {
-    if (!xSemaphoreTakeFromISR(encoderSemaphore, higherPriorityTaskWoken)) {
-        return pdFALSE;
-    }
-    *result = rEncoderCount;
-    return xSemaphoreGiveFromISR(encoderSemaphore, higherPriorityTaskWoken);
-}
-
-BaseType_t setRightEncoderCountISR(unsigned int count,
-                                   BaseType_t * higherPriorityTaskWoken) {
-    if (!xSemaphoreTakeFromISR(encoderSemaphore, higherPriorityTaskWoken)) {
-        return pdFALSE;
-    }
-    rEncoderCount = count;
-    return xSemaphoreGiveFromISR(encoderSemaphore, higherPriorityTaskWoken);
+int getRightEncoderCountISR(void) {
+    UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
+    int result = rEncoderCount;
+    taskEXIT_CRITICAL_FROM_ISR(mask);
+    return result;
 }

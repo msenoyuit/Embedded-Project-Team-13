@@ -5,19 +5,13 @@
 
 void encodersInit(void);
 
-unsigned int getLeftEncoderCount(void);
-void setLeftEncoderCount(unsigned int count);
-unsigned int getRightEncoderCount(void);
-void setRightEncoderCount(unsigned int count);
+int getLeftEncoderCount(void);
+int getRightEncoderCount(void);
+int getLeftEncoderCountISR(void);
+int getRightEncoderCountISR(void);
 
-BaseType_t getLeftEncoderCountISR(unsigned int * result,
-                                  BaseType_t * higherPriorityTaskWoken);
-BaseType_t setLeftEncoderCountISR(unsigned int count,
-                                  BaseType_t * higherPriorityTaskWoken);
-BaseType_t getRightEncoderCountISR(unsigned int * result,
-                                   BaseType_t * higherPriorityTaskWoken);
-BaseType_t setRightEncoderCountISR(unsigned int count,
-                                   BaseType_t * higherPriorityTaskWoken);
+void lEncoderIsr();
+void rEncoderIsr();
 
 #endif	/* ENCODERS_H */
 
