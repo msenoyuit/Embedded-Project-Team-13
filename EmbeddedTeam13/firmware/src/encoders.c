@@ -8,10 +8,14 @@
 
 #define SPEED_CALC_DELTA_T_MS 50
 #define ENCODER_TICKS_PER_INCH 300 /* TODO: Measure; This is a guess! */
-static volatile int lEncoderLastPos, rEncoderLastPos;
+// Used by speed calculations. These should only ever be modified by the
+// encoderSpeedCallback
+static volatile int lEncoderLastCount, rEncoderLastCount;
 static volatile int lEncoderSpeed, rEncoderSpeed;
-
+// Encoder counts. These should only be modified by the encoder ISRs.
 static volatile int lEncoderCount, rEncoderCount;
+// Timer for encoder speed callback
+static TimerHandle_t encoderSpeedTimer;
 
 // Functions for Reading Encoder Inputs ****************************************
 static bool getLeftA() {
@@ -50,12 +54,39 @@ void rEncoderIsr() {
     }
 }
 
+static void encoderSpeedCallback(TimerHandle_t timer) {
+    int lCount, rCount;
+    lCount = getLeftEncoderCountISR();
+    rCount = getRightEncoderCountISR();
+
+    lEncoderSpeed = (lCount - lEncoderLastCount) * 1000 / SPEED_CALC_DELTA_T_MS;
+    rEncoderSpeed = (rCount - rEncoderLastCount) * 1000 / SPEED_CALC_DELTA_T_MS;
+
+    lEncoderLastCount = lCount;
+    rEncoderLastCount = rCount;
+}
+
 // Initialization **************************************************************
 void encodersInit(void) {
-    lEncoderCount = rEncoderCount = 0;
+    // Initialize file-static variables
+    lEncoderCount = rEncoderCount = lEncoderLastCount = rEncoderLastCount = 0;
+    lEncoderSpeed = rEncoderSpeed = 0;
+
+    // Set up callback for calculating speed
+    encoderSpeedTimer = xTimerCreate("Encoder speed timer",
+                                     pdMS_TO_TICKS(SPEED_CALC_DELTA_T_MS),
+                                     pdTRUE, ( void * ) 0,
+                                     encoderSpeedCallback);
+    if(encoderSpeedTimer == NULL) {
+        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
+    }
+    if(xTimerStart(encoderSpeedTimer, 0) != pdPASS) {
+        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
+    }
 }
 
 // External Access Functions ***************************************************
+// Enter critical before reading to ensure it's not changed during read
 int getLeftEncoderCount(void) {
     taskENTER_CRITICAL();
     int count = lEncoderCount;
@@ -82,4 +113,32 @@ int getRightEncoderCountISR(void) {
     int result = rEncoderCount;
     taskEXIT_CRITICAL_FROM_ISR(mask);
     return result;
+}
+
+int getLeftEncoderSpeed(void) {
+    taskENTER_CRITICAL();
+    int speed = lEncoderSpeed;
+    taskEXIT_CRITICAL();
+    return speed;
+}
+
+int getRightEncoderSpeed(void) {
+    taskENTER_CRITICAL();
+    int speed = rEncoderSpeed;
+    taskEXIT_CRITICAL();
+    return speed;
+}
+
+int getLeftEncoderSpeedISR(void) {
+    UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
+    int speed = lEncoderSpeed;
+    taskEXIT_CRITICAL_FROM_ISR(mask);
+    return speed;
+}
+
+int getRightEncoderSpeedISR(void) {
+    UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
+    int speed = rEncoderSpeed;
+    taskEXIT_CRITICAL_FROM_ISR(mask);
+    return speed;
 }

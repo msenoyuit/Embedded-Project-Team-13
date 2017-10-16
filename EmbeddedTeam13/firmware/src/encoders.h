@@ -10,6 +10,11 @@ int getRightEncoderCount(void);
 int getLeftEncoderCountISR(void);
 int getRightEncoderCountISR(void);
 
+int getLeftEncoderSpeed(void);
+int getRightEncoderSpeed(void);
+int getLeftEncoderSpeedISR(void);
+int getRightEncoderSpeedISR(void);
+
 void lEncoderIsr();
 void rEncoderIsr();
 
