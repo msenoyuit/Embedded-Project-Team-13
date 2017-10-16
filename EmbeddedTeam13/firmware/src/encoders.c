@@ -6,7 +6,7 @@
 #include "queue_utils.h"
 #include "debug.h"
 
-#define SPEED_CALC_DELTA_T_MS 50
+#define SPEED_CALC_DELTA_T_MS 10
 #define ENCODER_TICKS_PER_INCH 300 /* TODO: Measure; This is a guess! */
 // Used by speed calculations. These should only ever be modified by the
 // encoderSpeedCallback
@@ -78,10 +78,10 @@ void encodersInit(void) {
                                      pdTRUE, ( void * ) 0,
                                      encoderSpeedCallback);
     if(encoderSpeedTimer == NULL) {
-        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
+        dbgFatalError(DBG_ERROR_ENCODER_INIT);
     }
     if(xTimerStart(encoderSpeedTimer, 0) != pdPASS) {
-        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
+        dbgFatalError(DBG_ERROR_ENCODER_INIT);
     }
 }
 
