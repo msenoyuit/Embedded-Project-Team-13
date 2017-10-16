@@ -233,7 +233,7 @@ void MOTOR_CONTROL_Initialize ( void ) {
     // Start the timer that drives the output compare modules
     DRV_TMR0_Start();
 
-    lSpeedDesired = rSpeedDesired = MAX_SPEED/2;
+    lSpeedDesired = rSpeedDesired = 0;
     setLeftMotorSignal(0);
     setRightMotorSignal(0);
 

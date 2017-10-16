@@ -95,8 +95,28 @@ DRIVE_CONTROL_DATA driveControlData;
 // *****************************************************************************
 
 
-/* TODO:  Add any necessary local functions.
-*/
+typedef enum {
+    LINE_CENTERED,
+    LINE_TO_RIGHT,
+    LINE_TO_LEFT,
+    INTERSECTION,
+    LOST,
+} LinePosition;
+    
+static LinePosition interpretLineSensorReading(bool farLeft, bool left,
+                                               bool right, bool farRight) {
+    if (!farLeft && !left && !right && !farRight) {
+        return LOST;
+    } else if (!farLeft && left && right && !farRight) {
+        return LINE_CENTERED;
+    } else if (!farLeft && !left) {
+        return LINE_TO_RIGHT;
+    } else if (!right && !farRight) {
+        return LINE_TO_LEFT;
+    } else {
+        return INTERSECTION;
+    }
+}
 
 
 // *****************************************************************************
