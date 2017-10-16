@@ -19,4 +19,3 @@ void lEncoderIsr();
 void rEncoderIsr();
 
 #endif	/* ENCODERS_H */
-

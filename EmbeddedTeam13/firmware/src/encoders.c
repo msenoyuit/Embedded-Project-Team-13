@@ -5,13 +5,18 @@
 #include "encoders.h"
 #include "queue_utils.h"
 #include "debug.h"
+#include "motors.h"
 
-#define SPEED_CALC_DELTA_T_MS 10
+#define SPEED_DELTA_T_MS 10
+#define SPEED_FILTER_RATIO 0.9
+#define COUNTS_PER_REVOLUTION = 298 * 12 /* 298:1 gear ratio, 12 CPR encoder */
 #define ENCODER_TICKS_PER_INCH 300 /* TODO: Measure; This is a guess! */
 // Used by speed calculations. These should only ever be modified by the
 // encoderSpeedCallback
 static volatile int lEncoderLastCount, rEncoderLastCount;
-static volatile int lEncoderSpeed, rEncoderSpeed;
+static volatile size_t countBufPos;
+
+static volatile float lEncoderSpeed, rEncoderSpeed;
 // Encoder counts. These should only be modified by the encoder ISRs.
 static volatile int lEncoderCount, rEncoderCount;
 // Timer for encoder speed callback
@@ -47,7 +52,9 @@ void lEncoderIsr() {
 }
 
 void rEncoderIsr() {
-    if (getRightA() == getRightB()) {
+    // Increment or decrement based on the direction we are sending the motor 
+    // since we aren't able to get the B reading
+    if (getRightMotorSignal() >= 0) { 
         rEncoderCount++;
     } else {
         rEncoderCount--;
@@ -55,12 +62,17 @@ void rEncoderIsr() {
 }
 
 static void encoderSpeedCallback(TimerHandle_t timer) {
-    int lCount, rCount;
-    lCount = getLeftEncoderCountISR();
-    rCount = getRightEncoderCountISR();
+    int lCount = getLeftEncoderCountISR();
+    int rCount = getRightEncoderCountISR();
 
-    lEncoderSpeed = (lCount - lEncoderLastCount) * 1000 / SPEED_CALC_DELTA_T_MS;
-    rEncoderSpeed = (rCount - rEncoderLastCount) * 1000 / SPEED_CALC_DELTA_T_MS;
+    int lNewSpeed = (lCount - lEncoderLastCount) * 1000 / SPEED_DELTA_T_MS;
+    int rNewSpeed = (rCount - rEncoderLastCount) * 1000 / SPEED_DELTA_T_MS;
+
+    // Simple lowpass filter
+    lEncoderSpeed = SPEED_FILTER_RATIO * lEncoderSpeed +
+        (1 - SPEED_FILTER_RATIO) * lNewSpeed;
+    rEncoderSpeed = SPEED_FILTER_RATIO * rEncoderSpeed +
+        (1 - SPEED_FILTER_RATIO) * rNewSpeed;
 
     lEncoderLastCount = lCount;
     rEncoderLastCount = rCount;
@@ -69,12 +81,14 @@ static void encoderSpeedCallback(TimerHandle_t timer) {
 // Initialization **************************************************************
 void encodersInit(void) {
     // Initialize file-static variables
-    lEncoderCount = rEncoderCount = lEncoderLastCount = rEncoderLastCount = 0;
+    lEncoderCount = rEncoderCount = 0;
+    lEncoderLastCount = rEncoderLastCount = 0;
     lEncoderSpeed = rEncoderSpeed = 0;
+    countBufPos = 0;
 
     // Set up callback for calculating speed
     encoderSpeedTimer = xTimerCreate("Encoder speed timer",
-                                     pdMS_TO_TICKS(SPEED_CALC_DELTA_T_MS),
+                                     pdMS_TO_TICKS(SPEED_DELTA_T_MS),
                                      pdTRUE, ( void * ) 0,
                                      encoderSpeedCallback);
     if(encoderSpeedTimer == NULL) {
@@ -117,28 +131,28 @@ int getRightEncoderCountISR(void) {
 
 int getLeftEncoderSpeed(void) {
     taskENTER_CRITICAL();
-    int speed = lEncoderSpeed;
+    float speed = lEncoderSpeed;
     taskEXIT_CRITICAL();
-    return speed;
+    return (int)speed;
 }
 
 int getRightEncoderSpeed(void) {
     taskENTER_CRITICAL();
-    int speed = rEncoderSpeed;
+    float speed = rEncoderSpeed;
     taskEXIT_CRITICAL();
-    return speed;
+    return (int)speed;
 }
 
 int getLeftEncoderSpeedISR(void) {
     UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
-    int speed = lEncoderSpeed;
+    float speed = lEncoderSpeed;
     taskEXIT_CRITICAL_FROM_ISR(mask);
-    return speed;
+    return (int)speed;
 }
 
 int getRightEncoderSpeedISR(void) {
     UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
-    int speed = rEncoderSpeed;
+    float speed = rEncoderSpeed;
     taskEXIT_CRITICAL_FROM_ISR(mask);
-    return speed;
+    return (int)speed;
 }
