@@ -26,10 +26,9 @@ static TimerHandle_t encoderSpeedTimer;
 static bool getLeftA() {
     return (SYS_PORTS_Read(PORTS_ID_0, PORT_CHANNEL_E) >> 8) & 1;
 }
-// NOT YET DETERMINED! For now we give the A reading, which will make it look
-// like we are always going the same direction
+
 static bool getLeftB() {
-    return (SYS_PORTS_Read(PORTS_ID_0, PORT_CHANNEL_E) >> 8) & 1;
+    return (SYS_PORTS_Read(PORTS_ID_0, PORT_CHANNEL_A) >> 9) & 1;
 }
 
 static bool getRightA() {
@@ -52,9 +51,7 @@ void lEncoderIsr() {
 }
 
 void rEncoderIsr() {
-    // Increment or decrement based on the direction we are sending the motor 
-    // since we aren't able to get the B reading
-    if (getRightMotorSignal() >= 0) { 
+    if (getRightA() == getRightB()) {
         rEncoderCount++;
     } else {
         rEncoderCount--;
