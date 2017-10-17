@@ -164,21 +164,21 @@ void MASTER_CONTROL_Tasks ( void ){
     // Handle the message
     switch (receivedMessage.type) {
     case MESSAGE_WIFLY_MESSAGE:
-        toSend = printfWiflyMessage("Wifly Echo: %s\n\r", getWiflyText(&receivedMessage));
+        toSend = printfWiflyMessage("Wifly Echo: %s", getWiflyText(&receivedMessage));
         wiflySendMsg(&toSend, portMAX_DELAY);
         break;
     case MESSAGE_DISTANCE_READING:
-        toSend = printfWiflyMessage("Distance (cm): %d\n\r",
+        toSend = printfWiflyMessage("Distance (cm): %d",
                                     getDistance(&receivedMessage));
         wiflySendMsg(&toSend, portMAX_DELAY);
         break;
     case MESSAGE_LINE_READING:
-        toSend = printfWiflyMessage("Line Reading: 0x%x\n\r",
+        toSend = printfWiflyMessage("Line Reading: 0x%x",
                                     getLine(&receivedMessage));
         wiflySendMsg(&toSend, portMAX_DELAY);
         break;
     case MESSAGE_COLOR_READING:
-        toSend = printfWiflyMessage("Color Reading: R %d, G %d, B %d, C %d\n\r",
+        toSend = printfWiflyMessage("Color Reading: R %d G %d B %d C %d",
                                     getRed(&receivedMessage),
                                     getGreen(&receivedMessage),
                                     getBlue(&receivedMessage),
@@ -186,7 +186,7 @@ void MASTER_CONTROL_Tasks ( void ){
         wiflySendMsg(&toSend, portMAX_DELAY);
         break;
     case MESSAGE_ENCODER_READING:
-        toSend = printfWiflyMessage("%s encoder: %d counts\n\r",
+        toSend = printfWiflyMessage("%s encoder: %d counts",
                                     (getEncoderId(&receivedMessage) ==
                                      L_ENCODER ? "Left" : "Right"),
                                     getEncoderCount(&receivedMessage));

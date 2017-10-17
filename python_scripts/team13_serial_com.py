@@ -130,6 +130,9 @@ while True:
     elif currentState == State.PARSING_MESSAGE:
         if char == stop_byte:
             print(message)
+            if("ERROR" in message):
+                print("***********************ERROR************************************")
+                raise Exception("ERR")
             updateStats(message)
             currentState = State.INIT
             # Send a reply message for each one received
@@ -137,7 +140,7 @@ while True:
             #print(stringToSend)
             print(sequenceCount)			
             sendFreqCount += 1
-            if sendFreqCount % 10 == 0 and "Wifly" not in message:
+            if sendFreqCount % 10 == 0 and "Wifly" not in message and 1 == 1:
                 ser.write('+'.encode('ascii'))
                 ser.write(stringToSend.encode('ascii'))
                 ser.write('-'.encode('ascii'))

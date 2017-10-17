@@ -59,7 +59,7 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
     //char readByte = DRV_USART_ReadByte(wiflyData.usartHandle);
     char readByte = PLIB_USART_ReceiverByteReceive(USART_ID_1);
     dbgOutputLoc(DBG_WIFLY_RECEIVE_CALLBACK_MIDDLE);
-
+    StandardQueueMessage toSend;
 #if USE_START_STOP
     /* TODO: Make all of this not terrible */
     
@@ -84,9 +84,12 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
      } else { 
          //44 == ','
          if (readByte == 44) { 
-             if(!wiflyData.stateFinished || wiflyData.rxState == CHECKSUM)
+             if(!wiflyData.stateFinished)
              {
-                 dbgFatalError(DBG_ERROR_WIFLY_STATE_CHANGE_INVALID); 
+                 toSend = makeWiflyMessage("\r\r ERROR state error \r\r");
+                 wiflySendMsg(&toSend, portMAX_DELAY);
+                 wiflyData.stateFinished = true;
+                 wiflyData.rxState = OUT_OF_STATE;
              }
              wiflyData.rxState++;
              wiflyData.stateFinished = false;
@@ -96,9 +99,13 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
          switch(wiflyData.rxState)
          {
              case ROVER_ID:
-                if(readByte != 48 + THIS_ROVER_ID)
+                if(readByte != INT_CHAR_DISTANCE + THIS_ROVER_ID)
                 {
-                    dbgFatalError(DBG_ERROR_WIFLY_WRONG_ROVER_ID_RECIVED);
+                        toSend = makeWiflyMessage("\r\r ERROR wrong rover id \r\r");
+                        wiflySendMsg(&toSend, portMAX_DELAY);
+                        wiflyData.stateFinished = true;
+                        wiflyData.rxState = OUT_OF_STATE;
+                        break;
                 }
                 wiflyData.stateFinished = true;
                 break;
@@ -110,12 +117,17 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
                  else
                  {
                      wiflyData.rxBuffLen = 0;
-                     int givenCount = (wiflyData.rxStateBuff[0] - 48)*100;
-                     givenCount += (wiflyData.rxStateBuff[1] - 48)*10;
-                     givenCount += (readByte - 48);
+                     int givenCount = (wiflyData.rxStateBuff[0] - INT_CHAR_DISTANCE)*100;
+                     givenCount += (wiflyData.rxStateBuff[1] - INT_CHAR_DISTANCE)*10;
+                     givenCount += (readByte - INT_CHAR_DISTANCE);
                      if(givenCount != wiflyData.rxSequenceCount++)
                      {
-                         dbgFatalError(DBG_ERROR_WIFLY_WRONG_SEQ_COUNT_RECIVED);
+                        toSend = makeWiflyMessage("\r\r ERROR Message count mismatch\r\r");
+                        wiflySendMsg(&toSend, portMAX_DELAY);
+                        wiflyData.stateFinished = true;
+                        wiflyData.rxState = OUT_OF_STATE;
+                        wiflyData.rxSequenceCount = givenCount + 1;
+                        break;
                      }
                      wiflyData.stateFinished = true;
                  }
@@ -128,11 +140,15 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
                  else
                  {
                      wiflyData.rxBuffLen = 0;
-                     wiflyData.givenMessageLength = (wiflyData.rxStateBuff[0] - 48)*10;
-                     wiflyData.givenMessageLength += (readByte - 48);
+                     wiflyData.givenMessageLength = (wiflyData.rxStateBuff[0] - INT_CHAR_DISTANCE)*10;
+                     wiflyData.givenMessageLength += (readByte - INT_CHAR_DISTANCE);
                      if(wiflyData.givenMessageLength > WIFLY_MAX_MSG_LEN)
                      {
-                         dbgFatalError(DBG_ERROR_WIFLY_MESSAGE_TOO_LONG);
+                         toSend = makeWiflyMessage("\r\r ERROR Message Too Long \r\r");
+                        wiflySendMsg(&toSend, portMAX_DELAY);
+                        wiflyData.stateFinished = true;
+                        wiflyData.rxState = OUT_OF_STATE;
+                        break;
                      }
                      wiflyData.stateFinished = true;
                  }
@@ -140,7 +156,11 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
              case MESSAGE_BODY:
                  if(wiflyData.rxMsgLen >= wiflyData.givenMessageLength)
                  {
-                     dbgFatalError(DBG_ERROR_WIFLY_MESSAGE_LONGER_THAN_EXPECTED);
+                     toSend = makeWiflyMessage("\r\r ERROR Invalid message. given length doesn't match \r\r");
+                    wiflySendMsg(&toSend, portMAX_DELAY);
+                    wiflyData.stateFinished = true;
+                    wiflyData.rxState = OUT_OF_STATE;
+                    break;
                  }
                  wiflyData.rxBuff[wiflyData.rxMsgLen++] = readByte;
                  wiflyData.checkSum += readByte;
@@ -157,19 +177,28 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
                  else
                  {
                      wiflyData.rxBuffLen = 0;
-                     int givenCheckSum = (wiflyData.rxStateBuff[0] - 48)*100;
-                     givenCheckSum += (wiflyData.rxStateBuff[1] - 48)*10;
-                     givenCheckSum += (readByte - 48);
+                     int givenCheckSum = (wiflyData.rxStateBuff[0] - INT_CHAR_DISTANCE)*100;
+                     givenCheckSum += (wiflyData.rxStateBuff[1] - INT_CHAR_DISTANCE)*10;
+                     givenCheckSum += (readByte - INT_CHAR_DISTANCE);
                      wiflyData.checkSum = wiflyData.checkSum % 256;
                      if(wiflyData.checkSum != givenCheckSum)
                      {
-                         dbgFatalError(DBG_ERROR_WIFLY_CHECKSUM_MISSMATCH);
+                         toSend = makeWiflyMessage("\r\r ERROR Invalid CheckSum \r\r");
+                         wiflySendMsg(&toSend, portMAX_DELAY);
+                         wiflyData.stateFinished = true;
+                         wiflyData.rxState = OUT_OF_STATE;
+                         break;
                      }
                      wiflyData.stateFinished = true;
                  }
                  break;
              default:
-                 dbgFatalError(DBG_ERROR_WIFLY_INVALID_RX_STATE);
+                 toSend = makeWiflyMessage("\r\r ERROR Invalid input state entered \r\r");
+                 wiflySendMsg(&toSend, portMAX_DELAY);
+                 wiflyData.stateFinished = true;
+                 wiflyData.rxState = OUT_OF_STATE;
+                 break;
+                 
          }
                  
                  
@@ -225,10 +254,42 @@ void wiflyUsartTransmitEventHandler(const SYS_MODULE_INDEX index) {
  * Precondition:
  * There should not be a message currently being sent
  */
-void sendMsg(StandardQueueMessage msg) {
+void sendMsg(StandardQueueMessage msg, char *checkSum, char *messageLength, char *mCount) {
     unsigned int sentChars = 0;
+    //Start Char
     xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
     DRV_USART_WriteByte(wiflyData.usartHandle, START_CHAR);
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, ',');
+    
+    //Rover ID
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, THIS_ROVER_ID + INT_CHAR_DISTANCE);
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, ',');
+    
+    //count
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, mCount[0]);
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, mCount[1]);
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, mCount[2]);
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, ',');
+    
+    
+    //message length
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, messageLength[0]);
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, messageLength[1]);
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, messageLength[2]);
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, ',');
+    
+    //message
     const char * text = getWiflyText(&msg);
     while (text[sentChars] != 0) {
         // Wait till the tx buffer is free and transmit
@@ -236,6 +297,20 @@ void sendMsg(StandardQueueMessage msg) {
         DRV_USART_WriteByte(wiflyData.usartHandle,
                             text[sentChars++]);
     }
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, ',');
+
+    //checksum
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, messageLength[0]);
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, messageLength[1]);
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, messageLength[2]);
+    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
+    DRV_USART_WriteByte(wiflyData.usartHandle, ',');
+    
+    //stop char
     xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
     DRV_USART_WriteByte(wiflyData.usartHandle, STOP_CHAR);
     dbgOutputLoc(DBG_WIFLY_AFTER_USART_WRITE);
@@ -252,6 +327,39 @@ BaseType_t wiflySendMsg(StandardQueueMessage * message,
 // Section: Application Initialization and State Machine Functions
 // *****************************************************************************
 // *****************************************************************************
+
+
+/* 
+ *Generate check sum of message and message length
+ * 
+ * Precondition:
+ * message should be wifly message
+ */
+void messAnalysis(StandardQueueMessage msg, char *mesCheckSum, char *mesCount, char *mCount)
+{
+    const char * text = getWiflyText(&msg);
+    unsigned int charPlace = 0;
+    unsigned int checkSum = 0;
+    while (text[charPlace] != 0) {
+        checkSum += text[charPlace++];
+    }
+    checkSum = checkSum % 256;
+    mesCheckSum[0] = (int)(checkSum / 100) + INT_CHAR_DISTANCE;
+    mesCheckSum[1] = (int)(checkSum%100 / 10) + INT_CHAR_DISTANCE;
+    mesCheckSum[2] = (int)(checkSum%10) + INT_CHAR_DISTANCE;
+    
+    mesCount[0] = (int)(charPlace / 100) + INT_CHAR_DISTANCE;
+    mesCount[1] = (int)(charPlace%100 / 10) + INT_CHAR_DISTANCE;
+    mesCount[2] = (int)(charPlace%10) + INT_CHAR_DISTANCE;
+    
+    mCount[0] = (int)(wiflyData.txSequenceCount / 100) + INT_CHAR_DISTANCE;
+    mCount[1] = (int)(wiflyData.txSequenceCount%100 / 10) + INT_CHAR_DISTANCE;
+    mCount[2] = (int)(wiflyData.txSequenceCount++%10) + INT_CHAR_DISTANCE;
+    
+    //itoa(mesCount, charPlace, 10);
+    //itoa(mCount, wiflyData.rxSequenceCount++, 10);
+}
+
 
 /*******************************************************************************
   Function:
@@ -290,6 +398,7 @@ void WIFLY_Initialize ( void ) {
     wiflyData.rxBuffLen = 0;
     wiflyData.stateFinished = false;
     wiflyData.checkSum = 0;
+    wiflyData.txSequenceCount = 0;
     // Initial 'giving' to make it available
     xSemaphoreGive(wiflyData.txBufferSemaphoreHandle);
 }
@@ -308,7 +417,11 @@ void WIFLY_Tasks ( void ) {
     dbgOutputLoc(DBG_WIFLY_BEFORE_QUEUE_RECEIVE);
     standardQueueMessageReceive(wiflyData.toSendQ, &toSend, portMAX_DELAY);
     dbgOutputLoc(DBG_WIFLY_AFTER_QUEUE_RECEIVE);
-    sendMsg(toSend);
+    char mlength[3] = "000";
+    char cSum[3] = "000";
+    char mCount[3] = "000";
+    messAnalysis(toSend, cSum, mlength, mCount);
+    sendMsg(toSend, cSum, mlength, mCount);
     dbgOutputLoc(DBG_WIFLY_AFTER_MSG_SEND);
 }
 
