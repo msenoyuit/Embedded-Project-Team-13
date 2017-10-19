@@ -43,7 +43,7 @@ static bool getRightB() {
 // Handlers for when the A channel goes high. These are registered in
 // system_interrupt.c in the middle of the pregenerated code
 void lEncoderIsr() {
-    if (getLeftA() == getLeftB()) {
+    if (getLeftA() != getLeftB()) {
         lEncoderCount++;
     } else {
         lEncoderCount--;
