@@ -12,14 +12,11 @@
 #define COUNTS_PER_REVOLUTION = (298 * 12) // 298:1 gear ratio, 12 CPR encoder
 // Approximation, with pi = 3, r = 1.5 * 3/2
 #define ENCODER_TICKS_PER_INCH (COUNTS_PER_REVOLUTION / 3 * 3 / 2)
-// Used by speed calculations. These should only ever be modified by the
-// encoderSpeedCallback
-static volatile int lEncoderLastCount, rEncoderLastCount;
-static volatile size_t countBufPos;
 
-static volatile float lEncoderSpeed, rEncoderSpeed;
-// Encoder counts. These should only be modified by the encoder ISRs.
-static volatile int lEncoderCount, rEncoderCount;
+static volatile EncoderCounts encoderCounts = {.counts={0,0}};
+static volatile EncoderCounts encoderLastCounts = {.counts={0,0}};
+static volatile MotorSpeeds speeds = {.speeds={0,0}};
+
 // Timer for encoder speed callback
 static TimerHandle_t encoderSpeedTimer;
 
@@ -45,40 +42,36 @@ static bool getRightB() {
 // system_interrupt.c in the middle of the pregenerated code
 void lEncoderIsr() {
     if (getLeftA() != getLeftB()) {
-        lEncoderCount++;
+        encoderCounts.counts[LEFT_SIDE]++;
     } else {
-        lEncoderCount--;
+        encoderCounts.counts[LEFT_SIDE]--;
     }
 }
 
 void rEncoderIsr() {
     if (getRightA() == getRightB()) {
-        rEncoderCount++;
+        encoderCounts.counts[RIGHT_SIDE]++;
     } else {
-        rEncoderCount--;
+        encoderCounts.counts[RIGHT_SIDE]--;
     }
 }
 
 static void encoderSpeedCallback(TimerHandle_t timer) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
 
-    int lCount = getLeftEncoderCountISR();
-    int rCount = getRightEncoderCountISR();
+    EncoderCounts counts = getEncoderCountsISR();
 
-    float lNewSpeed = (lCount - lEncoderLastCount) * 1000 / SPEED_DELTA_T_MS;
-    float rNewSpeed = (rCount - rEncoderLastCount) * 1000 / SPEED_DELTA_T_MS;
+    int i = 0;
+    for (; i < 2; i++) { // For left and right
+        float newSpeed = (counts.counts[i] - encoderLastCounts.counts[i]) *
+            1000 / SPEED_DELTA_T_MS;
+        // Simple lowpass filter
+        speeds.speeds[i] = SPEED_FILTER_RATIO * speeds.speeds[i] +
+            (1 - SPEED_FILTER_RATIO) * newSpeed;
+        encoderLastCounts.counts[i] = counts.counts[i];
+    }
 
-    // Simple lowpass filter
-    lEncoderSpeed = SPEED_FILTER_RATIO * lEncoderSpeed +
-        (1 - SPEED_FILTER_RATIO) * lNewSpeed;
-    rEncoderSpeed = SPEED_FILTER_RATIO * rEncoderSpeed +
-        (1 - SPEED_FILTER_RATIO) * rNewSpeed;
-
-    lEncoderLastCount = lCount;
-    rEncoderLastCount = rCount;
-
-    StandardQueueMessage msg = makeMotorSpeedsReport(lEncoderSpeed,
-                                                     rEncoderSpeed);
+    StandardQueueMessage msg = makeMotorSpeedsReport(speeds);
     if(motorControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
        != pdTRUE) {
         dbgFatalError(DBG_ERROR_ENCODER_ISR);
@@ -89,12 +82,6 @@ static void encoderSpeedCallback(TimerHandle_t timer) {
 
 // Initialization **************************************************************
 void encodersInit(void) {
-    // Initialize file-static variables
-    lEncoderCount = rEncoderCount = 0;
-    lEncoderLastCount = rEncoderLastCount = 0;
-    lEncoderSpeed = rEncoderSpeed = 0;
-    countBufPos = 0;
-
     // Set up callback for calculating speed
     encoderSpeedTimer = xTimerCreate("Encoder speed timer",
                                      pdMS_TO_TICKS(SPEED_DELTA_T_MS),
@@ -110,58 +97,30 @@ void encodersInit(void) {
 
 // External Access Functions ***************************************************
 // Enter critical before reading to ensure it's not changed during read
-int getLeftEncoderCount(void) {
+EncoderCounts getEncoderCounts(void) {
     taskENTER_CRITICAL();
-    int count = lEncoderCount;
+    EncoderCounts result = encoderCounts;
     taskEXIT_CRITICAL();
-    return count;
+    return result;
 }
 
-int getRightEncoderCount(void) {
-    taskENTER_CRITICAL();
-    int count = rEncoderCount;
-    taskEXIT_CRITICAL();
-    return count;
-}
-
-int getLeftEncoderCountISR(void) {
+EncoderCounts getEncoderCountsISR(void) {
     UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
-    int result = lEncoderCount;
+    EncoderCounts result = encoderCounts;
     taskEXIT_CRITICAL_FROM_ISR(mask);
     return result;
 }
 
-int getRightEncoderCountISR(void) {
-    UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
-    int result = rEncoderCount;
-    taskEXIT_CRITICAL_FROM_ISR(mask);
+MotorSpeeds getEncoderSpeeds(void) {
+    taskENTER_CRITICAL();
+    MotorSpeeds result = speeds;
+    taskEXIT_CRITICAL();
     return result;
 }
 
-float getLeftEncoderSpeed(void) {
-    taskENTER_CRITICAL();
-    float speed = lEncoderSpeed;
-    taskEXIT_CRITICAL();
-    return speed;
-}
-
-float getRightEncoderSpeed(void) {
-    taskENTER_CRITICAL();
-    float speed = rEncoderSpeed;
-    taskEXIT_CRITICAL();
-    return speed;
-}
-
-float getLeftEncoderSpeedISR(void) {
+MotorSpeeds getEncoderSpeedsISR(void) {
     UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
-    float speed = lEncoderSpeed;
+    MotorSpeeds result = speeds;
     taskEXIT_CRITICAL_FROM_ISR(mask);
-    return speed;
-}
-
-float getRightEncoderSpeedISR(void) {
-    UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
-    float speed = rEncoderSpeed;
-    taskEXIT_CRITICAL_FROM_ISR(mask);
-    return speed;
+    return result;
 }

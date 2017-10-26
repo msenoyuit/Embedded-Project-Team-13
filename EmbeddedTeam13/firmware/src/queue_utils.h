@@ -10,7 +10,7 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "wifly_public.h"
-#include "motor_control_public.h"
+#include "motor_data_types.h"
 
 typedef enum {
     MESSAGE_COLOR_READING, 

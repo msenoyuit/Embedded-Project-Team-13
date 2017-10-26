@@ -4,23 +4,13 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "queue_utils.h"
+#include "motor_data_types.h"
 
 struct StandardQueueMessage;
 
-typedef enum {
-    LEFT,
-    RIGHT,
-} RobotDriveSide;
-
-/* Motor setting for standard queue message */
-typedef struct {    
-    float leftSpeed, rightSpeed;
-} MotorSpeeds;
-
-struct StandardQueueMessage makeMotorSpeeds(float left, float right);
-struct StandardQueueMessage makeMotorSpeedsReport(float left, float right);
-float getLeftSpeed(struct StandardQueueMessage * msg);
-float getRightSpeed(struct StandardQueueMessage * msg);
+struct StandardQueueMessage makeMotorSpeeds(MotorSpeeds speeds);
+struct StandardQueueMessage makeMotorSpeedsReport(MotorSpeeds speeds);
+MotorSpeeds getSpeeds(struct StandardQueueMessage * msg);
 
 BaseType_t motorControlSendMsgToQFromISR(struct StandardQueueMessage * message,
                                          BaseType_t * higherPriorityTaskWoken);

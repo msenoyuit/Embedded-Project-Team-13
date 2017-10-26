@@ -2,18 +2,15 @@
 #define	ENCODERS_H
 
 #include "FreeRTOS.h"
+#include "motor_data_types.h"
 
 void encodersInit(void);
 
-int getLeftEncoderCount(void);
-int getRightEncoderCount(void);
-int getLeftEncoderCountISR(void);
-int getRightEncoderCountISR(void);
+EncoderCounts getEncoderCounts(void);
+EncoderCounts getEncoderCountsISR(void);
 
-float getLeftEncoderSpeed(void);
-float getRightEncoderSpeed(void);
-float getLeftEncoderSpeedISR(void);
-float getRightEncoderSpeedISR(void);
+MotorSpeeds getEncoderSpeeds(void);
+MotorSpeeds getEncoderSpeedsISR(void);
 
 void lEncoderIsr();
 void rEncoderIsr();

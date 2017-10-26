@@ -171,7 +171,8 @@ void DRIVE_CONTROL_Tasks ( void ) {
     StandardQueueMessage receivedMessage;
 
     // TESTING
-    StandardQueueMessage msg = makeMotorSpeeds(300, 300);
+    StandardQueueMessage msg =
+        makeMotorSpeeds((MotorSpeeds){.speeds={300, 300}});
     motorControlSendMsgToQ(&msg, portMAX_DELAY);
 
     xQueueReceive(driveControlData.queue, &receivedMessage, portMAX_DELAY);
