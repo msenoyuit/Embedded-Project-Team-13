@@ -68,7 +68,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #define MOTOR_CONTROL_UPDATE_FREQUENCY_MS 50
 #define MAX_SIGNAL 65535   /* = 2^16 - 1; In timer roll-overs;  */
 #define MAX_SPEED 520      /* In counts/s; approximate measured value */
-#define SIGNAL_CHANGE_PER_ERROR 10
+#define SIGNAL_CHANGE_PER_ERROR_PER_S 500
+#define SIGNAL_CHANGE_PER_ERROR 8
 
 // *****************************************************************************
 /* Application Data
@@ -87,7 +88,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 MOTOR_CONTROL_DATA motorControlData;
 
-static int lSpeedDesired, rSpeedDesired;
+static float lSpeedDesired, rSpeedDesired;
+static TickType_t last_motor_control_update;
 
 // *****************************************************************************
 // *****************************************************************************
@@ -95,23 +97,20 @@ static int lSpeedDesired, rSpeedDesired;
 // *****************************************************************************
 // *****************************************************************************
 
-/* Implements a simple bang-bang-like speed control. Increases the signal by
- * SIGNAL_DELTA if we're below the desired speed, otherwise decreases the signal
- * by SIGNAL_DELTA.
- */
-static void motorControlCallback(TimerHandle_t timer) {
-    BaseType_t higherPriorityTaskWoken = pdFALSE;
-
-    int lSpeed, rSpeed;
-    lSpeed = getLeftEncoderSpeedISR();
-    rSpeed = getRightEncoderSpeedISR();
-
+static void motorControlUpdate(float lSpeed, float rSpeed) {
     int newLSignal, newRSignal;
+    TickType_t current_time = xTaskGetTickCount();
+    int elapsed_ms = ((current_time - last_motor_control_update) *
+                      portTICK_PERIOD_MS);
+    int signal_change_per_error = (SIGNAL_CHANGE_PER_ERROR_PER_S * elapsed_ms /
+                                   1000);
+    last_motor_control_update = current_time;
+    
     newLSignal = getLeftMotorSignal();
-    newLSignal += (lSpeedDesired - lSpeed) * SIGNAL_CHANGE_PER_ERROR;
+    newLSignal += (int)(lSpeedDesired - lSpeed) * SIGNAL_CHANGE_PER_ERROR;
 
     newRSignal = getRightMotorSignal();
-    newRSignal += (rSpeedDesired - rSpeed) * SIGNAL_CHANGE_PER_ERROR;
+    newRSignal += (int)(rSpeedDesired - rSpeed) * SIGNAL_CHANGE_PER_ERROR;
     
     if (newLSignal > MAX_SIGNAL) {
         newLSignal = MAX_SIGNAL;
@@ -125,10 +124,15 @@ static void motorControlCallback(TimerHandle_t timer) {
         newRSignal = -MAX_SIGNAL;
     }
 
+    if ((lSpeedDesired - lSpeed) / lSpeedDesired <= 0.05 &&
+        (rSpeedDesired - rSpeed) / rSpeedDesired <= 0.05) {
+        SYS_PORTS_PinSet(0, PORT_CHANNEL_A, 3);
+    } else {
+        SYS_PORTS_PinClear(0, PORT_CHANNEL_A, 3);
+    }
+
     setLeftMotorSignal(newLSignal);
     setRightMotorSignal(newRSignal);
-
-    portEND_SWITCHING_ISR(higherPriorityTaskWoken);
 }
 
 // *****************************************************************************
@@ -151,28 +155,8 @@ BaseType_t motorControlSendMsgToQ(StandardQueueMessage * message,
                                           time);
 }
 
-// Encoder Reading Message Functions *******************************************
-struct StandardQueueMessage makeEncoderReading(EncoderId encoder, int counts) {
-    StandardQueueMessage msg = {
-        .type = MESSAGE_ENCODER_READING,
-        .encoderReading.encoder = encoder,
-        .encoderReading.counts = counts,
-    };
-    return msg;
-}
-
-EncoderId getEncoderId(const struct StandardQueueMessage * msg) {
-    checkMessageType(msg, MESSAGE_ENCODER_READING);
-    return msg->encoderReading.encoder;
-}
-
-int getEncoderCount(const struct StandardQueueMessage * msg) {
-    checkMessageType(msg, MESSAGE_ENCODER_READING);
-    return msg->encoderReading.counts;
-}
-
 // Motor Speed Message Functions *******************************************
-struct StandardQueueMessage makeMotorSpeeds(int left, int right) {
+struct StandardQueueMessage makeMotorSpeeds(float left, float right) {
     StandardQueueMessage msg = {
         .type = MESSAGE_MOTOR_SPEEDS,
         .motorSpeeds.leftSpeed = left,
@@ -181,13 +165,22 @@ struct StandardQueueMessage makeMotorSpeeds(int left, int right) {
     return msg;
 }
 
-int getLeftSpeed(struct StandardQueueMessage * msg) {
-    checkMessageType(msg, MESSAGE_MOTOR_SPEEDS);
+struct StandardQueueMessage makeMotorSpeedsReport(float left, float right) {
+    StandardQueueMessage msg = {
+        .type = MESSAGE_MOTOR_SPEEDS_REPORT,
+        .motorSpeeds.leftSpeed = left,
+        .motorSpeeds.rightSpeed = right,
+    };
+    return msg;
+}
+
+float getLeftSpeed(struct StandardQueueMessage * msg) {
+    checkMessageType2(msg, MESSAGE_MOTOR_SPEEDS, MESSAGE_MOTOR_SPEEDS_REPORT);
     return msg->motorSpeeds.leftSpeed;
 }
 
-int getRightSpeed(struct StandardQueueMessage * msg) {
-    checkMessageType(msg, MESSAGE_MOTOR_SPEEDS);
+float getRightSpeed(struct StandardQueueMessage * msg) {
+    checkMessageType2(msg, MESSAGE_MOTOR_SPEEDS, MESSAGE_MOTOR_SPEEDS_REPORT);
     return msg->motorSpeeds.rightSpeed;
 }
 
@@ -212,18 +205,6 @@ void MOTOR_CONTROL_Initialize ( void ) {
         dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
     }
 
-    motorControlData.motorControlTimer =
-        xTimerCreate("Motor Control Timer",
-                     pdMS_TO_TICKS(MOTOR_CONTROL_UPDATE_FREQUENCY_MS), pdTRUE,
-                     ( void * ) 0, motorControlCallback);
-    if(motorControlData.motorControlTimer == NULL) {
-        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
-    }
-    // Start the timer
-    if(xTimerStart(motorControlData.motorControlTimer, 0) != pdPASS) {
-        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
-    }
-
     SYS_PORTS_Clear(PORTS_ID_0, PORT_CHANNEL_C, 14);
     SYS_PORTS_Clear(PORTS_ID_0, PORT_CHANNEL_G, 1);
 
@@ -236,6 +217,8 @@ void MOTOR_CONTROL_Initialize ( void ) {
     lSpeedDesired = rSpeedDesired = 0;
     setLeftMotorSignal(0);
     setRightMotorSignal(0);
+
+    last_motor_control_update = xTaskGetTickCount();
 
     encodersInit();
 }
@@ -255,14 +238,19 @@ void MOTOR_CONTROL_Tasks ( void ) {
     standardQueueMessageReceive(motorControlData.queue, &receivedMessage,
                                 portMAX_DELAY);
     dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_AFTER_QUEUE_RECEIVE);
-    
-    StandardQueueMessage msg;
-    msg.type = MESSAGE_WIFLY_MESSAGE;
+
     switch(receivedMessage.type) {
     case MESSAGE_MOTOR_SPEEDS:
-        lSpeedDesired = getLeftSpeed(&msg);
-        rSpeedDesired = getRightSpeed(&msg);
+        lSpeedDesired = getLeftSpeed(&receivedMessage);
+        rSpeedDesired = getRightSpeed(&receivedMessage);
         break;
+    case MESSAGE_MOTOR_SPEEDS_REPORT:
+        motorControlUpdate(getLeftSpeed(&receivedMessage),
+                           getRightSpeed(&receivedMessage));
+        break;
+    default:
+        ;
+        // pass
     }
 }
 

@@ -7,30 +7,20 @@
 
 struct StandardQueueMessage;
 
-/* Encoder value reporting for StandardQueueMessage */
 typedef enum {
-    L_ENCODER,
-    R_ENCODER,
-} EncoderId;
-
-typedef struct {
-    EncoderId encoder;
-    int counts;
-} EncoderReading;
-
-struct StandardQueueMessage makeEncoderReading(EncoderId encoder, int counts);
-EncoderId getEncoderId(const struct StandardQueueMessage * msg);
-int getEncoderCount(const struct StandardQueueMessage * msg);
+    LEFT,
+    RIGHT,
+} RobotDriveSide;
 
 /* Motor setting for standard queue message */
-typedef struct {
-    int leftSpeed, rightSpeed;
+typedef struct {    
+    float leftSpeed, rightSpeed;
 } MotorSpeeds;
 
-struct StandardQueueMessage makeMotorSpeeds(int left, int right);
-int getLeftSpeed(struct StandardQueueMessage * msg);
-int getRightSpeed(struct StandardQueueMessage * msg);
-
+struct StandardQueueMessage makeMotorSpeeds(float left, float right);
+struct StandardQueueMessage makeMotorSpeedsReport(float left, float right);
+float getLeftSpeed(struct StandardQueueMessage * msg);
+float getRightSpeed(struct StandardQueueMessage * msg);
 
 BaseType_t motorControlSendMsgToQFromISR(struct StandardQueueMessage * message,
                                          BaseType_t * higherPriorityTaskWoken);

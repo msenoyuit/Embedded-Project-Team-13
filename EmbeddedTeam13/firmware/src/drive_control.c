@@ -54,6 +54,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 
 #include "drive_control.h"
+#include "motor_control_public.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -103,8 +104,12 @@ typedef enum {
     LOST,
 } LinePosition;
     
-static LinePosition interpretLineSensorReading(bool farLeft, bool left,
-                                               bool right, bool farRight) {
+static LinePosition interpretLineSensorReading(char reading) {
+    bool farLeft = (reading & 0x80) != 0;
+    bool left = (reading & 0x70) != 0;
+    bool right = (reading & 0x0E);
+    bool farRight = (reading & 0x01) != 0;
+    
     if (!farLeft && !left && !right && !farRight) {
         return LOST;
     } else if (!farLeft && left && right && !farRight) {
@@ -165,14 +170,15 @@ BaseType_t driveControlSendMsgToQ(StandardQueueMessage * message,
 void DRIVE_CONTROL_Tasks ( void ) {
     StandardQueueMessage receivedMessage;
 
+    // TESTING
+    StandardQueueMessage msg = makeMotorSpeeds(300, 300);
+    motorControlSendMsgToQ(&msg, portMAX_DELAY);
+
     xQueueReceive(driveControlData.queue, &receivedMessage, portMAX_DELAY);
 
     switch (receivedMessage.type) {
     case MESSAGE_LINE_READING:
         // Forward to master_control for now
-        masterControlSendMsgToQ(&receivedMessage, portMAX_DELAY);
-        break;
-    case MESSAGE_ENCODER_READING:
         masterControlSendMsgToQ(&receivedMessage, portMAX_DELAY);
         break;
     }
