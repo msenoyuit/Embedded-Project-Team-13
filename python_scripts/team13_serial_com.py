@@ -26,7 +26,7 @@ sequenceCount = 0
 
 sendFreqCount = 0
 
-
+onceError = True
 
 def getPort():
     ports = ['COM%s' % (i + 1) for i in range(256)]
@@ -129,23 +129,39 @@ while True:
 
     elif currentState == State.PARSING_MESSAGE:
         if char == stop_byte:
+            #if("Wifly" in message):
             print(message)
+            #    print(sequenceCount)	
             if("ERROR" in message):
-                print("***********************ERROR************************************")
-                raise Exception("ERR")
+                print("")
+                print("__________________________ERROR____________________________________________________")
+                print("__________________________ERROR____________________________________________________")
+                print(message)
+                #print("***********************ERROR***********************************************")
+                print("")
+                #//raise Exception("ERR")
             updateStats(message)
             currentState = State.INIT
             # Send a reply message for each one received
-            stringToSend = '0,' + '{0:03}'.format(sequenceCount) + ',10,' + 'TestString,' + '{0:03}'.format(calculateChecksum('TestString'))
+            
             #print(stringToSend)
-            print(sequenceCount)			
+		
             sendFreqCount += 1
             if sendFreqCount % 10 == 0 and "Wifly" not in message and 1 == 1:
+                if(sendFreqCount % 100 == 0 and False):
+                    #sequenceCount = int(sequenceCount/2)
+                    stringToSend = '0,' + '{0:03}'.format(sequenceCount) + ',10,' + 'TestString,' + '{0:03}'.format(calculateChecksum('TestString'))
+                    print("***********************ERROR***********************************************")
+                    print("sent: ", stringToSend)
+                    print("***********************ERROR***********************************************")
+                else:
+                    stringToSend = '0,' + '{0:03}'.format(sequenceCount) + ',10,' + 'TestString,' + '{0:03}'.format(calculateChecksum('TestString'))
                 ser.write('+'.encode('ascii'))
                 ser.write(stringToSend.encode('ascii'))
                 ser.write('-'.encode('ascii'))
                 sequenceCount += 1
                 sequenceCount %= 256
+                
 
         else:
             message += chr(char)

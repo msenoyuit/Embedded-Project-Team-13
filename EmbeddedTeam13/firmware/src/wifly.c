@@ -60,16 +60,17 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
     char readByte = PLIB_USART_ReceiverByteReceive(USART_ID_1);
     dbgOutputLoc(DBG_WIFLY_RECEIVE_CALLBACK_MIDDLE);
     StandardQueueMessage toSend;
-#if USE_START_STOP
     /* TODO: Make all of this not terrible */
     
      if (readByte == START_CHAR) {
          wiflyData.rxMsgLen = 0; 
          wiflyData.rxState = ROVER_ID;
          wiflyData.checkSum = 0;
+         wiflyData.stateFinished = true;
      } else if (wiflyData.rxState == OUT_OF_STATE){
-             //do nothing  
-     } else  if (readByte == STOP_CHAR) { 
+             wiflyData.rxMsgLen = 0; 
+             wiflyData.stateFinished = true;
+     } else  if (readByte == STOP_CHAR && wiflyData.rxMsgLen > 0) { 
          wiflyData.rxBuff[wiflyData.rxMsgLen] = 0; // null terminate 
          wiflyData.rxState = OUT_OF_STATE;
          StandardQueueMessage message = makeWiflyMessage(wiflyData.rxBuff);
@@ -91,8 +92,10 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
                  wiflyData.stateFinished = true;
                  wiflyData.rxState = OUT_OF_STATE;
              }
+             else{
              wiflyData.rxState++;
              wiflyData.stateFinished = false;
+             }
          } 
          else
          {
@@ -122,7 +125,7 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
                      givenCount += (readByte - INT_CHAR_DISTANCE);
                      if(givenCount != wiflyData.rxSequenceCount++)
                      {
-                        toSend = makeWiflyMessage("\r\r ERROR Message count mismatch\r\r");
+                        toSend = printfWiflyMessage("\r\r ERROR Message count mismatch %d\r\r", wiflyData.rxSequenceCount);
                         wiflySendMsg(&toSend, portMAX_DELAY);
                         wiflyData.stateFinished = true;
                         wiflyData.rxState = OUT_OF_STATE;
@@ -205,23 +208,7 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
                  
          }
      } 
-#else
-    char tempBuffer[2] = {'a', '\0'};;
-    if(readByte == START_CHAR)
-    {
-        tempBuffer[0] = 'b';
-    }
-     if(readByte == STOP_CHAR)
-    {
-        tempBuffer[0] = 'c';
-    }
-    
-    StandardQueueMessage message = makeWiflyMessage(tempBuffer);
-    if (masterControlSendMsgToQFromISR(&message, &higherPriorityTaskWoken) 
-        != pdTRUE) { 
-        dbgFatalError(DBG_ERROR_WIFLY_RUN); 
-    } 
-#endif   
+
     dbgOutputLoc(DBG_WIFLY_RECEIVE_CALLBACK_END);
         
     portEND_SWITCHING_ISR(higherPriorityTaskWoken);

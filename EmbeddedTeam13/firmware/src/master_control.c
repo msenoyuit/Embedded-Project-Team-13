@@ -171,6 +171,8 @@ void MASTER_CONTROL_Tasks ( void ){
         toSend = printfWiflyMessage("Distance (cm): %d",
                                     getDistance(&receivedMessage));
         wiflySendMsg(&toSend, portMAX_DELAY);
+        toSend = makeDriveCommand(ALL_STOP, 0);
+        driveControlSendMsgToQ(&toSend, portMAX_DELAY);
         break;
     case MESSAGE_LINE_READING:
         toSend = printfWiflyMessage("Line Reading: 0x%x",
