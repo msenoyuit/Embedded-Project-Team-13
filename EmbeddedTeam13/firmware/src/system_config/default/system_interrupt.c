@@ -71,6 +71,26 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // Section: System Interrupt Vector Functions
 // *****************************************************************************
 // *****************************************************************************
+
+
+void IntHandlerDrvI2CInstance0(void)
+{
+    DRV_I2C_Tasks(sysObj.drvI2C0);
+ 
+}
+
+   
+
+ 
+ 
+ 
+
+ 
+
+
+
+
+
 void IntHandlerDrvUsartInstance0(void)
 {
     DRV_USART_TasksTransmit(sysObj.drvUsart0);
