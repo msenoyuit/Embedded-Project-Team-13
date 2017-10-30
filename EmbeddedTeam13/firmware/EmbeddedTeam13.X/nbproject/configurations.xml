@@ -52,6 +52,7 @@
         <itemPath>../src/motor_control_public.h</itemPath>
         <itemPath>../src/encoders.h</itemPath>
         <itemPath>../src/motors.h</itemPath>
+        <itemPath>../src/ir_sensor.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="framework" projectFiles="true">
         <logicalFolder name="f1" displayName="driver" projectFiles="true">
@@ -221,7 +222,6 @@
         <itemPath>../src/master_control.c</itemPath>
         <itemPath>../src/drive_control.c</itemPath>
         <itemPath>../src/motor_control.c</itemPath>
-        <itemPath>../src/ir_sensor.h</itemPath>
         <itemPath>../src/ir_sensor.c</itemPath>
         <itemPath>../src/color_sensor.c</itemPath>
         <itemPath>../src/line_sensor.c</itemPath>

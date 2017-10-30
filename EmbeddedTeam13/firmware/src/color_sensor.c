@@ -7,48 +7,47 @@
 #include "debug.h"
 
 #define COLOR_READ_FREQUENCY_MS 50
-#define TCS34725_ADDRESS 0x29
-#define ACK_DATA_LENGTH 1
-#define RX_DATA_LENGTH 4
+#define TCS34725_ADDRESS 0x52
+#define TX_DATA_LENGTH 1
+#define RX_DATA_LENGTH 32
 static TimerHandle_t color_timer;
 static DRV_HANDLE drvI2CHandle; // I2C Driver Handle
-static DRV_I2C_BUFFER_HANDLE hReadyBuffer; // Ready Buffer Handle
-static DRV_I2C_BUFFER_HANDLE hTxBuffer; // Transmit Buffer Handle
-static DRV_I2C_BUFFER_HANDLE hAckBuffer; // Acknoledge Buffer Handle
-static DRV_I2C_BUFFER_HANDLE hRxBuffer; // Receive Buffer Handle
-static uint8_t ackData = 0; // Hold the acknowledge polling data
-static uint8_t RxData[RX_DATA_LENGTH] = {0};  // Hold the received data
+static DRV_I2C_BUFFER_HANDLE txBuffer; // Transmit Buffer Handle
+static DRV_I2C_BUFFER_HANDLE rxBuffer; // Receive Buffer Handle
+static uint8_t txData = 3; // Holds the transmit data
+static uint8_t rxData[RX_DATA_LENGTH];  // Hold the received data
 
 static void colorTimerCallback(TimerHandle_t timer) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
-    int red = 0, green = 0, blue = 0, clear = 0;
+    
+    int red = 0, green = 0, blue = 0, clear = 2;
 
-    // Open I2C Connection
-    /*drvI2CHandle = DRV_HANDLE_INVALID;
-    drvI2CHandle = DRV_I2C_Open(I2C_ID_1, DRV_IO_INTENT_READWRITE | DRV_IO_INTENT_BLOCKING);
+    //clear = 4;
     
-    // Checks if I2C connection was successfully opened
-    if (drvI2CHandle != (DRV_HANDLE(NULL))) {
-        // Transmit read request to I2C
-        hAckBuffer = DRV_I2C_Transmit(drvI2CHandle, TCS34725_ADDRESS, (void *)&ackData, ACK_DATA_LENGTH, (void*)NULL);
-        
-        if(hAckBuffer != (DRV_I2C_BUFFER_HANDLE)NULL) {
-            hRxBuffer = DRV_I2C_Receive(drvI2CHandle, TCS34725_ADDRESS, (void *)&RxData[0], RX_DATA_LENGTH, (void*)NULL);
-            
-        }
-        // else indicate that error has occurred
-        
-        DRV_I2C_Close(drvI2CHandle);
-    }*/
-    // else indicate that error has occurred
+    // Initializes the color sensor so that's it's ready to transmit
+    txBuffer = DRV_I2C_Transmit(drvI2CHandle, TCS34725_ADDRESS, &txData, TX_DATA_LENGTH, NULL);
     
-    // Parse received data
-    red = (int)RxData[0];
-    green = (int)RxData[1];
-    blue = (int)RxData[2];
-    clear = (int)RxData[3];
+    if (txBuffer == (DRV_I2C_BUFFER_HANDLE)NULL) {
+        dbgFatalError(DBG_ERROR_COLOR_RUN);
+    }
     
-    // Pretend to read sensor
+    // Receive 32 bytes of data from the color sensor
+    rxBuffer = DRV_I2C_Receive(drvI2CHandle, TCS34725_ADDRESS, &rxData, RX_DATA_LENGTH, NULL);
+    
+    if (rxBuffer == (DRV_I2C_BUFFER_HANDLE)NULL) {
+        dbgFatalError(DBG_ERROR_COLOR_RUN);
+    }
+    
+    /*if (rxBuffer != (DRV_I2C_BUFFER_HANDLE)NULL) {*/
+        // Parse RGBC data from receive buffer
+        //clear = 6;
+     
+        clear = rxData[20] & (rxData[21] << 8);
+        red = rxData[22] & (rxData[23] << 8);
+        green = rxData[24] & (rxData[25] << 8);
+        blue = rxData[26] & (rxData[27] << 8);
+    //}
+    
     StandardQueueMessage msg = makeColorReading(red, green, blue, clear);
     if(masterControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
        != pdTRUE) {
@@ -69,7 +68,27 @@ void colorSensorInit(void) {
 
     // Enable the ADC
     DRV_ADC_Open();
-
+    
+    // Enable the I2C Module
+    drvI2CHandle = DRV_I2C_Open(DRV_I2C_INDEX_0, DRV_IO_INTENT_READWRITE | DRV_IO_INTENT_BLOCKING);
+    
+    if (drvI2CHandle == DRV_HANDLE_INVALID) {
+       dbgFatalError(DBG_ERROR_COLOR_INIT);
+    }
+    
+    // Initializes the color sensor so that's it's ready to transmit
+    /*txBuffer = DRV_I2C_Transmit(drvI2CHandle, TCS34725_ADDRESS, &txData, TX_DATA_LENGTH, NULL);
+    
+    if (txBuffer == (DRV_I2C_BUFFER_HANDLE)NULL) {
+        dbgFatalError(DBG_ERROR_COLOR_RUN);
+    }
+    
+    rxBuffer = DRV_I2C_Receive(drvI2CHandle, TCS34725_ADDRESS, &rxData, RX_DATA_LENGTH, NULL);
+    
+    if (rxBuffer == (DRV_I2C_BUFFER_HANDLE)NULL) {
+        dbgFatalError(DBG_ERROR_COLOR_RUN);
+    }*/
+    
     // Start the timer
     if(xTimerStart(color_timer, 0) != pdPASS) {
         dbgFatalError(DBG_ERROR_COLOR_INIT);

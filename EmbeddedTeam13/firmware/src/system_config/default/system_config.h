@@ -144,7 +144,7 @@ extern "C" {
 #define DRV_I2C_BIT_BANG_IDX0                           false
 #define DRV_I2C_STOP_IN_IDLE_IDX0                       false
 #define DRV_I2C_SMBus_SPECIFICATION_IDX0			    false
-#define DRV_I2C_BAUD_RATE_IDX0                    		50000
+#define DRV_I2C_BAUD_RATE_IDX0                    		57600
 #define DRV_I2C_BRG_CLOCK_IDX0	                  		80000000
 #define DRV_I2C_SLEW_RATE_CONTROL_IDX0      			false
 #define DRV_I2C_MASTER_INT_SRC_IDX0               		INT_SOURCE_I2C_1_MASTER

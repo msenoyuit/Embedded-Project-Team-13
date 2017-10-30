@@ -8,43 +8,24 @@
 
 #define LINE_READ_FREQUENCY_MS 50
 #define STM8S105C4_ADDRESS 0x51
-#define ACK_DATA_LENGTH 1
+#define TX_DATA_LENGTH 1
 #define RX_DATA_LENGTH 1
 static TimerHandle_t line_timer;
 static DRV_HANDLE drvI2CHandle; // I2C Driver Handle
-static DRV_I2C_BUFFER_HANDLE hReadyBuffer; // Ready Buffer Handle
-static DRV_I2C_BUFFER_HANDLE hTxBuffer; // Transmit Buffer Handle
-static DRV_I2C_BUFFER_HANDLE hAckBuffer; // Acknoledge Buffer Handle
-static DRV_I2C_BUFFER_HANDLE hRxBuffer; // Receive Buffer Handle
-static uint8_t ackData = 0; // Hold the acknowledge polling data
-static uint8_t RxData = 0; // HOld the received data
+static DRV_I2C_BUFFER_HANDLE txBuffer; // Transmit Buffer Handle
+static DRV_I2C_BUFFER_HANDLE rxBuffer; // Receive Buffer Handle
+static uint8_t txData = 3; // Holds the transmit data
+static uint8_t rxData[RX_DATA_LENGTH] = {0};  // Hold the received data
 
 static void lineTimerCallback(TimerHandle_t timer) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
 
     int line_reading = 0;
     
-    // Open I2C Connection
-    /*drvI2CHandle = DRV_HANDLE_INVALID;
-    drvI2CHandle = DRV_I2C_Open(I2C_ID_1, DRV_IO_INTENT_READWRITE | DRV_IO_INTENT_BLOCKING);
-    
-    // Checks if I2C connection was successfully opened
-    if (drvI2CHandle != (DRV_HANDLE(NULL))) {
-        // Transmit read request to I2C
-        hAckBuffer = DRV_I2C_Transmit(drvI2CHandle, STM8S105C4_ADDRESS, (void *)&ackData, ACK_DATA_LENGTH, (void*)NULL);
-        
-        if(hAckBuffer != (DRV_I2C_BUFFER_HANDLE)NULL) {
-            hRxBuffer = DRV_I2C_Receive(drvI2CHandle, STM8S105C4_ADDRESS, (void *)&RxData, RX_DATA_LENGTH, (void*)NULL);
-            
-        }
-        // else indicate that error has occurred
-        
-        DRV_I2C_Close(drvI2CHandle);
-    }*/
-    // else indicate that error has occurred
+    // Add I2C read and write functions
     
     // Parse receive data
-    line_reading = (int) RxData;
+    line_reading = rxData[0];
     
     // Pretend to read sensor
     StandardQueueMessage msg = makeLineReading(0);
@@ -68,6 +49,13 @@ void lineSensorInit(void) {
     // Enable the ADC
     DRV_ADC_Open();
 
+    // Enable the I2C Module
+    /*drvI2CHandle = DRV_I2C_Open(DRV_I2C_INDEX_0, DRV_IO_INTENT_READWRITE | DRV_IO_INTENT_NONBLOCKING);
+    
+    if (drvI2CHandle == DRV_HANDLE_INVALID) {
+       dbgFatalError(DBG_ERROR_COLOR_INIT);
+    }*/
+    
     // Start the timer
     if(xTimerStart(line_timer, 0) != pdPASS) {
         dbgFatalError(DBG_ERROR_LINE_INIT);
