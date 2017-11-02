@@ -18,7 +18,6 @@
 
 #define MOTOR_CONTROL_UPDATE_FREQUENCY_MS 50
 #define MAX_SIGNAL 65535   /* = 2^16 - 1; In timer roll-overs;  */
-#define MAX_SPEED 520      /* In counts/s; approximate measured value */
 #define SIGNAL_CHANGE_PER_ERROR_PER_S 500
 #define SIGNAL_CHANGE_PER_ERROR 8
 

@@ -62,6 +62,11 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 #define DRIVE_CONTROL_QUEUE_LEN 10
+#define DRIVE_CONTROL_INTERNAL_QUEUE_LEN 16
+#define FORWARD_DRIVE_SPEED (MOTOR_MAX_SPEED * 0.75)
+#define REVERSE_DRIVE_SPEED (-1 * MOTOR_MAX_SPEED * 0.75)
+#define TURN_SLOW_MULTIPLIER 0.5
+#define TURN_FAST_MULTIPLIER 1.0
 
 // *****************************************************************************
 /* Application Data
@@ -123,6 +128,68 @@ static LinePosition interpretLineSensorReading(char reading) {
     }
 }
 
+static void setMotorSpeeds(float left, float right) {
+    MotorSpeeds speeds = {.speeds={left, right}}
+    StardardQueueMessage msg = makeMotorSpeeds(speeds);
+    if (motorControlSendMsgToQ(&msg, 0) == errQUEUE_FULL) {
+        dbgFatalError(DBG_ERROR_DRIVE_CONTROL_RUN);
+    }
+}
+
+static void startNextDriveCommand(void) {
+    StandardQueueMessage command;
+    if (xQueuePeek(driveControlData.internal_queue, &command, 0)
+        == errQUEUE_EMPTY) {
+        return;
+    }
+    switch (getCommand(&command)) {
+    case MOVE_FORWARD:
+        setMotorSpeeds(FOREWARD_DRIVE_SPEED, FOREWARD_DRIVE_SPEED);
+        break;
+    case MOVE_BACKWARD:
+        setMotorSpeeds(REVERSE_DRIVE_SPEED, REVERSE_DRIVE_SPEED);
+        break;
+    case TURN_LEFT:
+        setMotorSpeeds(FOREWARD_DRIVE_SPEED * TURN_SLOW_MULTIPLIER,
+                       FOREWARD_DRIVE_SPEED * TURN_FAST_MULTIPLIER);
+        break;
+    case TURN_RIGHT:
+        break;
+        setMotorSpeeds(FOREWARD_DRIVE_SPEED * TURN_FAST_MULTIPLIER,
+                       FOREWARD_DRIVE_SPEED * TURN_SLOW_MULTIPLIER);
+    default:
+        dbgFatalError(DBG_ERROR_DRIVE_CONTROL_RUN);
+    }
+}
+
+static void addDriveCommand(StandardQueueMessage command) {
+    if (getCommand(&command) == ALL_STOP) {
+        StandardQueueMessage toDiscard;
+        // empty the queue
+        while (xQueueReceive(driveControlData.internal_queue, &toDiscard, 0)
+               != errQUEUE_EMPTY) {}
+        // stop the motors
+        setMotorSpeeds(0, 0);
+        // Tell master control we've done it
+        if (masterControlSendMsgToQ(&command, 0) == errQUE_FULL) {
+            dbgFatalError(DBG_ERROR_DRIVE_CONTROL_RUN);
+        }
+        return;
+    }
+
+    if (sendStandardQueueMessageToBack(driveControlData.internal_queue,
+                                       &command, 0) == errQUEUE_FULL) {
+        dbgFatalError(DBG_ERROR_DRIVE_CONTROL_INTERNAL_QUEUE_FULL);
+    }
+    if (uxQueueMessagesWaiting(driveControlData.internal_queue) == 1) {
+        startNextDriveCommand();
+    }
+}
+
+static void updateDrive(LinePosition position) {
+    
+}
+
 
 // *****************************************************************************
 // *****************************************************************************
@@ -139,10 +206,16 @@ static LinePosition interpretLineSensorReading(char reading) {
  */
 
 void DRIVE_CONTROL_Initialize ( void ) {
-    driveControlData.state = DRIVE_CONTROL_STATE_INIT;
     driveControlData.queue = xQueueCreate(DRIVE_CONTROL_QUEUE_LEN,
-                                         sizeof(StandardQueueMessage));
+                                          sizeof(StandardQueueMessage));
     if(driveControlData.queue == NULL) {
+        dbgFatalError(DBG_ERROR_DRIVE_CONTROL_INIT);
+    }
+
+    driveControlData.internal_queue =
+        xQueueCreate(DRIVE_CONTROL_INTERNAL_QUEUE_LEN,
+                     sizeof(StandardQueueMessage));
+    if(driveControlData.internal_queue == NULL) {
         dbgFatalError(DBG_ERROR_DRIVE_CONTROL_INIT);
     }
     
@@ -178,9 +251,10 @@ void DRIVE_CONTROL_Tasks ( void ) {
     xQueueReceive(driveControlData.queue, &receivedMessage, portMAX_DELAY);
 
     switch (receivedMessage.type) {
+    case MESSAGE_DRIVE_COMMAND:
+        addDriveCommand(receivedMessage);
     case MESSAGE_LINE_READING:
-        // Forward to master_control for now
-        masterControlSendMsgToQ(&receivedMessage, portMAX_DELAY);
+        updateDrive(interpretLineSensorReading(getline(&receivedmessage));
         break;
     }
 }

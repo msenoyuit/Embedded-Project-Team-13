@@ -6,6 +6,8 @@
 #include "queue_utils.h"
 #include "motor_data_types.h"
 
+#define MOTOR_MAX_SPEED 520      /* In counts/s; approximate measured value */
+
 struct StandardQueueMessage;
 
 struct StandardQueueMessage makeMotorSpeeds(MotorSpeeds speeds);

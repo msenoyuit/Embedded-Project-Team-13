@@ -76,29 +76,8 @@ extern "C" {
 // Section: Type Definitions
 // *****************************************************************************
 // *****************************************************************************
+
     
-// *****************************************************************************
-/* Application states
-
-  Summary:
-    Application states enumeration
-
-  Description:
-    This enumeration defines the valid application states.  These states
-    determine the behavior of the application at various times.
-*/
-
-typedef enum
-{
-	/* Application's state machine's initial state. */
-	DRIVE_CONTROL_STATE_INIT=0,
-	DRIVE_CONTROL_STATE_SERVICE_TASKS,
-
-	/* TODO: Define states used by the application state machine. */
-
-} DRIVE_CONTROL_STATES;
-
-
 // *****************************************************************************
 /* Application Data
 
@@ -112,14 +91,11 @@ typedef enum
     Application strings and buffers are be defined outside this structure.
  */
 
-typedef struct
-{
-    /* The application's current state */
-    DRIVE_CONTROL_STATES state;
-
+typedef struct {
     /* Queue handle */
     QueueHandle_t queue;
-
+    // Internal queue for received move commands
+    QueueHandle_t internal_queue;
 } DRIVE_CONTROL_DATA;
 
 
