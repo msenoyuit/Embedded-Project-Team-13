@@ -26,7 +26,7 @@ typedef enum {
 } MessageType;
 
 typedef enum moveCommand{
-    MOVE_FOWARD = 0,
+    MOVE_FORWARD = 0,
     MOVE_BACKWARD = 1,
     TURN_LEFT = 2,
     TURN_RIGHT = 3,
