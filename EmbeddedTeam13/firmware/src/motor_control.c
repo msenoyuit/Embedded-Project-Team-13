@@ -60,13 +60,13 @@ static void motorControlUpdate(MotorSpeeds speeds) {
     newSignals = getMotorSignals();
     int i = 0;
     for (; i < 2; i++) {
-        newSignals.signals[i] += (int)(speedsDesired.speeds[i] -
-                                       speeds.speeds[i] *
-                                       SIGNAL_CHANGE_PER_ERROR);
+        newSignals.signals[i] +=
+            (int)((speedsDesired.speeds[i] - speeds.speeds[i]) *
+                  SIGNAL_CHANGE_PER_ERROR);
         if (newSignals.signals[i] > MAX_SIGNAL) {
             newSignals.signals[i] = MAX_SIGNAL;
-        } else if (newSignals.signals[i] < -MAX_SIGNAL) {
-            newSignals.signals[i] = -MAX_SIGNAL;
+        } else if (newSignals.signals[i] < -1 * MAX_SIGNAL) {
+            newSignals.signals[i] = -1 * MAX_SIGNAL;
         }
     }
 
