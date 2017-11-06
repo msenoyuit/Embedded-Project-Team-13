@@ -113,6 +113,66 @@ BaseType_t masterControlSendMsgToQ(StandardQueueMessage * message,
     
 }
 
+static StandardQueueMessage sendLineReading(char reading) {
+    StandardQueueMessage msg = makeLineReading(reading);
+    driveControlSendMsgToQ(&msg, portMAX_DELAY);
+    msg = printfWiflyMessage("Line follower reading of %x sent", reading);
+    return msg;
+}
+
+static char * moveCommandTypeToStr(moveCommandType cmd) {
+    switch (cmd) {
+    case MOVE_FORWARD:
+        return "MOVE_FORWARD";
+    case MOVE_BACKWARD:
+        return "MOVE_BACKWARD";
+    case TURN_LEFT:
+        return "TURN_LEFT";
+    case TURN_RIGHT:
+        return "TURN_RIGHT";
+    case ALL_STOP:
+        return "ALL_STOP";
+    default:
+        return "invalid move command!";
+    }
+}
+
+static StandardQueueMessage sendDriveCommand(moveCommandType cmd) {
+    static int id = 0;
+    StandardQueueMessage msg = makeDriveCommand(cmd, id);
+    driveControlSendMsgToQ(&msg, portMAX_DELAY);
+    msg = printfWiflyMessage("Drive command %s with id %d sent",
+                             moveCommandTypeToStr(cmd), id);
+    id++;
+    return msg;
+}
+
+static StandardQueueMessage handleMessage(const char * message) {
+    if (strcmp(message, "centered") == 0) {
+        return sendDriveCommand(0x70 & 0x0E);
+    } else if (strcmp(message, "right") == 0) {
+        return sendDriveCommand(0x00 & 0x0E);
+    } else if (strcmp(message, "left") == 0) {
+        return sendDriveCommand(0x70 & 0x00);
+    } else if (strcmp(message, "intersection") == 0) {
+        return sendDriveCommand(0xF0 & 0x0F);
+    } else if (strcmp(message, "unknown") == 0) {
+        return sendDriveCommand(0x00 & 0x00);
+    } else if (strcmp(message, "forward") == 0) {
+        return sendDriveCommand(MOVE_FORWARD);
+    } else if (strcmp(message, "backward") == 0) {
+        return sendDriveCommand(MOVE_BACKWARD);
+    } else if (strcmp(message, "turn left") == 0) {
+        return sendDriveCommand(TURN_LEFT);
+    } else if (strcmp(message, "turn right") == 0) {
+        return sendDriveCommand(TURN_RIGHT);
+    } else if (strcmp(message, "all stop") == 0) {
+        return sendDriveCommand(ALL_STOP);
+    } else {
+        return printfWiflyMessage("'%s' is not a recognized command", message);
+    }
+}
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Initialization and State Machine Functions
@@ -159,31 +219,19 @@ void MASTER_CONTROL_Tasks ( void ){
     StandardQueueMessage receivedMessage;
     StandardQueueMessage toSend;
 
-    standardQueueMessageReceive(masterControlData.queue, &receivedMessage, portMAX_DELAY);
+    standardQueueMessageReceive(masterControlData.queue, &receivedMessage,
+                                portMAX_DELAY);
     
     // Handle the message
     switch (receivedMessage.type) {
     case MESSAGE_WIFLY_MESSAGE:
-        toSend = printfWiflyMessage("Wifly Echo: %s\n\r", getWiflyText(&receivedMessage));
+        toSend = handleMessage(getWiflyText(&receivedMessage));
         wiflySendMsg(&toSend, portMAX_DELAY);
         break;
-    case MESSAGE_DISTANCE_READING:
-        toSend = printfWiflyMessage("Distance (cm): %d\n\r",
-                                    getDistance(&receivedMessage));
-        wiflySendMsg(&toSend, portMAX_DELAY);
-        break;
-    case MESSAGE_LINE_READING:
-        toSend = printfWiflyMessage("Line Reading: 0x%x\n\r",
-                                    getLine(&receivedMessage));
-        wiflySendMsg(&toSend, portMAX_DELAY);
-        break;
-    case MESSAGE_COLOR_READING:
-        toSend = printfWiflyMessage("Color Reading: R %d, G %d, B %d, C %d\n\r",
-                                    getRed(&receivedMessage),
-                                    getGreen(&receivedMessage),
-                                    getBlue(&receivedMessage),
-                                    getClear(&receivedMessage));
-        wiflySendMsg(&toSend, portMAX_DELAY);
+    case MESSAGE_DRIVE_COMMAND:
+        toSend = printfWiflyMessage("Drive command %s with id %d complete",
+                                    getCommand(&receivedMessage),
+                                    getMessageId(&receivedMessage));
         break;
     }
 }

@@ -143,7 +143,7 @@ static void updateDriveOutput(void) {
     }
     if (cmdComplete) {
         StandardQueueMessage command;
-        if (xQueueReceive(driveControlData.internalQueue &command, 0)
+        if (xQueueReceive(driveControlData.internalQueue, &command, 0)
             == errQUEUE_EMPTY) {
             dbgFatalError(DBG_ERROR_DRIVE_CONTROL_RUN);
         }

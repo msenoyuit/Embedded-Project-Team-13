@@ -176,6 +176,7 @@ void MOTOR_CONTROL_Tasks ( void ) {
     switch(receivedMessage.type) {
     case MESSAGE_MOTOR_SPEEDS:
         speedsDesired = getSpeeds(&receivedMessage);
+        
         break;
     case MESSAGE_MOTOR_SPEEDS_REPORT:
         motorControlUpdate(getSpeeds(&receivedMessage));
