@@ -29,6 +29,7 @@ sendFreqCount = 0
 
 
 def getPort():
+    return "/dev/tty.usbserial-A702ZMVF"  # For osx!
     ports = ['COM%s' % (i + 1) for i in range(256)]
     for port in ports:
         try:
