@@ -58,6 +58,7 @@ typedef enum {
 typedef struct {
     bool startCleared;
     moveCommandType currentCommand;
+    StandardQueueMessage currentCommandMsg;
     LinePosition linePos;
     /* Queue handle */
     QueueHandle_t queue;

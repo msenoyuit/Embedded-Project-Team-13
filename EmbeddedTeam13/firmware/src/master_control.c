@@ -116,7 +116,7 @@ BaseType_t masterControlSendMsgToQ(StandardQueueMessage * message,
 static StandardQueueMessage sendLineReading(char reading) {
     StandardQueueMessage msg = makeLineReading(reading);
     driveControlSendMsgToQ(&msg, portMAX_DELAY);
-    msg = printfWiflyMessage("Line follower reading of %x sent", reading);
+    msg = printfWiflyMessage("Line follower reading of %02x sent", reading);
     return msg;
 }
 
@@ -149,18 +149,18 @@ static StandardQueueMessage sendDriveCommand(moveCommandType cmd) {
 
 static StandardQueueMessage handleMessage(const char * message) {
     if (strcmp(message, "centered") == 0) {
-        return sendDriveCommand(0x70 & 0x0E);
+        return sendLineReading(0x70 | 0x0E);
     } else if (strcmp(message, "right") == 0) {
-        return sendDriveCommand(0x00 & 0x0E);
+        return sendLineReading(0x00 | 0x0E);
     } else if (strcmp(message, "left") == 0) {
-        return sendDriveCommand(0x70 & 0x00);
+        return sendLineReading(0x70 | 0x00);
     } else if (strcmp(message, "intersection") == 0) {
-        return sendDriveCommand(0xF0 & 0x0F);
+        return sendLineReading(0xF0 | 0x0F);
     } else if (strcmp(message, "unknown") == 0) {
-        return sendDriveCommand(0x00 & 0x00);
+        return sendLineReading(0x00 | 0x00);
     } else if (strcmp(message, "forward") == 0) {
         return sendDriveCommand(MOVE_FORWARD);
-    } else if (strcmp(message, "backward") == 0) {
+    } else if (strcmp(message, "reverse") == 0) {
         return sendDriveCommand(MOVE_BACKWARD);
     } else if (strcmp(message, "turn left") == 0) {
         return sendDriveCommand(TURN_LEFT);
@@ -229,9 +229,13 @@ void MASTER_CONTROL_Tasks ( void ){
         wiflySendMsg(&toSend, portMAX_DELAY);
         break;
     case MESSAGE_DRIVE_COMMAND:
+        ;
+        char * moveCommandStr =
+            moveCommandTypeToStr(getCommand(&receivedMessage));
         toSend = printfWiflyMessage("Drive command %s with id %d complete",
-                                    getCommand(&receivedMessage),
+                                    moveCommandStr,
                                     getMessageId(&receivedMessage));
+        wiflySendMsg(&toSend, portMAX_DELAY);
         break;
     }
 }

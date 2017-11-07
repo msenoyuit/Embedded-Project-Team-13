@@ -18,7 +18,7 @@
 #define DRIVE_SPEED (MOTOR_MAX_SPEED * 0.75)
 #define TURN_SLOW_MULTIPLIER 0.5
 #define TURN_FAST_MULTIPLIER 1.0
-#define FOLLOW_CORRECT_SLOW_MULTIPLIER 0.7
+#define FOLLOW_CORRECT_SLOW_MULTIPLIER 0.5
 #define FOLLOW_CORRECT_FAST_MULTIPLIER 1.0
 
 // *****************************************************************************
@@ -113,6 +113,7 @@ static void startNextDriveCommand(void);
 static void updateDriveOutput(void) {
     LinePosition pos = driveControlData.linePos;
     moveCommandType cmd = driveControlData.currentCommand;
+    
     bool cmdComplete = false;
     if (cmd == MOVE_FORWARD || cmd == MOVE_BACKWARD) {
         DriveDir dir = cmd == MOVE_FORWARD ? FORWARD : REVERSE;
@@ -142,12 +143,8 @@ static void updateDriveOutput(void) {
         stopMotors();
     }
     if (cmdComplete) {
-        StandardQueueMessage command;
-        if (xQueueReceive(driveControlData.internalQueue, &command, 0)
-            == errQUEUE_EMPTY) {
-            dbgFatalError(DBG_ERROR_DRIVE_CONTROL_RUN);
-        }
-        if (masterControlSendMsgToQ(&command, 0) == errQUEUE_FULL) {
+        if (masterControlSendMsgToQ(&driveControlData.currentCommandMsg, 0)
+              == errQUEUE_FULL) {
             dbgFatalError(DBG_ERROR_DRIVE_CONTROL_RUN);
         }
         startNextDriveCommand();
@@ -155,14 +152,16 @@ static void updateDriveOutput(void) {
 }
 
 static void startNextDriveCommand(void) {
-    StandardQueueMessage command;
-    if (xQueuePeek(driveControlData.internalQueue, &command, 0)
-        == errQUEUE_EMPTY) {
+    if (uxQueueMessagesWaiting(driveControlData.internalQueue) == 0) {
         driveControlData.currentCommand = ALL_STOP;
+        updateDriveOutput();
         return;
     }
+    xQueueReceive(driveControlData.internalQueue,
+                  &driveControlData.currentCommandMsg, 0);
+    driveControlData.currentCommand =
+        getCommand(&driveControlData.currentCommandMsg);
     driveControlData.startCleared = false;
-    driveControlData.currentCommand = getCommand(&command);
     updateDriveOutput();
 }
 
@@ -172,12 +171,12 @@ static void addDriveCommand(StandardQueueMessage command) {
         // empty the queue
         while (xQueueReceive(driveControlData.internalQueue, &toDiscard, 0)
                != errQUEUE_EMPTY) {}
-        stopMotors();
+        driveControlData.currentCommand = ALL_STOP;
+        updateDriveOutput();
         // Tell master control we've done it
         if (masterControlSendMsgToQ(&command, 0) == errQUEUE_FULL) {
             dbgFatalError(DBG_ERROR_DRIVE_CONTROL_RUN);
         }
-        driveControlData.currentCommand = ALL_STOP;
         return;
     }
 
@@ -185,7 +184,7 @@ static void addDriveCommand(StandardQueueMessage command) {
                                        &command, 0) == errQUEUE_FULL) {
         dbgFatalError(DBG_ERROR_DRIVE_CONTROL_INTERNAL_QUEUE_FULL);
     }
-    if (uxQueueMessagesWaiting(driveControlData.internalQueue) == 1) {
+    if (driveControlData.currentCommand == ALL_STOP) {
         startNextDriveCommand();
     }
 }
@@ -193,7 +192,7 @@ static void addDriveCommand(StandardQueueMessage command) {
 static LinePosition interpretLineSensorReading(char reading) {
     bool farLeft = (reading & 0x80) != 0;
     bool left = (reading & 0x70) != 0;
-    bool right = (reading & 0x0E);
+    bool right = (reading & 0x0E) != 0;
     bool farRight = (reading & 0x01) != 0;
     
     if (!farLeft && !left && !right && !farRight) {
@@ -210,11 +209,8 @@ static LinePosition interpretLineSensorReading(char reading) {
 }
 
 static void handleLineSensorReading(char reading) {
-    LinePosition newPos = interpretLineSensorReading(reading);
-    if (driveControlData.linePos != newPos) {
-        driveControlData.linePos = newPos;
-        updateDriveOutput();
-    }
+    driveControlData.linePos = interpretLineSensorReading(reading);
+    updateDriveOutput();
 }
 
 // *****************************************************************************
@@ -279,6 +275,7 @@ void DRIVE_CONTROL_Tasks ( void ) {
     switch (receivedMessage.type) {
     case MESSAGE_DRIVE_COMMAND:
         addDriveCommand(receivedMessage);
+        break;
     case MESSAGE_LINE_READING:
         handleLineSensorReading(getLine(&receivedMessage));
         break;

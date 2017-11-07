@@ -38,10 +38,10 @@ def readByte():
 
 
 def calculateChecksum(payloadMessage):
-    sum = 0
+    _sum = 0
     for char in payloadMessage:
-        sum += ord(char)
-    return sum & 0xFF
+        _sum += ord(char)
+    return _sum & 0xFF
 
 
 sequenceCount = 0
@@ -49,8 +49,12 @@ sequenceCount = 0
 
 def sendMessage(message):
     global sequenceCount
+    message = message.strip()
+    if (message == 'reset'):
+        sequenceCount = 0
+        return
     stringToSend = '0,{0:03},{1:02},{2},{3:03}'.format(
-        sequenceCount, len(message), message, calculateChecksum('TestString'))
+        sequenceCount, len(message), message, calculateChecksum(message))
     ser.write('+'.encode('ascii'))
     ser.write(stringToSend.encode('ascii'))
     ser.write('-'.encode('ascii'))
@@ -60,6 +64,7 @@ def sendMessage(message):
 
 def processRead(char):
     global currentState
+    global message
     # State machine for reading in message
     if currentState == State.INIT:
         # wait for start character
@@ -69,7 +74,7 @@ def processRead(char):
 
     elif currentState == State.PARSING_MESSAGE:
         if char == stop_byte:
-            print(message)
+            print('> {}'.format(message))
             currentState = State.INIT
         else:
             message += chr(char)
