@@ -87,6 +87,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 */
 
 MASTER_CONTROL_DATA masterControlData;
+SEND_DATA_TAG masterDataTag;
+int otherLineOn;
 
 // *****************************************************************************
 // *****************************************************************************
@@ -131,11 +133,16 @@ void MASTER_CONTROL_Initialize ( void ) {
     dbgInit();
     dbgOutputLoc(DBG_TASK_ENTRY);
 
+    
     /* Initialize Sensors */
     irSensorInit();
     colorSensorInit();
     lineSensorInit();
-
+    masterDataTag.color = 0;
+    masterDataTag.encoder = 0;
+    masterDataTag.lineOn = 0;
+    masterDataTag.distance = 1;
+    masterControlData.motorQueueCount = 0;
     /* Configure Queue */
     masterControlData.queue = xQueueCreate(MASTER_CONTROL_QUEUE_LEN,
                                          sizeof(StandardQueueMessage));
@@ -155,6 +162,50 @@ void MASTER_CONTROL_Initialize ( void ) {
     See prototype in master_control.h.
  */
 
+StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
+    checkMessageType(msg, MESSAGE_WIFLY_MESSAGE);
+    StandardQueueMessage outMsg;
+    StandardQueueMessage toSend;
+    const char * text = getWiflyText(msg);
+    
+    piCommandType piCommand = text[0] - INT_CHAR_DISTANCE;
+    piSpecifierType piSpecifier = text[2] - INT_CHAR_DISTANCE;
+    piFlagsType piFlag = COMMAND_RECEIVED;
+    outMsg = printfWiflyMessage("%d %d %d", piCommand, piSpecifier, piFlag);
+    
+    switch(piCommand)
+    {
+        case MOVE_COMMAND:
+            toSend = makeDriveCommand(piSpecifier, masterControlData.motorQueueCount++);
+            driveControlSendMsgToQ(&toSend, portMAX_DELAY);
+            break;
+        case READ_COMMAND:
+            //currently not used
+            break;
+        case PICKUP_COMMAND:
+            //start pickup sequence
+            break;
+        case STREAM_START:
+            masterDataTag.color |=  (piSpecifier == COLOR_SENSOR);
+            //masterDataTag.encoder = masterDataTag.encoder || piSpecifier == 4;
+            masterDataTag.lineOn |=  (piSpecifier == LINE_SENSOR);
+            masterDataTag.distance |= (piSpecifier == DISTANCE_SENSOR);
+            break;
+        case STREAM_STOP:
+            masterDataTag.color &=  (piSpecifier != COLOR_SENSOR);
+            //masterDataTag.encoder = masterDataTag.encoder || piSpecifier == 4;
+            masterDataTag.lineOn &=  (piSpecifier != LINE_SENSOR);
+            masterDataTag.distance &= (piSpecifier != DISTANCE_SENSOR);
+
+            break;
+        default:
+            outMsg = printfWiflyMessage(text);
+    }
+    
+    return outMsg;
+}
+
+
 void MASTER_CONTROL_Tasks ( void ){
     StandardQueueMessage receivedMessage;
     StandardQueueMessage toSend;
@@ -164,35 +215,46 @@ void MASTER_CONTROL_Tasks ( void ){
     // Handle the message
     switch (receivedMessage.type) {
     case MESSAGE_WIFLY_MESSAGE:
-        toSend = printfWiflyMessage("Wifly Echo: %s", getWiflyText(&receivedMessage));
+        toSend = handleWiflyCommand(&receivedMessage);
         wiflySendMsg(&toSend, portMAX_DELAY);
         break;
     case MESSAGE_DISTANCE_READING:
-        toSend = printfWiflyMessage("Distance (cm): %d",
+        if(masterDataTag.distance)
+        {
+            toSend = printfWiflyMessage("Distance (cm): %d",
                                     getDistance(&receivedMessage));
-        wiflySendMsg(&toSend, portMAX_DELAY);
-        toSend = makeDriveCommand(ALL_STOP, 0);
-        driveControlSendMsgToQ(&toSend, portMAX_DELAY);
+            wiflySendMsg(&toSend, portMAX_DELAY);
+        }
         break;
     case MESSAGE_LINE_READING:
-        toSend = printfWiflyMessage("Line Reading: 0x%x",
-                                    getLine(&receivedMessage));
-        wiflySendMsg(&toSend, portMAX_DELAY);
+        if(masterDataTag.lineOn)
+        {
+            toSend = printfWiflyMessage("Line Reading: 0x%x",
+                                        getLine(&receivedMessage));
+            wiflySendMsg(&toSend, portMAX_DELAY); 
+        }
         break;
     case MESSAGE_COLOR_READING:
-        toSend = printfWiflyMessage("Color Reading: R %d G %d B %d C %d",
-                                    getRed(&receivedMessage),
-                                    getGreen(&receivedMessage),
-                                    getBlue(&receivedMessage),
-                                    getClear(&receivedMessage));
-        wiflySendMsg(&toSend, portMAX_DELAY);
+        if(masterDataTag.color)
+        {
+            toSend = printfWiflyMessage("Color Reading: R %d G %d B %d C %d",
+                                        getRed(&receivedMessage),
+                                        getGreen(&receivedMessage),
+                                        getBlue(&receivedMessage),
+                                        getClear(&receivedMessage));
+            wiflySendMsg(&toSend, portMAX_DELAY);
+        }
         break;
     case MESSAGE_ENCODER_READING:
-        toSend = printfWiflyMessage("%s encoder: %d counts",
-                                    (getEncoderId(&receivedMessage) ==
-                                     L_ENCODER ? "Left" : "Right"),
-                                    getEncoderCount(&receivedMessage));
-        wiflySendMsg(&toSend, portMAX_DELAY);
+        if(masterDataTag.encoder)
+        {
+            toSend = printfWiflyMessage("%s encoder: %d counts",
+                                        (getEncoderId(&receivedMessage) ==
+                                         L_ENCODER ? "Left" : "Right"),
+                                        getEncoderCount(&receivedMessage));
+            wiflySendMsg(&toSend, portMAX_DELAY);
+            
+        }
         break;
     }
 }

@@ -4,6 +4,7 @@
 #include "timers.h"
 
 #include "master_control_public.h"
+
 #include "debug.h"
 
 #define COLOR_READ_FREQUENCY_MS 50

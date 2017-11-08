@@ -146,7 +146,7 @@ void DRIVE_CONTROL_Tasks ( void ) {
     StandardQueueMessage receivedMessage;
     StandardQueueMessage toSend;
     xQueueReceive(driveControlData.queue, &receivedMessage, portMAX_DELAY);
-    moveCommandType command;
+    piSpecifierType command;
     int commandId;
     switch (receivedMessage.type) {
     case MESSAGE_LINE_READING:
