@@ -53,6 +53,7 @@ void irSensorInit(void) {
     if(ir_timer == NULL) {
         dbgFatalError(DBG_ERROR_IR_INIT);
     }
+    
     // Start the timer
     if(xTimerStart(ir_timer, 0) != pdPASS) {
         dbgFatalError(DBG_ERROR_IR_INIT);
