@@ -148,25 +148,25 @@ static StandardQueueMessage sendDriveCommand(moveCommandType cmd) {
 }
 
 static StandardQueueMessage handleMessage(const char * message) {
-    if (strcmp(message, "centered") == 0) {
+    if (strcmp(message, "reading centered") == 0) {
         return sendLineReading(0x70 | 0x0E);
-    } else if (strcmp(message, "right") == 0) {
+    } else if (strcmp(message, "reading right") == 0) {
         return sendLineReading(0x00 | 0x0E);
-    } else if (strcmp(message, "left") == 0) {
+    } else if (strcmp(message, "reading left") == 0) {
         return sendLineReading(0x70 | 0x00);
-    } else if (strcmp(message, "intersection") == 0) {
+    } else if (strcmp(message, "reading intersection") == 0) {
         return sendLineReading(0xF0 | 0x0F);
-    } else if (strcmp(message, "unknown") == 0) {
+    } else if (strcmp(message, "reading unknown") == 0) {
         return sendLineReading(0x00 | 0x00);
-    } else if (strcmp(message, "forward") == 0) {
+    } else if (strcmp(message, "go forward") == 0) {
         return sendDriveCommand(MOVE_FORWARD);
-    } else if (strcmp(message, "reverse") == 0) {
+    } else if (strcmp(message, "go backward") == 0) {
         return sendDriveCommand(MOVE_BACKWARD);
-    } else if (strcmp(message, "turn left") == 0) {
+    } else if (strcmp(message, "go left") == 0) {
         return sendDriveCommand(TURN_LEFT);
-    } else if (strcmp(message, "turn right") == 0) {
+    } else if (strcmp(message, "go right") == 0) {
         return sendDriveCommand(TURN_RIGHT);
-    } else if (strcmp(message, "all stop") == 0) {
+    } else if (strcmp(message, "stop") == 0) {
         return sendDriveCommand(ALL_STOP);
     } else {
         return printfWiflyMessage("'%s' is not a recognized command", message);
