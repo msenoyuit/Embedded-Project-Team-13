@@ -56,7 +56,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "master_control.h"
 #include "master_control_public.h"
 #include "wifly_public.h"
-#include "ir_sensor.h"
+//#include "ir_sensor.h"
 #include "queue_utils.h"
 #include "color_sensor.h"
 #include "line_sensor.h"
@@ -134,8 +134,8 @@ void MASTER_CONTROL_Initialize ( void ) {
     /* Initialize Sensors */
     irSensorInit();
     colorSensorInit();
-    lineSensorInit();
-
+    //lineSensorInit();
+ 
     /* Configure Queue */
     masterControlData.queue = xQueueCreate(MASTER_CONTROL_QUEUE_LEN,
                                          sizeof(StandardQueueMessage));
