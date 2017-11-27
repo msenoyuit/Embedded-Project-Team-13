@@ -66,7 +66,7 @@ typedef enum piCommand{
     STREAM_START = 3,//sensor
     STREAM_STOP = 4, //sensor
 } piCommandType;
-
+/*
 typedef enum piSpecifier{
     NORTH_MOVE = 0,
     EAST_MOVE = 1,
@@ -76,7 +76,7 @@ typedef enum piSpecifier{
     COLOR_SENSOR = 5,
     DISTANCE_SENSOR = 6,    
 }piSpecifierType;
-
+*/
 typedef enum piFlags {
     COMMAND_RECEIVED = 0,
     COMMAND_FINISHED = 1,
