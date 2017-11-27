@@ -20,14 +20,30 @@ lCount = 0
 '''wTime = time.clock()
 wTimeAvg = 0
 wCount = 0'''
+commandList = ['3 5 1', '3 6 1', '3 7 1', '4 5 1', '4 6 1','3 5 1','4 7 1', '0 1 1']
 messageStartTime = 0
 
 sequenceCount = 0
 
 sendFreqCount = 0
 
+commandNumber = 0
 
+onceError = True
+def calculateChecksum(payloadMessage):
+    sum = 0
+    for char in payloadMessage:
+        sum += ord(char)
+    return sum & 0xFF
 
+def formatString(inString):
+    idNumber = '0'
+    strLength = '{0:02}'.format(len(inString))
+    seqCount = '{0:03}'.format(sequenceCount)
+    checkSum = '{0:03}'.format(calculateChecksum(inString))
+    stringToSend = idNumber + ',' + seqCount + ',' + strLength + ',' + inString + ',' + checkSum
+    return stringToSend
+    
 def getPort():
     ports = ['COM%s' % (i + 1) for i in range(256)]
     for port in ports:
@@ -48,7 +64,11 @@ ser = serial.Serial(
     timeout=1.1)
 
 print("connected to: " + ser.portstr)
-
+stringToSend = formatString("3 5 1")
+#ser.write('+'.encode('ascii'))
+#ser.write(stringToSend.encode('ascii'))
+#ser.write('-'.encode('ascii'))
+#sequenceCount += 1
 def readByte():
     return int.from_bytes(ser.read(1),  byteorder='little')
 	
@@ -102,11 +122,7 @@ def updateStats(readMessage):
             wTimeAvg = 0
             wCount = 0'''
 
-def calculateChecksum(payloadMessage):
-    sum = 0
-    for char in payloadMessage:
-        sum += ord(char)
-    return sum & 0xFF
+
 
 class State(Enum):
     INIT            = 0
@@ -129,20 +145,44 @@ while True:
 
     elif currentState == State.PARSING_MESSAGE:
         if char == stop_byte:
+            #if("Wifly" in message):
             print(message)
+            #    print(sequenceCount)	
+            if("ERROR" in message):
+                print("")
+                print("__________________________ERROR____________________________________________________")
+                print("__________________________ERROR____________________________________________________")
+                print(message)
+                #print("***********************ERROR***********************************************")
+                print("")
+                #//raise Exception("ERR")
             updateStats(message)
             currentState = State.INIT
             # Send a reply message for each one received
-            stringToSend = '0,' + '{0:03}'.format(sequenceCount) + ',10,' + 'TestString,' + '{0:03}'.format(calculateChecksum('TestString'))
+            
             #print(stringToSend)
-            print(sequenceCount)			
+		
             sendFreqCount += 1
-            if sendFreqCount % 10 == 0 and "Wifly" not in message:
+            if sendFreqCount % 10 == 0 and "Wifly" not in message and 1 == 1:
+                if(sendFreqCount % 100 == 0 and False):
+                    #sequenceCount = int(sequenceCount/2)
+                    stringToSend = '0,' + '{0:03}'.format(sequenceCount) + ',10,' + 'TestString,' + '{0:03}'.format(calculateChecksum('TestString'))
+                    print("***********************ERROR***********************************************")
+                    print("sent: ", stringToSend)
+                    print("***********************ERROR***********************************************")
+                else:
+                    #stringToSend = '0,' + '{0:03}'.format(sequenceCount) + ',05,' + '3 5 1,' + '{0:03}'.format(calculateChecksum('3 5 1'))
+                    commandIn = commandList[commandNumber]
+                    commandNumber += 1
+                    commandNumber = commandNumber % len(commandList)
+                    stringToSend = formatString(commandIn)
+                    print("*******************"+ stringToSend + "******************")
                 ser.write('+'.encode('ascii'))
                 ser.write(stringToSend.encode('ascii'))
                 ser.write('-'.encode('ascii'))
                 sequenceCount += 1
                 sequenceCount %= 256
+                
 
         else:
             message += chr(char)

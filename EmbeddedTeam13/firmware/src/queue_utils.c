@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdarg.h>
 
+
 #include "queue_utils.h"
 #include "debug.h"
 
@@ -126,7 +127,7 @@ int getLine(const StandardQueueMessage * msg) {
 }
 
 
-StandardQueueMessage makeDriveCommand(moveCommandType command, int messageId){
+StandardQueueMessage makeDriveCommand(piSpecifierType command, int messageId){
     StandardQueueMessage msg = {
         .type = MESSAGE_DRIVE_COMMAND,
         .driveCommand.command = command,
@@ -134,7 +135,7 @@ StandardQueueMessage makeDriveCommand(moveCommandType command, int messageId){
     };
     return msg;
 }
-moveCommandType getCommand(const StandardQueueMessage * msg){
+piSpecifierType getCommand(const StandardQueueMessage * msg){
     checkMessageType(msg, MESSAGE_DRIVE_COMMAND);
     return msg->driveCommand.command;
 }

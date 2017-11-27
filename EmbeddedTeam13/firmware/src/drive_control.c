@@ -144,9 +144,10 @@ BaseType_t driveControlSendMsgToQ(StandardQueueMessage * message,
 
 void DRIVE_CONTROL_Tasks ( void ) {
     StandardQueueMessage receivedMessage;
-
+    StandardQueueMessage toSend;
     xQueueReceive(driveControlData.queue, &receivedMessage, portMAX_DELAY);
-
+    piSpecifierType command;
+    int commandId;
     switch (receivedMessage.type) {
     case MESSAGE_LINE_READING:
         // Forward to master_control for now
@@ -155,6 +156,11 @@ void DRIVE_CONTROL_Tasks ( void ) {
     case MESSAGE_ENCODER_READING:
         masterControlSendMsgToQ(&receivedMessage, portMAX_DELAY);
         break;
+    case MESSAGE_DRIVE_COMMAND:
+        commandId = getMessageId(&receivedMessage);
+        command = getCommand(&receivedMessage);
+        toSend = printfWiflyMessage("Command: %d MessageId: %d", command, commandId);
+        masterControlSendMsgToQ(&toSend, portMAX_DELAY);
     }
 }
 
