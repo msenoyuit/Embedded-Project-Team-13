@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
 import serial
-import time
 from enum import Enum
+import threading
+import sys
 
 start_byte = 43
 stop_byte = 45
@@ -23,18 +25,22 @@ wCount = 0'''
 commandList = ['3 5 1', '3 6 1', '3 7 1', '4 5 1', '4 6 1','3 5 1','4 7 1', '0 1 1']
 messageStartTime = 0
 
-sequenceCount = 0
 
-sendFreqCount = 0
+class State(Enum):
+    INIT = 0
+    PARSING_MESSAGE = 1
 
 commandNumber = 0
 
 onceError = True
+
+
 def calculateChecksum(payloadMessage):
     sum = 0
     for char in payloadMessage:
         sum += ord(char)
     return sum & 0xFF
+
 
 def formatString(inString):
     idNumber = '0'
@@ -43,8 +49,10 @@ def formatString(inString):
     checkSum = '{0:03}'.format(calculateChecksum(inString))
     stringToSend = idNumber + ',' + seqCount + ',' + strLength + ',' + inString + ',' + checkSum
     return stringToSend
-    
+
+
 def getPort():
+    return "/dev/tty.usbserial-A702ZMVF"  # For osx!
     ports = ['COM%s' % (i + 1) for i in range(256)]
     for port in ports:
         try:
@@ -54,14 +62,10 @@ def getPort():
         except (OSError, serial.SerialException):
             pass
     raise Exception("NO PORTS CONNECTED")
-	
-ser = serial.Serial(
-    port=getPort(),\
-    baudrate=57600,\
-    parity=serial.PARITY_NONE,\
-    stopbits=serial.STOPBITS_ONE,\
-    bytesize=serial.EIGHTBITS,\
-    timeout=1.1)
+
+ser = serial.Serial(port=getPort(), baudrate=57600, parity=serial.PARITY_NONE,
+                    stopbits=serial. STOPBITS_ONE, bytesize=serial.EIGHTBITS,
+                    timeout=1.1)
 
 print("connected to: " + ser.portstr)
 stringToSend = formatString("3 5 1")
@@ -69,77 +73,37 @@ stringToSend = formatString("3 5 1")
 #ser.write(stringToSend.encode('ascii'))
 #ser.write('-'.encode('ascii'))
 #sequenceCount += 1
+
+
 def readByte():
     return int.from_bytes(ser.read(1),  byteorder='little')
-	
-	
 
 
-def updateStats(readMessage):
-    global dTimeAvg
-    global dTime
-    global dCount
-    global cTimeAvg
-    global cTime
-    global cCount
-    global lTimeAvg
-    global lTime
-    global lCount
-    '''global wTimeAvg
-    global wTime
-    global wCount'''
-    if 'Distance' in readMessage:
-        dTimeAvg += messageStartTime - dTime
-        dTime = messageStartTime
-        dCount += 1
-        if dCount == num_messages_per_avg:
-                print("Distance Sensor Time Avg: ", str(dTimeAvg / 10))
-                dTimeAvg = 0
-                dCount = 0
-        #ser.write(b'\xFFTestString\xFE')
-    elif 'Color' in readMessage:
-        cTimeAvg += messageStartTime - cTime
-        cTime = messageStartTime
-        cCount += 1
-        if cCount == num_messages_per_avg:
-            print("Color Sensor Time Avg: ", str(cTimeAvg / 10))
-            cTimeAvg = 0
-            cCount = 0
-    elif 'Line' in readMessage:
-        lTimeAvg += messageStartTime - lTime
-        lTime = messageStartTime
-        lCount += 1
-        if lCount == num_messages_per_avg:
-            print("Line Sensor Time Avg: ", str(lTimeAvg / 10))
-            lTimeAvg = 0
-            lCount = 0
-    '''elif 'Wifly' in readMessage:
-        wTimeAvg += messageStartTime - wTime
-        wTime = messageStartTime
-        wCount += 1
-        if wCount == num_messages_per_avg:
-            print("Line Sensor Time Avg: ", str(lTimeAvg / 10))
-            wTimeAvg = 0
-            wCount = 0'''
+sequenceCount = 0
 
 
+def sendMessage(message):
+    global sequenceCount
+    message = message.strip()
+    if (message == 'reset'):
+        sequenceCount = 0
+        return
+    stringToSend = '0,{0:03},{1:02},{2},{3:03}'.format(
+        sequenceCount, len(message), message, calculateChecksum(message))
+    ser.write('+'.encode('ascii'))
+    ser.write(stringToSend.encode('ascii'))
+    ser.write('-'.encode('ascii'))
+    sequenceCount += 1
+    sequenceCount %= 256
 
-class State(Enum):
-    INIT            = 0
-    PARSING_MESSAGE = 1
 
-currentState = State.INIT
-
-while True:
-    #time.sleep(.0001)
-    # Read in the next character
-    char = readByte()
-
+def processRead(char):
+    global currentState
+    global message
     # State machine for reading in message
     if currentState == State.INIT:
         # wait for start character
         if char == start_byte:
-            messageStartTime = time.clock()
             message = ''
             currentState = State.PARSING_MESSAGE
 
@@ -183,8 +147,20 @@ while True:
                 sequenceCount += 1
                 sequenceCount %= 256
                 
-
         else:
             message += chr(char)
 
-ser.close()
+
+def sendthreadfn():
+    for line in sys.stdin:
+        sendMessage(line)
+
+
+if __name__ == '__main__':
+    thread = threading.Thread(target=sendthreadfn)
+    thread.start()
+    while True:
+        # Read in the next character
+        processRead(readByte())
+
+    ser.close()

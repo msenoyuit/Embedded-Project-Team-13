@@ -115,6 +115,66 @@ BaseType_t masterControlSendMsgToQ(StandardQueueMessage * message,
     
 }
 
+static StandardQueueMessage sendLineReading(char reading) {
+    StandardQueueMessage msg = makeLineReading(reading);
+    driveControlSendMsgToQ(&msg, portMAX_DELAY);
+    msg = printfWiflyMessage("Line follower reading of %02x sent", reading);
+    return msg;
+}
+
+static char * moveCommandTypeToStr(moveCommandType cmd) {
+    switch (cmd) {
+    case MOVE_FORWARD:
+        return "MOVE_FORWARD";
+    case MOVE_BACKWARD:
+        return "MOVE_BACKWARD";
+    case TURN_LEFT:
+        return "TURN_LEFT";
+    case TURN_RIGHT:
+        return "TURN_RIGHT";
+    case ALL_STOP:
+        return "ALL_STOP";
+    default:
+        return "invalid move command!";
+    }
+}
+
+static StandardQueueMessage sendDriveCommand(moveCommandType cmd) {
+    static int id = 0;
+    StandardQueueMessage msg = makeDriveCommand(cmd, id);
+    driveControlSendMsgToQ(&msg, portMAX_DELAY);
+    msg = printfWiflyMessage("Drive command %s with id %d sent",
+                             moveCommandTypeToStr(cmd), id);
+    id++;
+    return msg;
+}
+
+static StandardQueueMessage handleMessage(const char * message) {
+    if (strcmp(message, "reading centered") == 0) {
+        return sendLineReading(0x70 | 0x0E);
+    } else if (strcmp(message, "reading right") == 0) {
+        return sendLineReading(0x00 | 0x0E);
+    } else if (strcmp(message, "reading left") == 0) {
+        return sendLineReading(0x70 | 0x00);
+    } else if (strcmp(message, "reading intersection") == 0) {
+        return sendLineReading(0xF0 | 0x0F);
+    } else if (strcmp(message, "reading unknown") == 0) {
+        return sendLineReading(0x00 | 0x00);
+    } else if (strcmp(message, "go forward") == 0) {
+        return sendDriveCommand(MOVE_FORWARD);
+    } else if (strcmp(message, "go backward") == 0) {
+        return sendDriveCommand(MOVE_BACKWARD);
+    } else if (strcmp(message, "go left") == 0) {
+        return sendDriveCommand(TURN_LEFT);
+    } else if (strcmp(message, "go right") == 0) {
+        return sendDriveCommand(TURN_RIGHT);
+    } else if (strcmp(message, "stop") == 0) {
+        return sendDriveCommand(ALL_STOP);
+    } else {
+        return printfWiflyMessage("'%s' is not a recognized command", message);
+    }
+}
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Initialization and State Machine Functions
@@ -210,7 +270,8 @@ void MASTER_CONTROL_Tasks ( void ){
     StandardQueueMessage receivedMessage;
     StandardQueueMessage toSend;
 
-    standardQueueMessageReceive(masterControlData.queue, &receivedMessage, portMAX_DELAY);
+    standardQueueMessageReceive(masterControlData.queue, &receivedMessage,
+                                portMAX_DELAY);
     
     // Handle the message
     switch (receivedMessage.type) {

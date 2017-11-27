@@ -68,6 +68,16 @@ void checkMessageType(const StandardQueueMessage * msg, MessageType type) {
     }
 }
 
+void checkMessageType2(const StandardQueueMessage * msg, MessageType type1,
+                       MessageType type2) {
+    if (!msg) {
+        dbgFatalError(DBG_ERROR_NULL_POINTER);
+    }
+    if ((msg->type != type1) && (msg->type != type2)) {
+        dbgFatalError(DBG_ERROR_QUEUE_TYPE_WRONG);
+    }
+}
+
 StandardQueueMessage makeColorReading(int red, int green, int blue, int clear) {
     StandardQueueMessage msg = {
         .type = MESSAGE_COLOR_READING,

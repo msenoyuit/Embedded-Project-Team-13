@@ -10,22 +10,25 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "wifly_public.h"
-#include "motor_control_public.h"
+#include "motor_data_types.h"
 
 typedef enum {
     MESSAGE_COLOR_READING, 
     MESSAGE_DISTANCE_READING,
     MESSAGE_LINE_READING,
     MESSAGE_WIFLY_MESSAGE,
-    MESSAGE_ENCODER_READING,
-    MESSAGE_MOTOR_SPEEDS,
+    // Both of the following correspond to a MotorSpeeds type. The first is for
+    // setting the desired speeds. The second is sending the current motor
+    // speed values
+    MESSAGE_MOTOR_SPEEDS, 
+    MESSAGE_MOTOR_SPEEDS_REPORT,
     MESSAGE_DRIVE_COMMAND,
 } MessageType;
 
 
 /*
 typedef enum moveCommand{
-    MOVE_FOWARD = 0,
+    MOVE_FORWARD = 0,
     MOVE_BACKWARD = 1,
     TURN_LEFT = 2,
     TURN_RIGHT = 3,
@@ -47,7 +50,6 @@ typedef struct StandardQueueMessage {
         DistanceReading distanceReading;
         LineReading lineReading;
         WiflyMsg wiflyMessage;
-        EncoderReading encoderReading;
         MotorSpeeds motorSpeeds;
         DriveCommand driveCommand;
     };
@@ -67,6 +69,8 @@ BaseType_t standardQueueMessageReceive(QueueHandle_t xQueue,
 
 /* Check given message before pulling out information */
 void checkMessageType(const StandardQueueMessage * msg, MessageType type);
+void checkMessageType2(const StandardQueueMessage * msg, MessageType type1,
+                       MessageType type2);
 
 StandardQueueMessage makeColorReading(int reg, int green, int blue, int clear);
 int getRed(const StandardQueueMessage * msg);
