@@ -280,11 +280,6 @@ void DRIVE_CONTROL_Tasks ( void ) {
     case MESSAGE_LINE_READING:
         handleLineSensorReading(getLine(&receivedMessage));
         break;
-    case MESSAGE_DRIVE_COMMAND:
-        commandId = getMessageId(&receivedMessage);
-        command = getCommand(&receivedMessage);
-        toSend = printfWiflyMessage("Command: %d MessageId: %d", command, commandId);
-        masterControlSendMsgToQ(&toSend, portMAX_DELAY);
     }
 }
 

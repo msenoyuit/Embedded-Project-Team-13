@@ -199,7 +199,6 @@ void MASTER_CONTROL_Initialize ( void ) {
     colorSensorInit();
     lineSensorInit();
     masterDataTag.color = 0;
-    masterDataTag.encoder = 0;
     masterDataTag.lineOn = 0;
     masterDataTag.distance = 1;
     masterControlData.motorQueueCount = 0;
@@ -247,13 +246,11 @@ StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
             break;
         case STREAM_START:
             masterDataTag.color |=  (piSpecifier == COLOR_SENSOR);
-            //masterDataTag.encoder = masterDataTag.encoder || piSpecifier == 4;
             masterDataTag.lineOn |=  (piSpecifier == LINE_SENSOR);
             masterDataTag.distance |= (piSpecifier == DISTANCE_SENSOR);
             break;
         case STREAM_STOP:
             masterDataTag.color &=  (piSpecifier != COLOR_SENSOR);
-            //masterDataTag.encoder = masterDataTag.encoder || piSpecifier == 4;
             masterDataTag.lineOn &=  (piSpecifier != LINE_SENSOR);
             masterDataTag.distance &= (piSpecifier != DISTANCE_SENSOR);
 
@@ -304,17 +301,6 @@ void MASTER_CONTROL_Tasks ( void ){
                                         getBlue(&receivedMessage),
                                         getClear(&receivedMessage));
             wiflySendMsg(&toSend, portMAX_DELAY);
-        }
-        break;
-    case MESSAGE_ENCODER_READING:
-        if(masterDataTag.encoder)
-        {
-            toSend = printfWiflyMessage("%s encoder: %d counts",
-                                        (getEncoderId(&receivedMessage) ==
-                                         L_ENCODER ? "Left" : "Right"),
-                                        getEncoderCount(&receivedMessage));
-            wiflySendMsg(&toSend, portMAX_DELAY);
-            
         }
         break;
     }

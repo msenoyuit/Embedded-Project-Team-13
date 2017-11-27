@@ -75,7 +75,6 @@ extern "C" {
     
 typedef struct {
     int distance;
-    int encoder;
     int color;
     int lineOn;
 } SEND_DATA_TAG;

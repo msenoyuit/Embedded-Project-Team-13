@@ -25,9 +25,7 @@ typedef enum {
     MESSAGE_DRIVE_COMMAND,
 } MessageType;
 
-
-/*
-typedef enum moveCommand{
+typedef enum {
     MOVE_FORWARD = 0,
     MOVE_BACKWARD = 1,
     TURN_LEFT = 2,
@@ -35,10 +33,6 @@ typedef enum moveCommand{
     ALL_STOP = 4,
 } moveCommandType;
 
-    
-typedef struct {moveCommandType command; int messageId;} DriveCommand;
-
-  */  
 typedef struct {piSpecifierType command; int messageId;} DriveCommand;
 typedef struct { int red; int green; int blue; int clear; } ColorReading; 
 typedef struct { int distance; } DistanceReading;
