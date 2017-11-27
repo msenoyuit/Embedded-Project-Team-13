@@ -110,6 +110,22 @@ void IntHandlerDrvAdc(void)
 
 
 
+void IntHandlerExternalInterruptInstance0(void)
+{
+    lEncoderIsr(); // Handle the interrupt; leave this when regenerating
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_EXTERNAL_1);
+}
+void IntHandlerExternalInterruptInstance1(void)
+{
+    rEncoderIsr(); // Handle the interrupt; leave this when regenerating
+    PLIB_INT_SourceFlagClear(INT_ID_0, INT_SOURCE_EXTERNAL_2);
+}
+ 
+
+void IntHandlerDrvTmrInstance0(void)
+{
+    PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_2);
+}
  
 /*******************************************************************************
  End of File

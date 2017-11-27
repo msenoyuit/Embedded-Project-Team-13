@@ -18,6 +18,7 @@ typedef enum {
     MESSAGE_LINE_READING,
     MESSAGE_WIFLY_MESSAGE,
     MESSAGE_ENCODER_READING,
+    MESSAGE_MOTOR_SPEEDS,
     MESSAGE_DRIVE_COMMAND,
 } MessageType;
 
@@ -47,6 +48,7 @@ typedef struct StandardQueueMessage {
         LineReading lineReading;
         WiflyMsg wiflyMessage;
         EncoderReading encoderReading;
+        MotorSpeeds motorSpeeds;
         DriveCommand driveCommand;
     };
 } StandardQueueMessage;

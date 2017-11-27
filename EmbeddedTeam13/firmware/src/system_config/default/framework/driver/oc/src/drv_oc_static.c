@@ -1,30 +1,28 @@
 /*******************************************************************************
-  Timer Driver Interface Declarations for Static Single Instance Driver
+  OC Driver Functions for Static Single Instance Driver
 
   Company:
     Microchip Technology Inc.
 
   File Name:
-    drv_tmr_static.h
+    drv_oc_static.c
 
   Summary:
-    Timer driver interface declarations for the static single instance driver.
+    OC driver implementation for the static single instance driver.
 
   Description:
-    The Timer device driver provides a simple interface to manage the Timer
-    modules on Microchip microcontrollers. This file defines the interface
-    Declarations for the TMR driver.
+    The OC device driver provides a simple interface to manage the OC
+    modules on Microchip microcontrollers.
     
   Remarks:
     Static interfaces incorporate the driver instance number within the names
     of the routines, eliminating the need for an object ID or object handle.
-    
     Static single-open interfaces also eliminate the need for the open handle.
 *******************************************************************************/
 
 //DOM-IGNORE-BEGIN
 /*******************************************************************************
-Copyright (c) 2014 released Microchip Technology Inc.  All rights reserved.
+Copyright (c) 2013 released Microchip Technology Inc.  All rights reserved.
 
 Microchip licenses to you the right to use, modify, copy and distribute
 Software only when embedded on a Microchip microcontroller or digital signal
@@ -47,79 +45,104 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVOCES, OR ANY CLAIMS BY THIRD PARTIES
 *******************************************************************************/
 //DOM-IGNORE-END
 
-#ifndef _DRV_TMR_STATIC_H
-#define _DRV_TMR_STATIC_H
 // *****************************************************************************
 // *****************************************************************************
-// Section: Include Headers
+// Header Includes
 // *****************************************************************************
 // *****************************************************************************
-#include <stdint.h>
-#include "driver/tmr/drv_tmr.h"
-#include "peripheral/tmr/plib_tmr.h"
-#include "peripheral/int/plib_int.h"
-
-// maximum divider value for 32 bit operation mode
-#define     DRV_TIMER_DIVIDER_MAX_32BIT     0xffffffff
-
-// minimum divider value for 32 bit operation mode
-#define     DRV_TIMER_DIVIDER_MIN_32BIT     0x2
-
-// maximum divider value for 16 bit operation mode
-#define     DRV_TIMER_DIVIDER_MAX_16BIT     0x10000
-
-// minimum divider value for 16 bit operation mode
-#define     DRV_TIMER_DIVIDER_MIN_16BIT     0x2
-
+#include "peripheral/oc/plib_oc.h"
 
 // *****************************************************************************
 // *****************************************************************************
-// Section: Interface Headers for Instance 0 for the static driver
+// Section: Instance 0 static driver functions
 // *****************************************************************************
 // *****************************************************************************
-
-void DRV_TMR0_Initialize(void);
-bool DRV_TMR0_Start(void);
-void DRV_TMR0_Stop(void);
-static inline void DRV_TMR0_DeInitialize(void)
+void DRV_OC0_Initialize(void)
 {
-	DRV_TMR0_Stop();
+    /* Setup OC0 Instance */
+    PLIB_OC_ModeSelect(OC_ID_1, OC_COMPARE_PWM_MODE_WITHOUT_FAULT_PROTECTION);
+    PLIB_OC_BufferSizeSelect(OC_ID_1, OC_BUFFER_SIZE_16BIT);
+    PLIB_OC_TimerSelect(OC_ID_1, OC_TIMER_16BIT_TMR2);
+    PLIB_OC_Buffer16BitSet(OC_ID_1, 0);
+    PLIB_OC_PulseWidth16BitSet(OC_ID_1, 0);
 }
-static inline SYS_STATUS DRV_TMR0_Status(void)
+
+void DRV_OC0_Enable(void)
 {
-	/* Return the status as ready always */
-    return SYS_STATUS_READY; 
+   PLIB_OC_Enable(OC_ID_1);
 }
-static inline void DRV_TMR0_Open(void) {}
-DRV_TMR_CLIENT_STATUS DRV_TMR0_ClientStatus ( void );
-static inline DRV_TMR_OPERATION_MODE DRV_TMR0_OperationModeGet(void)
+
+void DRV_OC0_Disable(void)
 {
-    return DRV_TMR_OPERATION_MODE_16_BIT;
+   PLIB_OC_Disable(OC_ID_1);
 }
-static inline void DRV_TMR0_Close(void) 
+
+void DRV_OC0_Start(void)
 {
-    DRV_TMR0_Stop();
+   PLIB_OC_Enable(OC_ID_1);
 }
-bool DRV_TMR0_ClockSet
-(
-    DRV_TMR_CLK_SOURCES clockSource, 
-    TMR_PRESCALE  prescale 
-);
-void DRV_TMR0_CounterValueSet(uint32_t value);
-uint32_t DRV_TMR0_CounterValueGet(void);
-void DRV_TMR0_CounterClear(void);
-TMR_PRESCALE DRV_TMR0_PrescalerGet(void);
-void DRV_TMR0_PeriodValueSet(uint32_t value);
-uint32_t DRV_TMR0_PeriodValueGet(void);
-void DRV_TMR0_StopInIdleDisable(void);
-void DRV_TMR0_StopInIdleEnable(void);
-static inline void DRV_TMR0_Tasks(void) {}
-uint32_t DRV_TMR0_CounterFrequencyGet(void);
-DRV_TMR_OPERATION_MODE DRV_TMR0_DividerRangeGet
-(
-    DRV_TMR_DIVIDER_RANGE * pDivRange
-);
-#endif // #ifndef _DRV_TMR_STATIC_H
+
+void DRV_OC0_Stop(void)
+{
+   PLIB_OC_Disable(OC_ID_1);
+}
+
+void DRV_OC0_PulseWidthSet(uint32_t pulseWidth)
+{
+    /* Updating pulse width for 16 bit mode */
+    PLIB_OC_PulseWidth16BitSet(OC_ID_1, (uint16_t)pulseWidth);
+}
+
+bool DRV_OC0_FaultHasOccurred(void)
+{
+   return PLIB_OC_FaultHasOccurred(OC_ID_1);
+}
+
+// *****************************************************************************
+// *****************************************************************************
+// Section: Instance 1 static driver functions
+// *****************************************************************************
+// *****************************************************************************
+void DRV_OC1_Initialize(void)
+{
+    /* Setup OC0 Instance */
+    PLIB_OC_ModeSelect(OC_ID_2, OC_COMPARE_PWM_MODE_WITHOUT_FAULT_PROTECTION);
+    PLIB_OC_BufferSizeSelect(OC_ID_2, OC_BUFFER_SIZE_16BIT);
+    PLIB_OC_TimerSelect(OC_ID_2, OC_TIMER_16BIT_TMR2);
+    PLIB_OC_Buffer16BitSet(OC_ID_2, 0);
+    PLIB_OC_PulseWidth16BitSet(OC_ID_2, 0);
+}
+
+void DRV_OC1_Enable(void)
+{
+   PLIB_OC_Enable(OC_ID_2);
+}
+
+void DRV_OC1_Disable(void)
+{
+   PLIB_OC_Disable(OC_ID_2);
+}
+
+void DRV_OC1_Start(void)
+{
+   PLIB_OC_Enable(OC_ID_2);
+}
+
+void DRV_OC1_Stop(void)
+{
+   PLIB_OC_Disable(OC_ID_2);
+}
+
+void DRV_OC1_PulseWidthSet(uint32_t pulseWidth)
+{
+    /* Updating pulse width for 16 bit mode */
+    PLIB_OC_PulseWidth16BitSet(OC_ID_2, (uint16_t)pulseWidth);
+}
+
+bool DRV_OC1_FaultHasOccurred(void)
+{
+   return PLIB_OC_FaultHasOccurred(OC_ID_2);
+}
 
 /*******************************************************************************
  End of File

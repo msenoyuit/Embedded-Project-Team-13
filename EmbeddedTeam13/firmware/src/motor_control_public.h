@@ -7,6 +7,7 @@
 
 struct StandardQueueMessage;
 
+/* Encoder value reporting for StandardQueueMessage */
 typedef enum {
     L_ENCODER,
     R_ENCODER,
@@ -20,6 +21,16 @@ typedef struct {
 struct StandardQueueMessage makeEncoderReading(EncoderId encoder, int counts);
 EncoderId getEncoderId(const struct StandardQueueMessage * msg);
 int getEncoderCount(const struct StandardQueueMessage * msg);
+
+/* Motor setting for standard queue message */
+typedef struct {
+    int leftSpeed, rightSpeed;
+} MotorSpeeds;
+
+struct StandardQueueMessage makeMotorSpeeds(int left, int right);
+int getLeftSpeed(struct StandardQueueMessage * msg);
+int getRightSpeed(struct StandardQueueMessage * msg);
+
 
 BaseType_t motorControlSendMsgToQFromISR(struct StandardQueueMessage * message,
                                          BaseType_t * higherPriorityTaskWoken);

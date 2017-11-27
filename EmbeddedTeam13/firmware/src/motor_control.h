@@ -98,7 +98,7 @@ extern "C" {
 typedef struct {
     // the applications queue
     QueueHandle_t queue;
-    TimerHandle_t encoderReadTimer;
+    TimerHandle_t motorControlTimer;
 } MOTOR_CONTROL_DATA;
 
 
