@@ -8,15 +8,17 @@
 #include "motors.h"
 
 #define SPEED_DELTA_T_MS 10
-#define SPEED_FILTER_RATIO 0.7
-#define COUNTS_PER_REVOLUTION = (298 * 12) // 298:1 gear ratio, 12 CPR encoder
-// Approximation, with pi = 3, r = 1.5 * 3/2
-#define ENCODER_TICKS_PER_INCH (COUNTS_PER_REVOLUTION / 3 * 3 / 2)
+#define SPEED_FILTER_RATIO 0.9
+#define COUNTS_PER_REVOLUTION = 298 * 12 /* 298:1 gear ratio, 12 CPR encoder */
+#define ENCODER_TICKS_PER_INCH 300 /* TODO: Measure; This is a guess! */
+// Used by speed calculations. These should only ever be modified by the
+// encoderSpeedCallback
+static volatile int lEncoderLastCount, rEncoderLastCount;
+static volatile size_t countBufPos;
 
-static volatile EncoderCounts encoderCounts = {.counts={0,0}};
-static volatile EncoderCounts encoderLastCounts = {.counts={0,0}};
-static volatile MotorSpeeds speeds = {.speeds={0,0}};
-
+static volatile float lEncoderSpeed, rEncoderSpeed;
+// Encoder counts. These should only be modified by the encoder ISRs.
+static volatile int lEncoderCount, rEncoderCount;
 // Timer for encoder speed callback
 static TimerHandle_t encoderSpeedTimer;
 
@@ -24,9 +26,10 @@ static TimerHandle_t encoderSpeedTimer;
 static bool getLeftA() {
     return (SYS_PORTS_Read(PORTS_ID_0, PORT_CHANNEL_E) >> 8) & 1;
 }
-
+// NOT YET DETERMINED! For now we give the A reading, which will make it look
+// like we are always going the same direction
 static bool getLeftB() {
-    return (SYS_PORTS_Read(PORTS_ID_0, PORT_CHANNEL_A) >> 9) & 1;
+    return (SYS_PORTS_Read(PORTS_ID_0, PORT_CHANNEL_E) >> 8) & 1;
 }
 
 static bool getRightA() {
@@ -41,47 +44,48 @@ static bool getRightB() {
 // Handlers for when the A channel goes high. These are registered in
 // system_interrupt.c in the middle of the pregenerated code
 void lEncoderIsr() {
-    if (getLeftA() != getLeftB()) {
-        encoderCounts.counts[LEFT_SIDE]++;
+    if (getLeftA() == getLeftB()) {
+        lEncoderCount++;
     } else {
-        encoderCounts.counts[LEFT_SIDE]--;
+        lEncoderCount--;
     }
 }
 
 void rEncoderIsr() {
-    if (getRightA() == getRightB()) {
-        encoderCounts.counts[RIGHT_SIDE]++;
+    // Increment or decrement based on the direction we are sending the motor 
+    // since we aren't able to get the B reading
+    if (getRightMotorSignal() >= 0) { 
+        rEncoderCount++;
     } else {
-        encoderCounts.counts[RIGHT_SIDE]--;
+        rEncoderCount--;
     }
 }
 
 static void encoderSpeedCallback(TimerHandle_t timer) {
-    BaseType_t higherPriorityTaskWoken = pdFALSE;
+    int lCount = getLeftEncoderCountISR();
+    int rCount = getRightEncoderCountISR();
 
-    EncoderCounts counts = getEncoderCountsISR();
+    int lNewSpeed = (lCount - lEncoderLastCount) * 1000 / SPEED_DELTA_T_MS;
+    int rNewSpeed = (rCount - rEncoderLastCount) * 1000 / SPEED_DELTA_T_MS;
 
-    int i = 0;
-    for (; i < 2; i++) { // For left and right
-        float newSpeed = (counts.counts[i] - encoderLastCounts.counts[i]) *
-            1000 / SPEED_DELTA_T_MS;
-        // Simple lowpass filter
-        speeds.speeds[i] = SPEED_FILTER_RATIO * speeds.speeds[i] +
-            (1 - SPEED_FILTER_RATIO) * newSpeed;
-        encoderLastCounts.counts[i] = counts.counts[i];
-    }
+    // Simple lowpass filter
+    lEncoderSpeed = SPEED_FILTER_RATIO * lEncoderSpeed +
+        (1 - SPEED_FILTER_RATIO) * lNewSpeed;
+    rEncoderSpeed = SPEED_FILTER_RATIO * rEncoderSpeed +
+        (1 - SPEED_FILTER_RATIO) * rNewSpeed;
 
-    StandardQueueMessage msg = makeMotorSpeedsReport(speeds);
-    if(motorControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
-       != pdTRUE) {
-        dbgFatalError(DBG_ERROR_ENCODER_ISR);
-    }
-    
-    portEND_SWITCHING_ISR(higherPriorityTaskWoken);
+    lEncoderLastCount = lCount;
+    rEncoderLastCount = rCount;
 }
 
 // Initialization **************************************************************
 void encodersInit(void) {
+    // Initialize file-static variables
+    lEncoderCount = rEncoderCount = 0;
+    lEncoderLastCount = rEncoderLastCount = 0;
+    lEncoderSpeed = rEncoderSpeed = 0;
+    countBufPos = 0;
+
     // Set up callback for calculating speed
     encoderSpeedTimer = xTimerCreate("Encoder speed timer",
                                      pdMS_TO_TICKS(SPEED_DELTA_T_MS),
@@ -97,30 +101,58 @@ void encodersInit(void) {
 
 // External Access Functions ***************************************************
 // Enter critical before reading to ensure it's not changed during read
-EncoderCounts getEncoderCounts(void) {
+int getLeftEncoderCount(void) {
     taskENTER_CRITICAL();
-    EncoderCounts result = encoderCounts;
+    int count = lEncoderCount;
     taskEXIT_CRITICAL();
-    return result;
+    return count;
 }
 
-EncoderCounts getEncoderCountsISR(void) {
+int getRightEncoderCount(void) {
+    taskENTER_CRITICAL();
+    int count = rEncoderCount;
+    taskEXIT_CRITICAL();
+    return count;
+}
+
+int getLeftEncoderCountISR(void) {
     UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
-    EncoderCounts result = encoderCounts;
+    int result = lEncoderCount;
     taskEXIT_CRITICAL_FROM_ISR(mask);
     return result;
 }
 
-MotorSpeeds getEncoderSpeeds(void) {
-    taskENTER_CRITICAL();
-    MotorSpeeds result = speeds;
-    taskEXIT_CRITICAL();
+int getRightEncoderCountISR(void) {
+    UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
+    int result = rEncoderCount;
+    taskEXIT_CRITICAL_FROM_ISR(mask);
     return result;
 }
 
-MotorSpeeds getEncoderSpeedsISR(void) {
+int getLeftEncoderSpeed(void) {
+    taskENTER_CRITICAL();
+    float speed = lEncoderSpeed;
+    taskEXIT_CRITICAL();
+    return (int)speed;
+}
+
+int getRightEncoderSpeed(void) {
+    taskENTER_CRITICAL();
+    float speed = rEncoderSpeed;
+    taskEXIT_CRITICAL();
+    return (int)speed;
+}
+
+int getLeftEncoderSpeedISR(void) {
     UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
-    MotorSpeeds result = speeds;
+    float speed = lEncoderSpeed;
     taskEXIT_CRITICAL_FROM_ISR(mask);
-    return result;
+    return (int)speed;
+}
+
+int getRightEncoderSpeedISR(void) {
+    UBaseType_t mask = taskENTER_CRITICAL_FROM_ISR();
+    float speed = rEncoderSpeed;
+    taskEXIT_CRITICAL_FROM_ISR(mask);
+    return (int)speed;
 }

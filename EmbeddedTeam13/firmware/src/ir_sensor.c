@@ -14,6 +14,9 @@ static uint64_t ADC_avg;
 static void irTimerCallback(TimerHandle_t timer) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
     
+    //Indicate life
+    SYS_PORTS_PinToggle(0, PORT_CHANNEL_A, 3);
+    
     // Start getting the next ADC reading
     PLIB_ADC_SampleAutoStartEnable(ADC_ID_1);
     

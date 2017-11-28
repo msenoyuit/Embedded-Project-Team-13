@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include "system_config.h"
 #include "system_definitions.h"
-#include "motor_data_types.h"
 
-MotorSignals getMotorSignals();
-void setMotorSignals(MotorSignals new_signals);
+int getLeftMotorSignal();
+int getRightMotorSignal();
+void setLeftMotorSignal(int signal);
+void setRightMotorSignal(int signal);

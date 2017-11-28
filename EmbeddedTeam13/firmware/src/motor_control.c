@@ -1,3 +1,52 @@
+/*******************************************************************************
+  MPLAB Harmony Application Source File
+  
+  Company:
+    Microchip Technology Inc.
+  
+  File Name:
+    motor_control.c
+
+  Summary:
+    This file contains the source code for the MPLAB Harmony application.
+
+  Description:
+    This file contains the source code for the MPLAB Harmony application.  It 
+    implements the logic of the application's state machine and it may call 
+    API routines of other MPLAB Harmony modules in the system, such as drivers,
+    system services, and middleware.  However, it does not call any of the
+    system interfaces (such as the "Initialize" and "Tasks" functions) of any of
+    the modules in the system or make any assumptions about when those functions
+    are called.  That is the responsibility of the configuration-specific system
+    files.
+ *******************************************************************************/
+
+// DOM-IGNORE-BEGIN
+/*******************************************************************************
+Copyright (c) 2013-2014 released Microchip Technology Inc.  All rights reserved.
+
+Microchip licenses to you the right to use, modify, copy and distribute
+Software only when embedded on a Microchip microcontroller or digital signal
+controller that is integrated into your product or third party product
+(pursuant to the sublicense terms in the accompanying license agreement).
+
+You should refer to the license agreement accompanying this Software for
+additional information regarding your rights and obligations.
+
+SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF
+MERCHANTABILITY, TITLE, NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE.
+IN NO EVENT SHALL MICROCHIP OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER
+CONTRACT, NEGLIGENCE, STRICT LIABILITY, CONTRIBUTION, BREACH OF WARRANTY, OR
+OTHER LEGAL EQUITABLE THEORY ANY DIRECT OR INDIRECT DAMAGES OR EXPENSES
+INCLUDING BUT NOT LIMITED TO ANY INCIDENTAL, SPECIAL, INDIRECT, PUNITIVE OR
+CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF PROCUREMENT OF
+SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
+(INCLUDING BUT NOT LIMITED TO ANY DEFENSE THEREOF), OR OTHER SIMILAR COSTS.
+ *******************************************************************************/
+// DOM-IGNORE-END
+
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Included Files 
@@ -18,8 +67,8 @@
 
 #define MOTOR_CONTROL_UPDATE_FREQUENCY_MS 50
 #define MAX_SIGNAL 65535   /* = 2^16 - 1; In timer roll-overs;  */
-#define SIGNAL_CHANGE_PER_ERROR_PER_S 500
-#define SIGNAL_CHANGE_PER_ERROR 8
+#define MAX_SPEED 520      /* In counts/s; approximate measured value */
+#define SIGNAL_CHANGE_PER_ERROR 10
 
 // *****************************************************************************
 /* Application Data
@@ -38,8 +87,7 @@
 
 MOTOR_CONTROL_DATA motorControlData;
 
-static MotorSpeeds speedsDesired = {.speeds={0,0}};
-static TickType_t last_motor_control_update;
+static int lSpeedDesired, rSpeedDesired;
 
 // *****************************************************************************
 // *****************************************************************************
@@ -47,39 +95,40 @@ static TickType_t last_motor_control_update;
 // *****************************************************************************
 // *****************************************************************************
 
-static void motorControlUpdate(MotorSpeeds speeds) {
-    MotorSignals newSignals;
+/* Implements a simple bang-bang-like speed control. Increases the signal by
+ * SIGNAL_DELTA if we're below the desired speed, otherwise decreases the signal
+ * by SIGNAL_DELTA.
+ */
+static void motorControlCallback(TimerHandle_t timer) {
+    BaseType_t higherPriorityTaskWoken = pdFALSE;
+
+    int lSpeed, rSpeed;
+    lSpeed = getLeftEncoderSpeedISR();
+    rSpeed = getRightEncoderSpeedISR();
+
+    int newLSignal, newRSignal;
+    newLSignal = getLeftMotorSignal();
+    newLSignal += (lSpeedDesired - lSpeed) * SIGNAL_CHANGE_PER_ERROR;
+
+    newRSignal = getRightMotorSignal();
+    newRSignal += (rSpeedDesired - rSpeed) * SIGNAL_CHANGE_PER_ERROR;
     
-    TickType_t current_time = xTaskGetTickCount();
-    int elapsed_ms = ((current_time - last_motor_control_update) *
-                      portTICK_PERIOD_MS);
-    int signal_change_per_error = (SIGNAL_CHANGE_PER_ERROR_PER_S * elapsed_ms /
-                                   1000);
-    last_motor_control_update = current_time;
-
-    newSignals = getMotorSignals();
-    int i = 0;
-    for (; i < 2; i++) {
-        newSignals.signals[i] +=
-            (int)((speedsDesired.speeds[i] - speeds.speeds[i]) *
-                  SIGNAL_CHANGE_PER_ERROR);
-        if (newSignals.signals[i] > MAX_SIGNAL) {
-            newSignals.signals[i] = MAX_SIGNAL;
-        } else if (newSignals.signals[i] < -1 * MAX_SIGNAL) {
-            newSignals.signals[i] = -1 * MAX_SIGNAL;
-        }
+    if (newLSignal > MAX_SIGNAL) {
+        newLSignal = MAX_SIGNAL;
+    } else if (newLSignal < -MAX_SIGNAL) {
+        newLSignal = -MAX_SIGNAL;
     }
 
-    if ((speedsDesired.speeds[LEFT_SIDE] - speeds.speeds[LEFT_SIDE]) /
-        speedsDesired.speeds[LEFT_SIDE] <= 0.05 &&
-        (speedsDesired.speeds[RIGHT_SIDE] - speeds.speeds[RIGHT_SIDE]) /
-        speedsDesired.speeds[RIGHT_SIDE] <= 0.05) {
-        SYS_PORTS_PinSet(0, PORT_CHANNEL_A, 3);
-    } else {
-        SYS_PORTS_PinClear(0, PORT_CHANNEL_A, 3);
+    if (newRSignal > MAX_SIGNAL) {
+        newRSignal = MAX_SIGNAL;
+    } else if (newRSignal < -MAX_SIGNAL) {
+        newRSignal = -MAX_SIGNAL;
     }
 
-    setMotorSignals(newSignals);
+    setLeftMotorSignal(newLSignal);
+    setRightMotorSignal(newRSignal);
+
+    portEND_SWITCHING_ISR(higherPriorityTaskWoken);
 }
 
 // *****************************************************************************
@@ -102,24 +151,44 @@ BaseType_t motorControlSendMsgToQ(StandardQueueMessage * message,
                                           time);
 }
 
-// Motor Speed Message Functions *******************************************
-struct StandardQueueMessage makeMotorSpeeds(MotorSpeeds speeds) {
+// Encoder Reading Message Functions *******************************************
+struct StandardQueueMessage makeEncoderReading(EncoderId encoder, int counts) {
     StandardQueueMessage msg = {
-        .type = MESSAGE_MOTOR_SPEEDS,
-        .motorSpeeds = speeds,
+        .type = MESSAGE_ENCODER_READING,
+        .encoderReading.encoder = encoder,
+        .encoderReading.counts = counts,
     };
     return msg;
 }
 
-struct StandardQueueMessage makeMotorSpeedsReport(MotorSpeeds speeds) {
-    StandardQueueMessage msg = makeMotorSpeeds(speeds);
-    msg.type = MESSAGE_MOTOR_SPEEDS_REPORT;
+EncoderId getEncoderId(const struct StandardQueueMessage * msg) {
+    checkMessageType(msg, MESSAGE_ENCODER_READING);
+    return msg->encoderReading.encoder;
+}
+
+int getEncoderCount(const struct StandardQueueMessage * msg) {
+    checkMessageType(msg, MESSAGE_ENCODER_READING);
+    return msg->encoderReading.counts;
+}
+
+// Motor Speed Message Functions *******************************************
+struct StandardQueueMessage makeMotorSpeeds(int left, int right) {
+    StandardQueueMessage msg = {
+        .type = MESSAGE_MOTOR_SPEEDS,
+        .motorSpeeds.leftSpeed = left,
+        .motorSpeeds.rightSpeed = right,
+    };
     return msg;
 }
 
-MotorSpeeds getSpeeds(struct StandardQueueMessage * msg) {
-    checkMessageType2(msg, MESSAGE_MOTOR_SPEEDS, MESSAGE_MOTOR_SPEEDS_REPORT);
-    return msg->motorSpeeds;
+int getLeftSpeed(struct StandardQueueMessage * msg) {
+    checkMessageType(msg, MESSAGE_MOTOR_SPEEDS);
+    return msg->motorSpeeds.leftSpeed;
+}
+
+int getRightSpeed(struct StandardQueueMessage * msg) {
+    checkMessageType(msg, MESSAGE_MOTOR_SPEEDS);
+    return msg->motorSpeeds.rightSpeed;
 }
 
 // *****************************************************************************
@@ -143,6 +212,18 @@ void MOTOR_CONTROL_Initialize ( void ) {
         dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
     }
 
+    motorControlData.motorControlTimer =
+        xTimerCreate("Motor Control Timer",
+                     pdMS_TO_TICKS(MOTOR_CONTROL_UPDATE_FREQUENCY_MS), pdTRUE,
+                     ( void * ) 0, motorControlCallback);
+    if(motorControlData.motorControlTimer == NULL) {
+        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
+    }
+    // Start the timer
+    if(xTimerStart(motorControlData.motorControlTimer, 0) != pdPASS) {
+        dbgFatalError(DBG_ERROR_MOTOR_CONTROL_INIT);
+    }
+
     SYS_PORTS_Clear(PORTS_ID_0, PORT_CHANNEL_C, 14);
     SYS_PORTS_Clear(PORTS_ID_0, PORT_CHANNEL_G, 1);
 
@@ -152,7 +233,9 @@ void MOTOR_CONTROL_Initialize ( void ) {
     // Start the timer that drives the output compare modules
     DRV_TMR0_Start();
 
-    last_motor_control_update = xTaskGetTickCount();
+    lSpeedDesired = rSpeedDesired = 0;
+    setLeftMotorSignal(0);
+    setRightMotorSignal(0);
 
     encodersInit();
 }
@@ -172,18 +255,14 @@ void MOTOR_CONTROL_Tasks ( void ) {
     standardQueueMessageReceive(motorControlData.queue, &receivedMessage,
                                 portMAX_DELAY);
     dbgOutputLoc(DBG_MOTOR_CONTROL_TASK_AFTER_QUEUE_RECEIVE);
-
+    
+    StandardQueueMessage msg;
+    msg.type = MESSAGE_WIFLY_MESSAGE;
     switch(receivedMessage.type) {
     case MESSAGE_MOTOR_SPEEDS:
-        speedsDesired = getSpeeds(&receivedMessage);
-        
+        lSpeedDesired = getLeftSpeed(&msg);
+        rSpeedDesired = getRightSpeed(&msg);
         break;
-    case MESSAGE_MOTOR_SPEEDS_REPORT:
-        motorControlUpdate(getSpeeds(&receivedMessage));
-        break;
-    default:
-        ;
-        // pass
     }
 }
 

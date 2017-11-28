@@ -14,17 +14,6 @@ extern "C" {
 
 struct StandardQueueMessage;
 
-typedef enum piSpecifier{
-    NORTH_MOVE = 0,
-    EAST_MOVE = 1,
-    SOUTH_MOVE = 2,
-    WEST_MOVE = 3,
-    ALL_STOP_PI = 4,
-    LINE_SENSOR = 5,
-    COLOR_SENSOR = 6,
-    DISTANCE_SENSOR = 7,
-}piSpecifierType;
-
 typedef struct {
     char text[WIFLY_MAX_MSG_LEN];
 } WiflyMsg;

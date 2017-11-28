@@ -10,30 +10,27 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "wifly_public.h"
-#include "motor_data_types.h"
+#include "motor_control_public.h"
 
 typedef enum {
     MESSAGE_COLOR_READING, 
     MESSAGE_DISTANCE_READING,
     MESSAGE_LINE_READING,
     MESSAGE_WIFLY_MESSAGE,
-    // Both of the following correspond to a MotorSpeeds type. The first is for
-    // setting the desired speeds. The second is sending the current motor
-    // speed values
-    MESSAGE_MOTOR_SPEEDS, 
-    MESSAGE_MOTOR_SPEEDS_REPORT,
+    MESSAGE_ENCODER_READING,
+    MESSAGE_MOTOR_SPEEDS,
     MESSAGE_DRIVE_COMMAND,
 } MessageType;
 
-typedef enum {
-    MOVE_FORWARD = 0,
+typedef enum moveCommand{
+    MOVE_FOWARD = 0,
     MOVE_BACKWARD = 1,
     TURN_LEFT = 2,
     TURN_RIGHT = 3,
     ALL_STOP = 4,
 } moveCommandType;
-
-typedef struct {piSpecifierType command; int messageId;} DriveCommand;
+    
+typedef struct {moveCommandType command; int messageId;} DriveCommand;
 typedef struct { int red; int green; int blue; int clear; } ColorReading; 
 typedef struct { int distance; } DistanceReading;
 typedef struct { int line; } LineReading;
@@ -44,6 +41,7 @@ typedef struct StandardQueueMessage {
         DistanceReading distanceReading;
         LineReading lineReading;
         WiflyMsg wiflyMessage;
+        EncoderReading encoderReading;
         MotorSpeeds motorSpeeds;
         DriveCommand driveCommand;
     };
@@ -63,8 +61,6 @@ BaseType_t standardQueueMessageReceive(QueueHandle_t xQueue,
 
 /* Check given message before pulling out information */
 void checkMessageType(const StandardQueueMessage * msg, MessageType type);
-void checkMessageType2(const StandardQueueMessage * msg, MessageType type1,
-                       MessageType type2);
 
 StandardQueueMessage makeColorReading(int reg, int green, int blue, int clear);
 int getRed(const StandardQueueMessage * msg);
@@ -78,9 +74,8 @@ int getDistance(const StandardQueueMessage * msg);
 StandardQueueMessage makeLineReading(int line);
 int getLine(const StandardQueueMessage * msg);
 
-
-StandardQueueMessage makeDriveCommand(piSpecifierType command, int messageId);
-piSpecifierType getCommand(const StandardQueueMessage * msg);
+StandardQueueMessage makeDriveCommand(moveCommandType command, int messageId);
+moveCommandType getCommand(const StandardQueueMessage * msg);
 int getMessageId(const StandardQueueMessage * msg);
 
 StandardQueueMessage makeWiflyMessage(const char * text);
