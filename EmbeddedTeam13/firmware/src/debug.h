@@ -99,6 +99,8 @@ typedef enum dbgError {
     DBG_ERROR_WIFLY_INVALID_RX_STATE = 24,
     DBG_ERROR_WIFLY_STATE_CHANGE_INVALID = 25,
     DBG_ERROR_ENCODER_INIT = 26,
+    DBG_ERROR_DRIVE_CONTROL_INTERNAL_QUEUE_FULL = 27,
+    DBG_ERROR_DRIVE_CONTROL_RUN = 28,
 } dbgErrorType;
 // *****************************************************************************
 // *****************************************************************************

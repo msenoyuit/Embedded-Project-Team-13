@@ -71,6 +71,15 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 extern "C" {
 
 #endif
+    
+    
+typedef struct {
+    int distance;
+    int color;
+    int lineOn;
+} SEND_DATA_TAG;
+
+
 // DOM-IGNORE-END 
 
 // *****************************************************************************
@@ -97,6 +106,7 @@ extern "C" {
 typedef struct {
     /* Handle to the queue */
     QueueHandle_t queue;
+    uint8_t motorQueueCount;
 
 } MASTER_CONTROL_DATA;
 

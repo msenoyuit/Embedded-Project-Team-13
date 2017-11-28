@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdarg.h>
 
+
 #include "queue_utils.h"
 #include "debug.h"
 
@@ -67,6 +68,16 @@ void checkMessageType(const StandardQueueMessage * msg, MessageType type) {
     }
 }
 
+void checkMessageType2(const StandardQueueMessage * msg, MessageType type1,
+                       MessageType type2) {
+    if (!msg) {
+        dbgFatalError(DBG_ERROR_NULL_POINTER);
+    }
+    if ((msg->type != type1) && (msg->type != type2)) {
+        dbgFatalError(DBG_ERROR_QUEUE_TYPE_WRONG);
+    }
+}
+
 StandardQueueMessage makeColorReading(int red, int green, int blue, int clear) {
     StandardQueueMessage msg = {
         .type = MESSAGE_COLOR_READING,
@@ -126,7 +137,7 @@ int getLine(const StandardQueueMessage * msg) {
 }
 
 
-StandardQueueMessage makeDriveCommand(moveCommandType command, int messageId){
+StandardQueueMessage makeDriveCommand(piSpecifierType command, int messageId){
     StandardQueueMessage msg = {
         .type = MESSAGE_DRIVE_COMMAND,
         .driveCommand.command = command,
@@ -134,7 +145,7 @@ StandardQueueMessage makeDriveCommand(moveCommandType command, int messageId){
     };
     return msg;
 }
-moveCommandType getCommand(const StandardQueueMessage * msg){
+piSpecifierType getCommand(const StandardQueueMessage * msg){
     checkMessageType(msg, MESSAGE_DRIVE_COMMAND);
     return msg->driveCommand.command;
 }
