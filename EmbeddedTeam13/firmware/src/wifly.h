@@ -32,6 +32,8 @@ extern "C" {
 #define WIFLY_QUEUE_LENGTH 10
 //rover 0 is the scout, rover 1 is the truck
 #define THIS_ROVER_ID 0
+#define INT_CHAR_DISTANCE 48
+#define COMMA_UART 43
 const char START_CHAR = 43;
 const char STOP_CHAR = 45;
 
@@ -64,7 +66,7 @@ typedef enum piCommand{
     STREAM_START = 3,//sensor
     STREAM_STOP = 4, //sensor
 } piCommandType;
-
+/*
 typedef enum piSpecifier{
     NORTH_MOVE = 0,
     EAST_MOVE = 1,
@@ -74,12 +76,13 @@ typedef enum piSpecifier{
     COLOR_SENSOR = 5,
     DISTANCE_SENSOR = 6,    
 }piSpecifierType;
-
+*/
 typedef enum piFlags {
     COMMAND_RECEIVED = 0,
     COMMAND_FINISHED = 1,
     EVENT_ALERT = 2,
 }piFlagsType;
+
 //receive format - "command specifier"
 //send format - "flag command data"
 //flag - RECIVED, FINISHED, EVENT
@@ -92,6 +95,7 @@ typedef struct {
     SemaphoreHandle_t txBufferSemaphoreHandle;
     QueueHandle_t toSendQ;
     uint32_t sendSequenceCount;
+    uint8_t txSequenceCount;
     
     char rxStateBuff[WIFLY_MAX_MSG_LEN];
     unsigned int rxBuffLen;
@@ -99,6 +103,8 @@ typedef struct {
     uint8_t rxSequenceCount;
     unsigned int givenMessageLength;
     bool stateFinished;
+    uint8_t checkSum;
+    
     
     
 } WIFLY_DATA;
@@ -151,6 +157,8 @@ typedef struct {
 
 void WIFLY_Initialize ( void );
 
+
+//void messAnalysis (StandardQueueMessage msg, char *mesCheckSum, char *mesCount, char *mCount);
 
 /*******************************************************************************
   Function:

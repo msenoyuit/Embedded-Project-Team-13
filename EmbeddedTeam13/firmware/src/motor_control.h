@@ -61,7 +61,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "motor_control_public.h"
 #include "FreeRTOS.h"
 #include "queue.h"
-#include "timers.h"
 
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
@@ -98,7 +97,6 @@ extern "C" {
 typedef struct {
     // the applications queue
     QueueHandle_t queue;
-    TimerHandle_t motorControlTimer;
 } MOTOR_CONTROL_DATA;
 
 

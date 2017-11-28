@@ -4,14 +4,10 @@
 
 // Motor Signal get/set*********************************************************
 // Should only be directly set/read by the following
-static int lSignal, rSignal;
+static MotorSignals signals = {.signals={0,0}};
 
-int getLeftMotorSignal(void) {
-    return lSignal;
-}
-
-int getRightMotorSignal(void) {
-    return rSignal;
+MotorSignals getMotorSignals(void) {
+    return signals;
 }
 
 static void setLeftMotorAbsSignal(unsigned int signal) {
@@ -30,14 +26,12 @@ static void setRightMotorDir(bool forward) {
     SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_G, 1, forward);
 }
 
-void setLeftMotorSignal(int signal) {
-    setLeftMotorDir(signal > 0);
-    setLeftMotorAbsSignal((unsigned int) abs(signal));
-    lSignal = signal;
-}
+void setMotorSignals(MotorSignals new_signals) {
+    setLeftMotorDir(new_signals.signals[LEFT_SIDE] > 0);
+    setLeftMotorAbsSignal((unsigned int) abs(new_signals.signals[LEFT_SIDE]));
 
-void setRightMotorSignal(int signal) {
-    setRightMotorDir(signal > 0);
-    setRightMotorAbsSignal((unsigned int) abs(signal));
-    rSignal = signal;
+    setRightMotorDir(new_signals.signals[RIGHT_SIDE] > 0);
+    setRightMotorAbsSignal((unsigned int) abs(new_signals.signals[RIGHT_SIDE]));
+    
+    signals = new_signals;
 }
