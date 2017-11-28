@@ -12,6 +12,8 @@ from PyQt5.QtCore import *
 
 state = 'INIT'
 stateToResume = '' # Used to recover from pause
+rover0CommandToResume = ''
+rover1CommandToResume = ''
 
 # Determine which parser to use based on rover ID
 def guiCommandHandler(rover, message):
@@ -22,7 +24,7 @@ def guiCommandHandler(rover, message):
 
 # Called when user presses start button
 def start():
-    global state
+    global state, stateToResume, rover0CommandToResume, rover1CommandToResume
     if state == 'INIT': # When first starting, create threads for rover controllers and start them running
         controller0Thread = threading.Thread(target=rover0Controller.run)
         controller0Thread.start()
@@ -31,13 +33,18 @@ def start():
         state = 'RUN'
     if state == 'PAUSE':
         state = stateToResume
+        if len(rover0CommandToResume) > 0:
+            rover0Parser.constructMessage(rover0CommandToResume)
+        if len(rover1CommandToResume) > 0:
+            rover1Parser.constructMessage(rover1CommandToResume)
     else:
         mainInfo('Already running (state = ' + state + ')')
 
 def pause():
-    global state
+    global state, stateToResume
     if state == 'RUN':
         state = 'PAUSE'
+        stateToResume = 'RUN'
     else:
         mainInfo('Not running')
 
@@ -66,6 +73,20 @@ def rover1Message(message):
         rover1Controller.handleMessage(message)
     else:
         print('Dropped rover 1 message:\t', message)
+
+def rover0Command(message):
+    global state, rover0Parser, rover0CommandToResume
+    if state == 'RUN':
+        rover0Parser.constructMessage(message)
+    elif state == 'PAUSE':
+        rover0CommandToResume = message
+
+def rover1Command(message):
+    global state, rover1Parser, rover1CommandToResume
+    if state == 'RUN':
+        rover1Parser.constructMessage(message)
+    elif state == 'PAUSE':
+        rover1CommandToResume = message
 
 def mainInfo(message):
     print('Main Info:\t', message)
@@ -112,7 +133,8 @@ rover0Parser.constructedMessageSignal.connect(server.sendClient0Message)
 rover1Parser.parsedMessageSignal.connect(rover1Message)
 rover1Parser.constructedMessageSignal.connect(server.sendClient1Message)
 # Connect controller 0 signals
-rover0Controller.sendCommandSignal.connect(rover0Parser.constructMessage)
+#rover0Controller.sendCommandSignal.connect(rover0Parser.constructMessage)
+rover0Controller.sendCommandSignal.connect(rover0Command)
 rover0Controller.positionChanged.connect(serverGui.setRoverIconPos)
 rover0Controller.newRedBlockFound.connect(serverGui.moveRedBlock)
 rover0Controller.newRedBlockFound.connect(rover1Controller.addRedBlock)
@@ -121,7 +143,8 @@ rover0Controller.newGreenBlockFound.connect(rover1Controller.addGreenBlock)
 rover0Controller.newBlueBlockFound.connect(serverGui.moveBlueBlock)
 rover0Controller.newBlueBlockFound.connect(rover1Controller.addBlueBlock)
 # Connect controller 1 signals
-rover1Controller.sendCommandSignal.connect(rover1Parser.constructMessage)
+#rover1Controller.sendCommandSignal.connect(rover1Parser.constructMessage)
+rover1Controller.sendCommandSignal.connect(rover1Command)
 rover1Controller.positionChanged.connect(serverGui.setRoverIconPos)
 rover1Controller.movedBlock.connect(serverGui.moveRedBlock)
 
