@@ -107,6 +107,7 @@ typedef struct {
     /* Handle to the queue */
     QueueHandle_t queue;
     uint8_t motorQueueCount;
+    uint8_t direction;
 
 } MASTER_CONTROL_DATA;
 

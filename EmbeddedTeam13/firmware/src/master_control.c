@@ -202,6 +202,7 @@ void MASTER_CONTROL_Initialize ( void ) {
     masterDataTag.lineOn = 0;
     masterDataTag.distance = 1;
     masterControlData.motorQueueCount = 0;
+    masterControlData.direction = 1;
     /* Configure Queue */
     masterControlData.queue = xQueueCreate(MASTER_CONTROL_QUEUE_LEN,
                                          sizeof(StandardQueueMessage));
@@ -225,6 +226,7 @@ StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
     checkMessageType(msg, MESSAGE_WIFLY_MESSAGE);
     StandardQueueMessage outMsg;
     StandardQueueMessage toSend;
+    int turns = 0;
     const char * text = getWiflyText(msg);
 
     piCommandType piCommand = text[0] - INT_CHAR_DISTANCE;
@@ -235,6 +237,37 @@ StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
     switch(piCommand)
     {
         case MOVE_COMMAND:
+            while(piSpecifier != masterControlData.direction)
+            {
+                if(piSpecifier == 4)
+                {
+                    toSend = makeDriveCommand(ALL_STOP, masterControlData.motorQueueCount++);
+                    driveControlSendMsgToQ(&toSend, portMAX_DELAY);
+                    break;
+                }
+                    
+                turns = masterControlData.direction - piSpecifier;
+                if((turns < 0 && turns > -3) || turns == 3)
+                {
+                    toSend = makeDriveCommand(TURN_RIGHT, masterControlData.motorQueueCount++);
+                    driveControlSendMsgToQ(&toSend, portMAX_DELAY);
+                    masterControlData.direction++;
+                }
+                else
+                {
+                    toSend = makeDriveCommand(TURN_LEFT, masterControlData.motorQueueCount++);
+                    driveControlSendMsgToQ(&toSend, portMAX_DELAY);
+                    masterControlData.direction--;
+                }
+                if(masterControlData.direction < 0)
+                {
+                    masterControlData.direction = 3;
+                }
+                else
+                {
+                    masterControlData.direction %= 4;
+                }
+            }
             toSend = makeDriveCommand(piSpecifier, masterControlData.motorQueueCount++);
             driveControlSendMsgToQ(&toSend, portMAX_DELAY);
             break;
