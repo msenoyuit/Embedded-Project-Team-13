@@ -17,6 +17,9 @@ static volatile EncoderCounts encoderCounts = {.counts={0,0}};
 static volatile EncoderCounts encoderLastCounts = {.counts={0,0}};
 static volatile MotorSpeeds speeds = {.speeds={0,0}};
 
+static volatile EncoderCounts distanceFrom = {.counts={0,0}};
+static volatile int alertDist = 0;
+
 // Timer for encoder speed callback
 static TimerHandle_t encoderSpeedTimer;
 
@@ -76,6 +79,17 @@ static void encoderSpeedCallback(TimerHandle_t timer) {
        != pdTRUE) {
         dbgFatalError(DBG_ERROR_ENCODER_ISR);
     }
+
+    // Send a distance traveled alert if needed
+    if (alertDist != 0 &&
+        ((encoderCounts.counts[0] - distanceFrom.counts[0]) +
+         (encoderCounts.counts[1] - distanceFrom.counts[1]))/2 >= alertDist) {
+        alertDist == 0;
+        if(driveControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
+           != pdTRUE) {
+            dbgFatalError(DBG_ERROR_ENCODER_ISR);
+        }
+    }
     
     portEND_SWITCHING_ISR(higherPriorityTaskWoken);
 }
@@ -123,4 +137,9 @@ MotorSpeeds getEncoderSpeedsISR(void) {
     MotorSpeeds result = speeds;
     taskEXIT_CRITICAL_FROM_ISR(mask);
     return result;
+}
+
+void registerDistanceAlert(int dist) {
+    alertDist = dist;
+    distanceFrom = encoderCounts;
 }

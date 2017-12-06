@@ -7,6 +7,7 @@
 
 #include "drive_control.h"
 #include "motor_control_public.h"
+#include "encoders.c"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -64,6 +65,7 @@ static void setMotorSpeeds(float left, float right) {
 typedef enum {
     FORWARD,
     REVERSE,
+    SPIN,
 } DriveDir;
 
 typedef enum {
@@ -75,7 +77,7 @@ typedef enum {
 } TurnSpec;
 
 static void drive(DriveDir direction, TurnSpec turn) {
-    float dirMult = (direction == FORWARD) ? 1.0 : -1.0;
+    float dirMult = (direction != REVERSE) ? 1.0 : -1.0;
     float leftMult, rightMult;
     switch (turn) {
     case STRAIGHT:
@@ -90,12 +92,14 @@ static void drive(DriveDir direction, TurnSpec turn) {
         rightMult = FOLLOW_CORRECT_SLOW_MULTIPLIER;
         break;
     case TURN_TO_LEFT:
-        leftMult = TURN_SLOW_MULTIPLIER;
+        leftMult = ((direction == SPIN) ? -1 * TURN_FAST_MULTIPLIER:
+                    TURN_SLOW_MULTIPLIER);
         rightMult = TURN_FAST_MULTIPLIER;
         break;
     case TURN_TO_RIGHT:
         leftMult = TURN_FAST_MULTIPLIER;
-        rightMult = TURN_SLOW_MULTIPLIER;
+        rightMult = ((direction == SPIN) ? -1 * TURN_FAST_MULTIPLIER:
+                     TURN_SLOW_MULTIPLIER);
         break;
     default:
         dbgFatalError(DBG_ERROR_DRIVE_CONTROL_RUN);
@@ -129,16 +133,34 @@ static void updateDriveOutput(void) {
             drive(dir, STRAIGHT);
         }
     } else if (cmd == TURN_LEFT || cmd == TURN_RIGHT) {
-        driveControlData.startCleared = (driveControlData.startCleared ||
-                                         pos == UNKNOWN);
-        
-        if (driveControlData.startCleared && (pos == LINE_TO_RIGHT ||
-                                              pos == LINE_CENTERED ||
-                                              pos == LINE_TO_LEFT)) {
-            cmdComplete = true;
+        if (!driveControlData.distAlertSet) {
+            // Clear the intersection, then set an alert
+            if (pos != INTERSECTION) {
+                registerDistanceAlert(600);
+                driveControlData.distAlertSet = true;
+            }
+            
+            drive(FORWARD, STRAIGHT);
+        } else if (!driveControlData.distAlertReceived) {
+            // Follow the line till we get alerted
+            if (pos == LINE_TO_RIGHT) {
+                drive(FORWARD, CORRECT_TO_RIGHT);
+            } else if (pos == LINE_TO_LEFT) {
+                drive(FORWARD, CORRECT_TO_LEFT);
+            } else {
+                drive(FORWARD, STRAIGHT);
+            }
         } else {
-            drive(FORWARD, (cmd == TURN_LEFT) ? TURN_TO_LEFT : TURN_TO_RIGHT);
-        } 
+            // Turn on our point until we center on the next line
+            driveControlData.startCleared = (driveControlData.startCleared
+                                             || pos == UNKNOWN);
+            if (driveControlData.startCleared && (pos == LINE_CENTERED)) {
+                cmdComplete = true;
+            } else {
+                drive(SPIN,
+                      (cmd == TURN_LEFT) ? TURN_TO_LEFT : TURN_TO_RIGHT);
+            }
+        }
     } else {
         stopMotors();
     }
@@ -159,9 +181,18 @@ static void startNextDriveCommand(void) {
     }
     xQueueReceive(driveControlData.internalQueue,
                   &driveControlData.currentCommandMsg, 0);
+    if (driveControlData.currentCommand == TURN_LEFT ||
+        driveControlData.currentCommand == TURN_RIGHT) {
+        // If we just turned we're already positioned at the right distance
+        driveControlData.distAlertSet = true;
+        driveControlData.distAlertReceived = true;
+    } else {
+        driveControlData.distAlertSet = false;
+        driveControlData.distAlertReceived = false;
+    }
+        driveControlData.startCleared = false;
     driveControlData.currentCommand =
         getCommand(&driveControlData.currentCommandMsg);
-    driveControlData.startCleared = false;
     updateDriveOutput();
 }
 
@@ -266,23 +297,30 @@ BaseType_t driveControlSendMsgToQ(StandardQueueMessage * message,
   Remarks:
     See prototype in drive_control.h.
  */
-bool initialized = false;
 
 
 void DRIVE_CONTROL_Tasks ( void ) {
     StandardQueueMessage receivedMessage;
     StandardQueueMessage toSend;
+
+    /* To hard code a set of directions for testing
+    static bool initialized = false;
     if (!initialized) {
         StandardQueueMessage msg = makeDriveCommand(MOVE_FORWARD, 0);
         driveControlSendMsgToQ(&msg, 0);
-        msg = makeDriveCommand(TURN_LEFT, 1);
+        msg = makeDriveCommand(MOVE_FORWARD, 1);
         driveControlSendMsgToQ(&msg, 0);
-        msg = makeDriveCommand(MOVE_FORWARD, 2);
+        msg = makeDriveCommand(TURN_LEFT, 2);
         driveControlSendMsgToQ(&msg, 0);
-        msg = makeDriveCommand(TURN_RIGHT, 3);
+        msg = makeDriveCommand(TURN_LEFT, 3);
         driveControlSendMsgToQ(&msg, 0);
+        msg = makeDriveCommand(TURN_LEFT, 4);
+        driveControlSendMsgToQ(&msg, 0);
+        msg = makeDriveCommand(MOVE_FORWARD, 5);
+        driveControlSendMsgToQ(&msg, 0);        
         initialized = true;
     }
+    */
     xQueueReceive(driveControlData.queue, &receivedMessage, portMAX_DELAY);
     piSpecifierType command;
     int commandId;
@@ -292,6 +330,10 @@ void DRIVE_CONTROL_Tasks ( void ) {
         break;
     case MESSAGE_LINE_READING:
         handleLineSensorReading(getLine(&receivedMessage));
+        break;
+    case MESSAGE_MOTOR_SPEEDS_REPORT:
+        driveControlData.distAlertReceived = true;
+        updateDriveOutput();
         break;
     }
 }

@@ -57,6 +57,8 @@ typedef enum {
 
 typedef struct {
     bool startCleared;
+    bool distAlertSet;
+    bool distAlertReceived;
     moveCommandType currentCommand;
     StandardQueueMessage currentCommandMsg;
     LinePosition linePos;
