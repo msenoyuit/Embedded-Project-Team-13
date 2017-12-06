@@ -266,10 +266,23 @@ BaseType_t driveControlSendMsgToQ(StandardQueueMessage * message,
   Remarks:
     See prototype in drive_control.h.
  */
+bool initialized = false;
+
 
 void DRIVE_CONTROL_Tasks ( void ) {
     StandardQueueMessage receivedMessage;
     StandardQueueMessage toSend;
+    if (!initialized) {
+        StandardQueueMessage msg = makeDriveCommand(MOVE_FORWARD, 0);
+        driveControlSendMsgToQ(&msg, 0);
+        msg = makeDriveCommand(TURN_LEFT, 1);
+        driveControlSendMsgToQ(&msg, 0);
+        msg = makeDriveCommand(MOVE_FORWARD, 2);
+        driveControlSendMsgToQ(&msg, 0);
+        msg = makeDriveCommand(TURN_RIGHT, 3);
+        driveControlSendMsgToQ(&msg, 0);
+        initialized = true;
+    }
     xQueueReceive(driveControlData.queue, &receivedMessage, portMAX_DELAY);
     piSpecifierType command;
     int commandId;
