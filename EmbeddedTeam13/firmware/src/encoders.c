@@ -84,7 +84,7 @@ static void encoderSpeedCallback(TimerHandle_t timer) {
     if (alertDist != 0 &&
         ((encoderCounts.counts[0] - distanceFrom.counts[0]) +
          (encoderCounts.counts[1] - distanceFrom.counts[1]))/2 >= alertDist) {
-        alertDist == 0;
+        alertDist = 0;
         if(driveControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
            != pdTRUE) {
             dbgFatalError(DBG_ERROR_ENCODER_ISR);
