@@ -107,7 +107,7 @@ void wiflyUsartReceiveEventHandler(const SYS_MODULE_INDEX index) {
                         toSend = makeWiflyMessage("\r\r ERROR wrong rover id \r\r");
                         wiflySendMsg(&toSend, portMAX_DELAY);
                         wiflyData.stateFinished = true;
-                        wiflyData.rxState = OUT_OF_STATE;
+                        //wiflyData.rxState = OUT_OF_STATE;
                         break;
                 }
                 wiflyData.stateFinished = true;
@@ -246,8 +246,6 @@ void sendMsg(StandardQueueMessage msg, char *checkSum, char *messageLength, char
     //Start Char
     xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
     DRV_USART_WriteByte(wiflyData.usartHandle, START_CHAR);
-    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
-    DRV_USART_WriteByte(wiflyData.usartHandle, ',');
     
     //Rover ID
     xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
@@ -289,13 +287,11 @@ void sendMsg(StandardQueueMessage msg, char *checkSum, char *messageLength, char
 
     //checksum
     xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
-    DRV_USART_WriteByte(wiflyData.usartHandle, messageLength[0]);
+    DRV_USART_WriteByte(wiflyData.usartHandle, checkSum[0]);
     xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
-    DRV_USART_WriteByte(wiflyData.usartHandle, messageLength[1]);
+    DRV_USART_WriteByte(wiflyData.usartHandle, checkSum[1]);
     xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
-    DRV_USART_WriteByte(wiflyData.usartHandle, messageLength[2]);
-    xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);
-    DRV_USART_WriteByte(wiflyData.usartHandle, ',');
+    DRV_USART_WriteByte(wiflyData.usartHandle, checkSum[2]);
     
     //stop char
     xSemaphoreTake(wiflyData.txBufferSemaphoreHandle, portMAX_DELAY);

@@ -108,6 +108,8 @@ typedef struct {
     QueueHandle_t queue;
     uint8_t motorQueueCount;
     uint8_t direction;
+    int lastCommand;
+    bool inPickup;
 
 } MASTER_CONTROL_DATA;
 

@@ -11,7 +11,8 @@ extern "C" {
 // DOM-IGNORE-END
 
 #define WIFLY_MAX_MSG_LEN 100
-
+//rover 0 is the scout, rover 1 is the truck
+#define THIS_ROVER_ID 0
 struct StandardQueueMessage;
 
 typedef enum piSpecifier{

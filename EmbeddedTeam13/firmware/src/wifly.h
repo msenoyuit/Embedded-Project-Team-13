@@ -30,12 +30,10 @@ extern "C" {
 
 #define WIFLY_USART_INDEX DRV_USART_INDEX_0
 #define WIFLY_QUEUE_LENGTH 10
-//rover 0 is the scout, rover 1 is the truck
-#define THIS_ROVER_ID 0
 #define INT_CHAR_DISTANCE 48
-#define COMMA_UART 43
-const char START_CHAR = 43;
-const char STOP_CHAR = 45;
+#define COMMA_UART 44
+const char START_CHAR = 123;
+const char STOP_CHAR = 125;
 
 // *****************************************************************************
 /* Application Data

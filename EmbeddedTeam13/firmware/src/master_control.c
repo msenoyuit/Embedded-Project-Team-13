@@ -200,9 +200,11 @@ void MASTER_CONTROL_Initialize ( void ) {
     lineSensorInit();
     masterDataTag.color = 0;
     masterDataTag.lineOn = 0;
-    masterDataTag.distance = 1;
+    masterDataTag.distance = 0;
     masterControlData.motorQueueCount = 0;
     masterControlData.direction = 1;
+    masterControlData.lastCommand = 9;
+    masterControlData.inPickup = false;
     /* Configure Queue */
     masterControlData.queue = xQueueCreate(MASTER_CONTROL_QUEUE_LEN,
                                          sizeof(StandardQueueMessage));
@@ -222,22 +224,11 @@ void MASTER_CONTROL_Initialize ( void ) {
     See prototype in master_control.h.
  */
 
-StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
-    checkMessageType(msg, MESSAGE_WIFLY_MESSAGE);
-    StandardQueueMessage outMsg;
-    StandardQueueMessage toSend;
+void turnToDir(int piSpecifier)
+{
     int turns = 0;
-    const char * text = getWiflyText(msg);
-
-    piCommandType piCommand = text[0] - INT_CHAR_DISTANCE;
-    piSpecifierType piSpecifier = text[2] - INT_CHAR_DISTANCE;
-    piFlagsType piFlag = COMMAND_RECEIVED;
-    outMsg = printfWiflyMessage("%d %d %d", piCommand, piSpecifier, piFlag);
-
-    switch(piCommand)
-    {
-        case MOVE_COMMAND:
-            while(piSpecifier != masterControlData.direction)
+    StandardQueueMessage toSend;
+    while(piSpecifier != masterControlData.direction)
             {
                 if(piSpecifier == 4)
                 {
@@ -247,13 +238,13 @@ StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
                 }
                     
                 turns = masterControlData.direction - piSpecifier;
-                if((turns < 0 && turns > -3) || turns == 3)
+                if((turns == -1 || turns == -2 || turns == 3))
                 {
                     toSend = makeDriveCommand(TURN_RIGHT, masterControlData.motorQueueCount++);
                     driveControlSendMsgToQ(&toSend, portMAX_DELAY);
                     masterControlData.direction++;
                 }
-                else
+                else if((turns == 1 || turns == 2 || turns == -3))
                 {
                     toSend = makeDriveCommand(TURN_LEFT, masterControlData.motorQueueCount++);
                     driveControlSendMsgToQ(&toSend, portMAX_DELAY);
@@ -268,7 +259,25 @@ StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
                     masterControlData.direction %= 4;
                 }
             }
-            toSend = makeDriveCommand(piSpecifier, masterControlData.motorQueueCount++);
+}
+
+StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
+    checkMessageType(msg, MESSAGE_WIFLY_MESSAGE);
+    StandardQueueMessage outMsg;
+    StandardQueueMessage toSend;
+    const char * text = getWiflyText(msg);
+
+    piCommandType piCommand = text[0] - INT_CHAR_DISTANCE;
+    piSpecifierType piSpecifier = text[2] - INT_CHAR_DISTANCE;
+    piFlagsType piFlag = COMMAND_RECEIVED;
+    outMsg = printfWiflyMessage("%d %d %d", piCommand, piSpecifier, piFlag);
+
+    switch(piCommand)
+    {
+        case MOVE_COMMAND:
+            masterControlData.lastCommand = piSpecifier;
+            turnToDir(piSpecifier);
+            toSend = makeDriveCommand(MOVE_FORWARD, masterControlData.motorQueueCount++);
             driveControlSendMsgToQ(&toSend, portMAX_DELAY);
             break;
         case READ_COMMAND:
@@ -299,7 +308,7 @@ StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
 void MASTER_CONTROL_Tasks ( void ){
     StandardQueueMessage receivedMessage;
     StandardQueueMessage toSend;
-
+    int driveCommand;
     standardQueueMessageReceive(masterControlData.queue, &receivedMessage,
                                 portMAX_DELAY);
 
@@ -335,6 +344,22 @@ void MASTER_CONTROL_Tasks ( void ){
                                         getClear(&receivedMessage));
             wiflySendMsg(&toSend, portMAX_DELAY);
         }
+        break;
+    case MESSAGE_DRIVE_COMMAND:
+        driveCommand = getCommand(&receivedMessage);
+        if(driveCommand == MOVE_FORWARD)
+        {
+            if(masterControlData.inPickup == false)
+                toSend = printfWiflyMessage("0 %d 1",
+                                        masterControlData.direction);
+            else
+            {
+                toSend = printfWiflyMessage("2 %d 1",
+                                        masterControlData.direction);
+                masterControlData.inPickup = false;
+            }
+            wiflySendMsg(&toSend, portMAX_DELAY);
+         }
         break;
     }
 }
