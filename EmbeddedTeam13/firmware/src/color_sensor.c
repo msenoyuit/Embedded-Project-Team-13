@@ -2,6 +2,7 @@
 
 #include "FreeRTOS.h"
 #include "timers.h"
+#include "config.h"
 
 #include "master_control_public.h"
 
@@ -30,10 +31,6 @@ static uint8_t line_data = 0; // Hold the final computed line sesnor values
 static uint16_t clear, red, green, blue; // Hold the final computed RGBC value
 //static uint8_t count = 0;
 
-// Enable/disable the color sensor
-//rover 0 is the scout, rover 1 is the truck. Only scout has sensor
-
-#define COLOR_SENSOR
 
 void ColorBufferEventHandler(DRV_I2C_BUFFER_EVENT event,
                                 DRV_I2C_BUFFER_HANDLE bufferHandle,
@@ -94,7 +91,7 @@ void readSensors() {
     txBuffer = DRV_I2C_Transmit(drvI2CHandle, LINE_SENSOR_ADDRESS, &tx2Data[10], TX2_DATA_LENGTH, NULL);
     txBuffer = DRV_I2C_Transmit(drvI2CHandle, LINE_SENSOR_ADDRESS, &tx2Data[13], TX_DATA_LENGTH, NULL);
     rxBuffer = DRV_I2C_Receive(drvI2CHandle, LINE_SENSOR_ADDRESS, &line_data, 1, NULL);
-#ifdef COLOR_SENSOR
+#ifdef IS_SCOUT
     rxBuffer = DRV_I2C_Receive(drvI2CHandle, TCS34725_ADDRESS, &rxData[0], RX_DATA_LENGTH, NULL);
 #endif
     DRV_I2C_Close(drvI2CHandle);
@@ -115,8 +112,15 @@ void colorSensorInit(void) {
        dbgFatalError(DBG_ERROR_COLOR_INIT);
     }
     
+    
     // Test is this is needed here
     DRV_I2C_BufferEventHandlerSet(drvI2CHandle, ColorBufferEventHandler, i2cOpStatus);
+    
+    
+#ifdef IS_SCOUT
+    txBuffer = DRV_I2C_Transmit(drvI2CHandle, TCS34725_ADDRESS, &txData, TX_DATA_LENGTH, NULL);
+#endif
+    
 #ifdef COLOR_SENSOR
     txBuffer = DRV_I2C_Transmit(drvI2CHandle, TCS34725_ADDRESS, &txData, TX_DATA_LENGTH, NULL);
 #endif
@@ -132,8 +136,6 @@ void colorSensorInit(void) {
         dbgFatalError(DBG_ERROR_COLOR_INIT);
     }*/
     
-    // Send value to initialize color sensor for data read
-
     /*if (txBuffer == (DRV_I2C_BUFFER_HANDLE)NULL) {
         dbgFatalError(DBG_ERROR_COLOR_INIT);
     }*/

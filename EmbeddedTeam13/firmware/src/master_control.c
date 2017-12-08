@@ -180,6 +180,16 @@ static StandardQueueMessage handleMessage(const char * message) {
     }
 }
 
+/* Turn on the electromagnet */
+static void enableElectromagnet(void) {
+    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, 2, 1);
+}
+
+/* Turn off the electromagnet */
+static void disableElectromagnet(void) {
+    SYS_PORTS_PinWrite(PORTS_ID_0, PORT_CHANNEL_D, 2, 0);    
+}
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Initialization and State Machine Functions
@@ -217,6 +227,9 @@ void MASTER_CONTROL_Initialize ( void ) {
     if(masterControlData.queue == NULL) {
         dbgFatalError(DBG_ERROR_MAIN_TASK_INIT);
     }
+
+    // Make sure the electromagnet is off
+    disableElectromagnet();
 
     dbgOutputLoc(DBG_TASK_BEFORE_LOOP);
 }

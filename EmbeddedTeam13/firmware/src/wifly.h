@@ -17,6 +17,7 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "semphr.h"
+#include "config.h"
 
 #include "wifly_public.h"
 
@@ -30,7 +31,6 @@ extern "C" {
 
 #define WIFLY_USART_INDEX DRV_USART_INDEX_0
 #define WIFLY_QUEUE_LENGTH 10
-#define THIS_ROVER_ID 0
 #define INT_CHAR_DISTANCE 48
 #define COMMA_UART 44
 const char START_CHAR = 123;

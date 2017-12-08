@@ -59,6 +59,10 @@ typedef struct {
     bool startCleared;
     bool distAlertSet;
     bool distAlertReceived;
+    // If the last drive command executed was a turn
+    bool inTurnPosition;
+    // If the distance sensor says we can go forward
+    bool canGoForward;
     moveCommandType currentCommand;
     StandardQueueMessage currentCommandMsg;
     LinePosition linePos;

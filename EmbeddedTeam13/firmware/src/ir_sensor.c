@@ -36,7 +36,14 @@ void IR_ADC_Average (void) {
     BaseType_t higherPriorityTaskWoken = pdFALSE;
     StandardQueueMessage msg = makeDistanceReading(ADC_avg);
     dbgOutputLoc(DBG_ISR_BEFORE_QUEUE_SEND);
-    if(masterControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken) != pdTRUE) {
+
+    // Send to both drive control and master control
+    if(driveControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
+       != pdTRUE) {
+        dbgFatalError(DBG_ERROR_IR_RUN);
+    }
+    if(masterControlSendMsgToQFromISR(&msg, &higherPriorityTaskWoken)
+       != pdTRUE) {
         dbgFatalError(DBG_ERROR_IR_RUN);
     }
     dbgOutputLoc(DBG_ISR_AFTER_QUEUE_SEND);
