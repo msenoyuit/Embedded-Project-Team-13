@@ -110,6 +110,7 @@ typedef struct {
     uint8_t direction;
     int lastCommand;
     bool inPickup;
+    int colorCount;
 
 } MASTER_CONTROL_DATA;
 

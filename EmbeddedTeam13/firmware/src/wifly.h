@@ -30,6 +30,7 @@ extern "C" {
 
 #define WIFLY_USART_INDEX DRV_USART_INDEX_0
 #define WIFLY_QUEUE_LENGTH 10
+#define THIS_ROVER_ID 0
 #define INT_CHAR_DISTANCE 48
 #define COMMA_UART 44
 const char START_CHAR = 123;
@@ -63,6 +64,7 @@ typedef enum piCommand{
     PICKUP_COMMAND = 2, //direction
     STREAM_START = 3,//sensor
     STREAM_STOP = 4, //sensor
+    RELEASE_COMMAND = 5
 } piCommandType;
 /*
 typedef enum piSpecifier{
@@ -75,11 +77,6 @@ typedef enum piSpecifier{
     DISTANCE_SENSOR = 6,    
 }piSpecifierType;
 */
-typedef enum piFlags {
-    COMMAND_RECEIVED = 0,
-    COMMAND_FINISHED = 1,
-    EVENT_ALERT = 2,
-}piFlagsType;
 
 //receive format - "command specifier"
 //send format - "flag command data"

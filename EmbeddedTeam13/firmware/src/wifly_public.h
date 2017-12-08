@@ -11,9 +11,14 @@ extern "C" {
 // DOM-IGNORE-END
 
 #define WIFLY_MAX_MSG_LEN 100
-//rover 0 is the scout, rover 1 is the truck
-#define THIS_ROVER_ID 0
+
 struct StandardQueueMessage;
+
+typedef enum piFlags {
+    COMMAND_RECEIVED = 0,
+    COMMAND_FINISHED = 1,
+    EVENT_ALERT = 2,
+}piFlagsType;
 
 typedef enum piSpecifier{
     NORTH_MOVE = 0,
