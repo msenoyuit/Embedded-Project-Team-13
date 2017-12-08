@@ -305,6 +305,7 @@ void DRIVE_CONTROL_Initialize ( void ) {
     driveControlData.startCleared = false;
 
     driveControlData.inTurnPosition = false;
+    driveControlData.canGoForward = true;
 }
 
 BaseType_t driveControlSendMsgToQFromISR(StandardQueueMessage * message,
@@ -333,7 +334,7 @@ void DRIVE_CONTROL_Tasks ( void ) {
     StandardQueueMessage receivedMessage;
     StandardQueueMessage toSend;
 
-    /* To hard code a set of directions for testing
+    /* To hard code a set of directions for testing 
     static bool initialized = false;
     if (!initialized) {
         StandardQueueMessage msg = makeDriveCommand(MOVE_FORWARD, 0);
@@ -342,12 +343,14 @@ void DRIVE_CONTROL_Tasks ( void ) {
         driveControlSendMsgToQ(&msg, 0);
         msg = makeDriveCommand(TURN_LEFT, 2);
         driveControlSendMsgToQ(&msg, 0);
-        msg = makeDriveCommand(TURN_LEFT, 3);
+        msg = makeDriveCommand(MOVE_FORWARD, 3);
         driveControlSendMsgToQ(&msg, 0);
         msg = makeDriveCommand(TURN_LEFT, 4);
         driveControlSendMsgToQ(&msg, 0);
-        msg = makeDriveCommand(MOVE_FORWARD, 5);
-        driveControlSendMsgToQ(&msg, 0);        
+        msg = makeDriveCommand(TURN_LEFT, 5);
+        driveControlSendMsgToQ(&msg, 0);
+        msg = makeDriveCommand(MOVE_FORWARD, 6);
+        driveControlSendMsgToQ(&msg, 0);
         initialized = true;
     }
     */
@@ -368,7 +371,7 @@ void DRIVE_CONTROL_Tasks ( void ) {
         int distance = getDistance(&receivedMessage);
         // These seem to correspond to the range of readings we get if there's
         // something in front
-        driveControlData.canGoForward = (3 < distance && distance <= 20);
+        driveControlData.canGoForward = !(3 < distance && distance <= 20);
     }
 }
 
