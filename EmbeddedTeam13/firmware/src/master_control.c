@@ -230,8 +230,6 @@ void MASTER_CONTROL_Initialize ( void ) {
 
     // Make sure the electromagnet is off
     disableElectromagnet();
-    // TESTING
-    enableElectromagnet();
 
     dbgOutputLoc(DBG_TASK_BEFORE_LOOP);
 }
