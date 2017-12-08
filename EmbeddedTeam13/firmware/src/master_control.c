@@ -369,6 +369,7 @@ void MASTER_CONTROL_Tasks ( void ){
                                         masterControlData.direction,
                                         COMMAND_FINISHED);
                 wiflySendMsg(&toSend, portMAX_DELAY);
+                masterControlData.colorCount--;
             }
         }
         break;
