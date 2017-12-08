@@ -173,24 +173,61 @@ static void updateDriveOutput(void) {
     }
 }
 
+static void executeAllStop(StandardQueueMessage allStopCommand) {
+    StandardQueueMessage toDiscard;
+    // empty the queue
+    while (xQueueReceive(driveControlData.internalQueue, &toDiscard, 0)
+           != errQUEUE_EMPTY) {}
+    driveControlData.currentCommand = ALL_STOP;
+    updateDriveOutput();
+    // Tell master control we've done it
+    if (masterControlSendMsgToQ(&allStopCommand, 0) == errQUEUE_FULL) {
+        dbgFatalError(DBG_ERROR_DRIVE_CONTROL_RUN);
+    }
+}
+
 static void startNextDriveCommand(void) {
     if (uxQueueMessagesWaiting(driveControlData.internalQueue) == 0) {
         driveControlData.currentCommand = ALL_STOP;
         updateDriveOutput();
         return;
     }
+    // If the last command was a turn, or the last command was an
+    // all stop and we turned before that, we're in position for a turn
+    if (driveControlData.currentCommand == TURN_LEFT ||
+        driveControlData.currentCommand == TURN_RIGHT ||
+        (driveControlData.currentCommand == ALL_STOP &&
+         driveControlData.inTurnPosition)) {
+        driveControlData.inTurnPosition = true;
+    } else {
+        driveControlData.inTurnPosition = false;
+    }
+    
     xQueueReceive(driveControlData.internalQueue,
                   &driveControlData.currentCommandMsg, 0);
-    if (driveControlData.currentCommand == TURN_LEFT ||
-        driveControlData.currentCommand == TURN_RIGHT) {
-        // If we just turned we're already positioned at the right distance
+
+    if (driveControlData.inTurnPosition) {
         driveControlData.distAlertSet = true;
         driveControlData.distAlertReceived = true;
     } else {
         driveControlData.distAlertSet = false;
         driveControlData.distAlertReceived = false;
     }
-        driveControlData.startCleared = false;
+    driveControlData.startCleared = false;
+
+    // If we're the truck, we'll only get told to drive into things if
+    // we're trying to pick them up
+#ifdef IS_SCOUT
+    // If there's something in the way abort
+    if (!driveControlData.canGoForward && 
+        getCommand(&driveControlData.currentCommandMsg) == MOVE_FORWARD) {
+        // Change the command to an all stop
+        driveControlData.currentCommandMsg.driveCommand.command = ALL_STOP;
+        executeAllStop(driveControlData.currentCommandMsg);
+        return;
+    }
+#endif
+    
     driveControlData.currentCommand =
         getCommand(&driveControlData.currentCommandMsg);
     updateDriveOutput();
@@ -198,16 +235,7 @@ static void startNextDriveCommand(void) {
 
 static void addDriveCommand(StandardQueueMessage command) {
     if (getCommand(&command) == ALL_STOP) {
-        StandardQueueMessage toDiscard;
-        // empty the queue
-        while (xQueueReceive(driveControlData.internalQueue, &toDiscard, 0)
-               != errQUEUE_EMPTY) {}
-        driveControlData.currentCommand = ALL_STOP;
-        updateDriveOutput();
-        // Tell master control we've done it
-        if (masterControlSendMsgToQ(&command, 0) == errQUEUE_FULL) {
-            dbgFatalError(DBG_ERROR_DRIVE_CONTROL_RUN);
-        }
+        executeAllStop(command);
         return;
     }
 
@@ -275,6 +303,8 @@ void DRIVE_CONTROL_Initialize ( void ) {
     driveControlData.currentCommand = ALL_STOP;
     driveControlData.linePos = UNKNOWN;
     driveControlData.startCleared = false;
+
+    driveControlData.inTurnPosition = false;
 }
 
 BaseType_t driveControlSendMsgToQFromISR(StandardQueueMessage * message,
@@ -322,8 +352,6 @@ void DRIVE_CONTROL_Tasks ( void ) {
     }
     */
     xQueueReceive(driveControlData.queue, &receivedMessage, portMAX_DELAY);
-    piSpecifierType command;
-    int commandId;
     switch (receivedMessage.type) {
     case MESSAGE_DRIVE_COMMAND:
         addDriveCommand(receivedMessage);
@@ -335,6 +363,12 @@ void DRIVE_CONTROL_Tasks ( void ) {
         driveControlData.distAlertReceived = true;
         updateDriveOutput();
         break;
+    case MESSAGE_DISTANCE_READING:
+        ;
+        int distance = getDistance(&receivedMessage);
+        // These seem to correspond to the range of readings we get if there's
+        // something in front
+        driveControlData.canGoForward = (3 < distance && distance <= 20);
     }
 }
 
