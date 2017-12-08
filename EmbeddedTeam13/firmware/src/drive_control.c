@@ -334,7 +334,7 @@ void DRIVE_CONTROL_Tasks ( void ) {
     StandardQueueMessage receivedMessage;
     StandardQueueMessage toSend;
 
-    /* To hard code a set of directions for testing 
+    /* To hard code a set of directions for testing
     static bool initialized = false;
     if (!initialized) {
         StandardQueueMessage msg = makeDriveCommand(MOVE_FORWARD, 0);
