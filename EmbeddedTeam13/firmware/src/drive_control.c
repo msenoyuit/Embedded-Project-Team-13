@@ -16,10 +16,14 @@
 // *****************************************************************************
 #define DRIVE_CONTROL_QUEUE_LEN 10
 #define DRIVE_CONTROL_INTERNAL_QUEUE_LEN 16
-#define DRIVE_SPEED (MOTOR_MAX_SPEED * 0.75)
+#ifdef IS_SCOUT
+#define DRIVE_SPEED (MOTOR_MAX_SPEED * 0.95)
+#else
+#define DRIVE_SPEED (MOTOR_MAX_SPEED * 0.8)
+#endif
 #define TURN_SLOW_MULTIPLIER 0.5
 #define TURN_FAST_MULTIPLIER 1.0
-#define FOLLOW_CORRECT_SLOW_MULTIPLIER 0.5
+#define FOLLOW_CORRECT_SLOW_MULTIPLIER 0.7
 #define FOLLOW_CORRECT_FAST_MULTIPLIER 1.0
 
 // *****************************************************************************
