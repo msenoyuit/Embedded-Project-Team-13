@@ -296,7 +296,7 @@ StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
             driveControlSendMsgToQ(&toSend, portMAX_DELAY);
             break;
         case READ_COMMAND:
-            masterControlData.colorCount = 10;
+            masterControlData.colorCount = 1;
             break;
         case PICKUP_COMMAND:
             masterControlData.lastCommand = piCommand;
@@ -320,7 +320,7 @@ StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
             disableElectromagnet();
             toSend = printfWiflyMessage("%d %d %d", 
                                         piCommand, 
-                                        masterControlData.direction, 
+                                        0, 
                                         1);
             wiflySendMsg(&toSend, portMAX_DELAY);
             break;
@@ -363,11 +363,10 @@ void MASTER_CONTROL_Tasks ( void ){
     case MESSAGE_COLOR_READING:
         if(masterDataTag.color || masterControlData.colorCount > 0)
         {
-            toSend = printfWiflyMessage("Color Reading: R %d G %d B %d C %d",
+            toSend = printfWiflyMessage("R %d G %d B %d",
                                         getRed(&receivedMessage),
                                         getGreen(&receivedMessage),
-                                        getBlue(&receivedMessage),
-                                        getClear(&receivedMessage));
+                                        getBlue(&receivedMessage));
             wiflySendMsg(&toSend, portMAX_DELAY);
             if(masterControlData.colorCount > 1)
             {
@@ -377,7 +376,7 @@ void MASTER_CONTROL_Tasks ( void ){
             {
                 toSend = printfWiflyMessage("%d %d %d", 
                                         READ_COMMAND,
-                                        masterControlData.direction,
+                                        0,
                                         COMMAND_FINISHED);
                 wiflySendMsg(&toSend, portMAX_DELAY);
                 masterControlData.colorCount--;
@@ -388,12 +387,12 @@ void MASTER_CONTROL_Tasks ( void ){
         driveCommand = getCommand(&receivedMessage);
         if(driveCommand == MOVE_FORWARD)
         {
-            if(masterControlData.inPickup == false)
+            //if(masterControlData.inPickup == false)
                 toSend = printfWiflyMessage("%d %d %d", 
-                                        MOVE_COMMAND,
+                                        masterControlData.lastCommand,
                                         masterControlData.direction,
                                         COMMAND_FINISHED);
-            else
+            /*else
             {
                 toSend = printfWiflyMessage("%d %d %d",
                                         PICKUP_COMMAND,
@@ -401,6 +400,7 @@ void MASTER_CONTROL_Tasks ( void ){
                                         COMMAND_FINISHED);
                 masterControlData.inPickup = false;
             }
+             * */
             wiflySendMsg(&toSend, portMAX_DELAY);
          } else if(driveCommand == ALL_STOP)
         {
