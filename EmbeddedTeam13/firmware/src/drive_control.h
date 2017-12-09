@@ -56,11 +56,9 @@ typedef enum {
  */
 
 typedef struct {
+    // If the first half of the move command has been completed.
+    // What that means varies by command
     bool startCleared;
-    bool distAlertSet;
-    bool distAlertReceived;
-    // If the last drive command executed was a turn
-    bool inTurnPosition;
     // If the distance sensor says we can go forward
     bool canGoForward;
     moveCommandType currentCommand;

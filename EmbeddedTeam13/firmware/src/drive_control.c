@@ -114,18 +114,27 @@ static void stopMotors() {
 
 static void startNextDriveCommand(void);
 
+static void notifyCommandCompleted() {
+    if (masterControlSendMsgToQ(&driveControlData.currentCommandMsg, 0)
+        == errQUEUE_FULL) {
+        dbgFatalError(DBG_ERROR_DRIVE_CONTROL_RUN);
+    }
+}
+
 static void updateDriveOutput(void) {
     LinePosition pos = driveControlData.linePos;
     moveCommandType cmd = driveControlData.currentCommand;
     
-    bool cmdComplete = false;
     if (cmd == MOVE_FORWARD || cmd == MOVE_BACKWARD) {
+        // Go forward till we hit an intersection, then set a distance alert
+        if (pos == INTERSECTION && !driveControlData.startCleared) {
+            registerDistanceAlert(720);
+            driveControlData.startCleared = true;
+        }
+
+        // Do the actual line following
         DriveDir dir = cmd == MOVE_FORWARD ? FORWARD : REVERSE;
-        driveControlData.startCleared = (driveControlData.startCleared ||
-                                         pos != INTERSECTION);
-        if (driveControlData.startCleared && pos == INTERSECTION) {
-            cmdComplete = true;
-        } else if (pos == LINE_TO_RIGHT) {
+        if (pos == LINE_TO_RIGHT) {
             drive(dir, CORRECT_TO_RIGHT);
         } else if (pos == LINE_TO_LEFT) {
             drive(dir, CORRECT_TO_LEFT);
@@ -133,43 +142,21 @@ static void updateDriveOutput(void) {
             drive(dir, STRAIGHT);
         }
     } else if (cmd == TURN_LEFT || cmd == TURN_RIGHT) {
-        if (!driveControlData.distAlertSet) {
-            // Clear the intersection, then set an alert
-            if (pos != INTERSECTION) {
-                registerDistanceAlert(600);
-                driveControlData.distAlertSet = true;
-            }
-            
-            drive(FORWARD, STRAIGHT);
-        } else if (!driveControlData.distAlertReceived) {
-            // Follow the line till we get alerted
-            if (pos == LINE_TO_RIGHT) {
-                drive(FORWARD, CORRECT_TO_RIGHT);
-            } else if (pos == LINE_TO_LEFT) {
-                drive(FORWARD, CORRECT_TO_LEFT);
-            } else {
-                drive(FORWARD, STRAIGHT);
-            }
-        } else {
-            // Turn on our point until we center on the next line
-            driveControlData.startCleared = (driveControlData.startCleared
-                                             || pos == UNKNOWN);
-            if (driveControlData.startCleared && (pos == LINE_CENTERED)) {
-                cmdComplete = true;
-            } else {
-                drive(SPIN,
-                      (cmd == TURN_LEFT) ? TURN_TO_LEFT : TURN_TO_RIGHT);
-            }
+        // Turn till the sensor is over all white
+        if (pos == UNKNOWN) {
+            driveControlData.startCleared = true;
         }
+        // Then keep turning till we're centered on the next line
+        if (driveControlData.startCleared && (pos == LINE_CENTERED)) {
+            notifyCommandCompleted();
+            startNextDriveCommand();
+            return;
+        }
+
+        // Just spin in the direction we're turning
+        drive(SPIN, (cmd == TURN_LEFT) ? TURN_TO_LEFT : TURN_TO_RIGHT);
     } else {
         stopMotors();
-    }
-    if (cmdComplete) {
-        if (masterControlSendMsgToQ(&driveControlData.currentCommandMsg, 0)
-              == errQUEUE_FULL) {
-            dbgFatalError(DBG_ERROR_DRIVE_CONTROL_RUN);
-        }
-        startNextDriveCommand();
     }
 }
 
@@ -192,27 +179,10 @@ static void startNextDriveCommand(void) {
         updateDriveOutput();
         return;
     }
-    // If the last command was a turn, or the last command was an
-    // all stop and we turned before that, we're in position for a turn
-    if (driveControlData.currentCommand == TURN_LEFT ||
-        driveControlData.currentCommand == TURN_RIGHT ||
-        (driveControlData.currentCommand == ALL_STOP &&
-         driveControlData.inTurnPosition)) {
-        driveControlData.inTurnPosition = true;
-    } else {
-        driveControlData.inTurnPosition = false;
-    }
-    
+ 
     xQueueReceive(driveControlData.internalQueue,
                   &driveControlData.currentCommandMsg, 0);
 
-    if (driveControlData.inTurnPosition) {
-        driveControlData.distAlertSet = true;
-        driveControlData.distAlertReceived = true;
-    } else {
-        driveControlData.distAlertSet = false;
-        driveControlData.distAlertReceived = false;
-    }
     driveControlData.startCleared = false;
 
     // If we're the truck, we'll only get told to drive into things if
@@ -234,6 +204,7 @@ static void startNextDriveCommand(void) {
 }
 
 static void addDriveCommand(StandardQueueMessage command) {
+    // Execute ALL_STOP immediately
     if (getCommand(&command) == ALL_STOP) {
         executeAllStop(command);
         return;
@@ -243,6 +214,7 @@ static void addDriveCommand(StandardQueueMessage command) {
                                        &command, 0) == errQUEUE_FULL) {
         dbgFatalError(DBG_ERROR_DRIVE_CONTROL_INTERNAL_QUEUE_FULL);
     }
+    // If we're not doing anything at the moment, start executing this
     if (driveControlData.currentCommand == ALL_STOP) {
         startNextDriveCommand();
     }
@@ -303,9 +275,6 @@ void DRIVE_CONTROL_Initialize ( void ) {
     driveControlData.currentCommand = ALL_STOP;
     driveControlData.linePos = UNKNOWN;
     driveControlData.startCleared = false;
-
-    driveControlData.inTurnPosition = false;
-    driveControlData.canGoForward = true;
 }
 
 BaseType_t driveControlSendMsgToQFromISR(StandardQueueMessage * message,
@@ -363,15 +332,18 @@ void DRIVE_CONTROL_Tasks ( void ) {
         handleLineSensorReading(getLine(&receivedMessage));
         break;
     case MESSAGE_MOTOR_SPEEDS_REPORT:
-        driveControlData.distAlertReceived = true;
-        updateDriveOutput();
+        // This is sent when a distance alert we set has been triggered
+        // It indicates that we should stop the current drive forward/backward
+        // command
+        notifyCommandCompleted();
+        startNextDriveCommand();
         break;
     case MESSAGE_DISTANCE_READING:
         ;
         int distance = getDistance(&receivedMessage);
         // These seem to correspond to the range of readings we get if there's
         // something in front
-        driveControlData.canGoForward = !(3 < distance && distance <= 20);
+        driveControlData.canGoForward = !(3 < distance && distance <= 15);
     }
 }
 
