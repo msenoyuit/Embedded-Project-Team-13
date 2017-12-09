@@ -189,7 +189,7 @@ static void startNextDriveCommand(void) {
     // we're trying to pick them up
 #ifdef IS_SCOUT
     // If there's something in the way abort
-    if (!driveControlData.canGoForward && 
+    if (driveControlData.forwardClearCheck < 0 && 
         getCommand(&driveControlData.currentCommandMsg) == MOVE_FORWARD) {
         // Change the command to an all stop
         driveControlData.currentCommandMsg.driveCommand.command = ALL_STOP;
@@ -275,6 +275,7 @@ void DRIVE_CONTROL_Initialize ( void ) {
     driveControlData.currentCommand = ALL_STOP;
     driveControlData.linePos = UNKNOWN;
     driveControlData.startCleared = false;
+    driveControlData.forwardClearCheck = 0;
 }
 
 BaseType_t driveControlSendMsgToQFromISR(StandardQueueMessage * message,
@@ -343,7 +344,12 @@ void DRIVE_CONTROL_Tasks ( void ) {
         int distance = getDistance(&receivedMessage);
         // These seem to correspond to the range of readings we get if there's
         // something in front
-        driveControlData.canGoForward = !(3 < distance && distance <= 15);
+        if (3 < distance && distance <= 15 &&
+            driveControlData.forwardClearCheck > -2) {
+            driveControlData.forwardClearCheck--;                
+        } else if (driveControlData.forwardClearCheck < 2) {
+            driveControlData.forwardClearCheck++;
+        }
     }
 }
 

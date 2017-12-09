@@ -60,7 +60,7 @@ typedef struct {
     // What that means varies by command
     bool startCleared;
     // If the distance sensor says we can go forward
-    bool canGoForward;
+    int forwardClearCheck;
     moveCommandType currentCommand;
     StandardQueueMessage currentCommandMsg;
     LinePosition linePos;
