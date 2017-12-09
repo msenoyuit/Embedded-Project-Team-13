@@ -20,8 +20,8 @@ static TimerHandle_t color_timer;
 static DRV_HANDLE drvI2CHandle; // I2C driver handle
 static DRV_I2C_BUFFER_HANDLE txBuffer; // Transmit buffer handle
 static DRV_I2C_BUFFER_HANDLE rxBuffer; // Receive buffer handle for color data
-static DRV_I2C_BUFFER_HANDLE rx2Buffer; // Recevie buffer handle for line data
-static SYS_STATUS i2c_status; // Hold the current status of the I2C bus
+//static DRV_I2C_BUFFER_HANDLE rx2Buffer; // Recevie buffer handle for line data
+//static SYS_STATUS i2c_status; // Hold the current status of the I2C bus
 static DRV_I2C_BUFFER_EVENT i2cOpStatus;
 static uint8_t txData = 3; // Holds the transmit data
 static uint8_t tx2Data[14] = {0x7D, 0x12, 0x7D, 0x34, 0x0F, 0xFF, 0x0E, 0xFC, 0x10, 0x01, 0x10, 0x00, 0x13, 0x11};
@@ -46,7 +46,7 @@ void ColorBufferEventHandler(DRV_I2C_BUFFER_EVENT event,
         case DRV_I2C_BUFFER_EVENT_COMPLETE: // parse the received color data
             clear = (rxData[20] + (rxData[21] << 8));
             // Correct for extra strong red readings
-            red = (rxData[22] + (rxData[23] << 8)) - 100;
+            red = (rxData[22] + (rxData[23] << 8));
             green = (rxData[24] + (rxData[25] << 8));
             blue = (rxData[26] + (rxData[27] << 8));
             break;
