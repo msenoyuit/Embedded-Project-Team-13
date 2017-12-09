@@ -45,7 +45,8 @@ void ColorBufferEventHandler(DRV_I2C_BUFFER_EVENT event,
     {
         case DRV_I2C_BUFFER_EVENT_COMPLETE: // parse the received color data
             clear = (rxData[20] + (rxData[21] << 8));
-            red = (rxData[22] + (rxData[23] << 8));
+            // Correct for extra strong red readings
+            red = (rxData[22] + (rxData[23] << 8)) - 100;
             green = (rxData[24] + (rxData[25] << 8));
             blue = (rxData[26] + (rxData[27] << 8));
             break;
