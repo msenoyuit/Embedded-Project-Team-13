@@ -122,10 +122,6 @@ static StandardQueueMessage sendLineReading(char reading) {
     return msg;
 }
 
-void toggleMagnet()
-{
- //do nothing   
-}
 
 static char * moveCommandTypeToStr(moveCommandType cmd) {
     switch (cmd) {
@@ -305,7 +301,9 @@ StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
         case PICKUP_COMMAND:
             masterControlData.lastCommand = piCommand;
             turnToDir(piSpecifier);
-            toggleMagnet();
+            toSend = makeDriveCommand(MOVE_FORWARD, masterControlData.motorQueueCount++);
+            driveControlSendMsgToQ(&toSend, portMAX_DELAY);
+            enableElectromagnet();
             break;
         case STREAM_START:
             masterDataTag.color |=  (piSpecifier == COLOR_SENSOR);
@@ -319,7 +317,7 @@ StandardQueueMessage handleWiflyCommand(const StandardQueueMessage * msg) {
 
             break;
         case RELEASE_COMMAND:
-            toggleMagnet();
+            disableElectromagnet();
             toSend = printfWiflyMessage("%d %d %d", 
                                         piCommand, 
                                         masterControlData.direction, 
