@@ -20,9 +20,10 @@ specifiers = {
     "EAST_MOVE":        '1',
     "SOUTH_MOVE":       '2',
     "WEST_MOVE":        '3',
-    "LINE_SENSOR":      '4',
-    "COLOR_SENSOR":     '5',
-    "DISTANCE_SENSOR":  '6',
+    "ALL_STOP":         '4',
+    "LINE_SENSOR":      '5',
+    "COLOR_SENSOR":     '6',
+    "DISTANCE_SENSOR":  '7',
     "":                 ''
 }
 

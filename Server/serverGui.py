@@ -154,7 +154,7 @@ class MainWindow(QWidget):
 
     def createDiagnosticsView(self):
         # QLabel to display text
-        self.diagnosticsLabel = QLabel("Test Text")
+        self.diagnosticsLabel = QLabel("It works.")
         self.diagnosticsLabel.setStyleSheet("color: white")
 
         # Command builder
@@ -191,7 +191,7 @@ class MainWindow(QWidget):
         self.diagnosticsWidget.setLayout(diagnosticsLayout)
 
     def isCommandBuilderValid(self):
-        if self.roverSelector.currentIndex() == 0:  # Rover 0, scout
+        if '0' in self.roverSelector.currentText():  # Rover 0, scout
             if "MOVE" in self.commandSelector.currentText():
                 return "MOVE" in self.specifierSelector.currentText()
             elif "READ" in self.commandSelector.currentText():
@@ -199,16 +199,16 @@ class MainWindow(QWidget):
             elif "PICKUP" in self.commandSelector.currentText():
                 return False
             elif "STREAM" in self.commandSelector.currentText():
-                return True;
+                return "SENSOR" in self.specifierSelector.currentText()
         else:   # Rover 1, mover
             if "MOVE" in self.commandSelector.currentText():
                 return "MOVE" in self.specifierSelector.currentText()
             elif "READ" in self.commandSelector.currentText():
                 return False
             elif "PICKUP" in self.commandSelector.currentText():
-                return len(self.specifierSelector.currentText()) == 0
+                return 'MOVE' in self.specifierSelector.currentText()
             elif "STREAM" in self.commandSelector.currentText():
-                return "LINE" in self.specifierSelector.currentText()
+                return "SENSOR" in self.specifierSelector.currentText()
 
     def mapButtonHandler(self, bool):
         self.mapClickCount += 1

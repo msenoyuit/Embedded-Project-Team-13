@@ -52,7 +52,7 @@ class RoverControl(QObject):
     # Send a command and wait until we get an ack
     def sendCommand(self, command):
         self.sendCommandSignal.emit(command)
-        expectedReply = commandDefs.flags["COMMAND_RECEIVED"] + ' ' + command
+        expectedReply = command + ' ' + commandDefs.flags["COMMAND_RECEIVED"]
         nextReply = self.messageQ.get()
         while nextReply != expectedReply:
             self.infoMessage('Unexpected message from rover during sendCommand:\t' + nextReply)
@@ -60,7 +60,7 @@ class RoverControl(QObject):
 
     def waitForCommandFinished(self, command):
         reply = self.messageQ.get()
-        while reply != commandDefs.flags["COMMAND_FINISHED"] + ' ' + command:
+        while reply != command + ' ' + commandDefs.flags["COMMAND_FINISHED"]:
             self.infoMessage('Unexpected message while waiting for command completion:\t' + reply)
             reply = self.messageQ.get()
 
@@ -70,7 +70,7 @@ class RoverControl(QObject):
         self.waitUntilClear()
         command = commandDefs.commands["MOVE_COMMAND"] + ' ' + commandDefs.specifiers[direction]
         self.sendCommand(command)
-        roverReplyFlag = self.messageQ.get().replace(' ' + command, '')
+        roverReplyFlag = self.messageQ.get().replace(command + ' ', '')
         while True:
             if roverReplyFlag == commandDefs.flags["EVENT_ALERT"]:
                 return roverReplyFlag
@@ -81,16 +81,30 @@ class RoverControl(QObject):
             roverReplyFlag = self.messageQ.get().replace(' ' + command, '')
 
     def moveAroundBlock(self, directionOfTravel):
-        if self.getCurrentPosition()[1] == 0:   # if on the bottom row
-            self.moveCommand("NORTH_MOVE")
-            self.moveCommand(directionOfTravel)
-            self.moveCommand(directionOfTravel)
-            self.moveCommand("SOUTH_MOVE")
+        if (directionOfTravel == "EAST_MOVE" or
+            directionOfTravel == "WEST_MOVE"):
+            if self.getCurrentPosition()[1] == 0:   # if on the bottom row
+                self.moveCommand("NORTH_MOVE")
+                self.moveCommand(directionOfTravel)
+                self.moveCommand(directionOfTravel)
+                self.moveCommand("SOUTH_MOVE")
+            else:
+                self.moveCommand("SOUTH_MOVE")
+                self.moveCommand(directionOfTravel)
+                self.moveCommand(directionOfTravel)
+                self.moveCommand("NORTH_MOVE")
         else:
-            self.moveCommand("SOUTH_MOVE")
-            self.moveCommand(directionOfTravel)
-            self.moveCommand(directionOfTravel)
-            self.moveCommand("NORTH_MOVE")
+            if self.getCurrentPosition()[0] == 0:   # if on the bottom row
+                self.moveCommand("EAST_MOVE")
+                self.moveCommand(directionOfTravel)
+                self.moveCommand(directionOfTravel)
+                self.moveCommand("WEST_MOVE")
+            else:
+                self.moveCommand("WEST_MOVE")
+                self.moveCommand(directionOfTravel)
+                self.moveCommand(directionOfTravel)
+                self.moveCommand("EAST_MOVE")
+            
 
     def infoMessage(self, message):
         print(message)

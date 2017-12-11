@@ -41,6 +41,6 @@ class RoverPositions:
             '''if self.rover0X != x and self.nextRover0X != x and \
                 self.rover0Y != y and self.nextRover0Y != y:
                 break'''
-            if self.rover0Y - self.rover1Y >= 3 or (self.rover0X == 8 and self.rover0Y == 8):
+            if self.rover0Y - self.rover1Y > 3 or (self.rover0X == 8 and self.rover0Y == 8):
                 break
             time.sleep(0.5)

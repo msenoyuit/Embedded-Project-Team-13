@@ -3,8 +3,8 @@ from PyQt5.QtCore import *
 
 class MessageParser(QObject):
 
-    startByte = 0xFF
-    stopByte = 0xFE
+    startByte = ord('{')
+    stopByte = ord('}')
 
     # Signal emitted when a full message is parsed
     parsedMessageSignal = pyqtSignal(str)
@@ -30,8 +30,9 @@ class MessageParser(QObject):
 
     def extractPayload(self, message):
         messageFields = message.split(',')
+        self.rxSequenceCount %= 256
         if not len(messageFields) == 5:
-            self.parseError('Message did not contain the proper number of fields')
+            self.parseError('Message did not contain the proper number of fields: \t\t' + message)
         elif not (len(messageFields[0]) == 1 and ord(messageFields[0]) - 0x30 == self.roverID):
             self.parseError('Rover ID incorrect')
         elif not (len(messageFields[1]) == 3 and messageFields[1].isdigit()):
@@ -52,7 +53,9 @@ class MessageParser(QObject):
         return None
 
     def constructMessage(self, message):
-        fullMessage = str(chr(MessageParser.startByte)) + str(self.roverID) + ',' + '{:03}'.format(self.txSequenceCount) + ',' + '{:03}'.format(len(message)) + ','
+        if len(message.split(' ')) != 2:
+            message = message + ' 0'
+        fullMessage = str(chr(MessageParser.startByte)) + str(self.roverID) + ',' + '{:03}'.format(self.txSequenceCount) + ',' + '{:02}'.format(len(message)) + ','
         fullMessage +=  message + ',' + '{:03}'.format(checksum.calculateChecksum(message)) + chr(MessageParser.stopByte)
         self.txSequenceCount += 1
         #return fullMessage
@@ -67,6 +70,7 @@ class MessageParser(QObject):
             self.parsedMessageSignal.emit(messagePayload)   # Emit signal with parsed message
 
     def parse(self, messageChunk):
+        #print(messageChunk)
         for char in messageChunk:
             if self.state == 'INIT':
                 if char == MessageParser.startByte:

@@ -1,6 +1,7 @@
 from roverControl import RoverControl
 from PyQt5.QtCore import *
 import commandDefs
+import time
 
 class Rover0Control(RoverControl):
 
@@ -28,16 +29,28 @@ class Rover0Control(RoverControl):
 
     def waitUntilClear(self):#, x, y):
         self.positionInfo.waitUntilRover0Clear()
-
-    # Command a color reading and return the result
+        
+    def distanceColor(self,r,g,b):
+        if r - 50 > g  and r - 50 > b:
+            return "R"
+        if g > b:
+            return 'G'
+        return 'B'
+        # Command a color reading and return the result
     def takeColorReading(self):
-        self.sendCommand(commandDefs.commands["READ_COMMAND"])
+        time.sleep(0.5)
+        readCommand = commandDefs.commands["READ_COMMAND"] + ' ' + '0'
+        self.sendCommand(readCommand)
         nextMessage = self.messageQ.get().split(' ')
-        while len(nextMessage) != 2 or nextMessage[0] != commandDefs.flags["EVENT_ALERT"]:
+        while len(nextMessage) != 6:
             self.infoMessage('Unexpected message from rover during takeColorReading:\t' + nextMessage)
             nextMessage = self.messageQ.get().split(' ')
-        self.waitForCommandFinished(commandDefs.commands["READ_COMMAND"])
-        return nextMessage[1]
+        '''while len(nextMessage) != 2 or nextMessage[0] != commandDefs.flags["EVENT_ALERT"]:
+            self.infoMessage('Unexpected message from rover during takeColorReading:\t' + nextMessage)
+            nextMessage = self.messageQ.get().split(' ')'''
+        toReturn = self.distanceColor(int(nextMessage[1]), int(nextMessage[3]), int(nextMessage[5])) # for x in [nextMessage[1], nextMessage[3], nextMessage[5]]
+        self.waitForCommandFinished(readCommand)
+        return toReturn
 
     def nextStepAlongRow(self, direction):
         if self.moveCommand(direction) == commandDefs.flags["EVENT_ALERT"]:  # When a block is encountered

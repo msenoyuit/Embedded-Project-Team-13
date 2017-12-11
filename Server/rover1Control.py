@@ -73,28 +73,36 @@ class Rover1Control(RoverControl):
         self.moveCommand("EAST_MOVE") # Move to the 0 position
         for blockIndex in range(0,3):
             self.waitForBlockToBeFound(blockIndex)
-            while self.getCurrentPosition()[1] < self.redBlocks[blockIndex][1]: # Move up while y < block's y
-                self.moveCommand("NORTH_MOVE")
-            while self.getCurrentPosition()[0] < self.redBlocks[blockIndex][0] - 1: # Move right while left of block
+            while self.getCurrentPosition()[0] < self.redBlocks[blockIndex][0]: # Move right while left of block
                 if not self.isBlockInDirection("EAST_MOVE"):
                     self.moveCommand("EAST_MOVE")
                 else:
                     self.moveAroundBlock("EAST_MOVE")
-            pickupCommand = commandDefs.commands["PICKUP_COMMAND"] + ' ' + commandDefs.specifiers["EAST_MOVE"]
+            while self.getCurrentPosition()[1] < self.redBlocks[blockIndex][1]-1: # Move up while y < block's y
+                if not self.isBlockInDirection("NORTH_MOVE"):
+                    self.moveCommand("NORTH_MOVE")
+                else:
+                    self.moveAroundBlock("NORTH_MOVE")
+            pickupCommand = commandDefs.commands["PICKUP_COMMAND"] + ' ' + commandDefs.specifiers["NORTH_MOVE"]
+            self.waitUntilClear()
             self.sendCommand(pickupCommand)                                     # Pick up the block
             self.waitForCommandFinished(pickupCommand)
             self.hasBlock = blockIndex
-            self.updateCurrentPositionByDirection("EAST_MOVE")
+            self.updateCurrentPositionByDirection("NORTH_MOVE")
             self.pickedUpBlock.emit(blockIndex)
+            while self.getCurrentPosition()[1] > 0:                             # Move down while above bottom
+                if not self.isBlockInDirection("SOUTH_MOVE"):
+                    self.moveCommand("SOUTH_MOVE")
+                else:
+                    self.moveAroundBlock("SOUTH_MOVE")
             while self.getCurrentPosition()[0] > 0:                             # Move left while right of axis
                 if not self.isBlockInDirection("WEST_MOVE"):
                     self.moveCommand("WEST_MOVE")
                 else:
                     self.moveAroundBlock("WEST_MOVE")
-            while self.getCurrentPosition()[1] > 0:                             # Move down while above bottom
-                self.moveCommand("SOUTH_MOVE")
-            self.sendCommand(commandDefs.commands["RELEASE_COMMAND"])           # Release block
-            self.waitForCommandFinished(commandDefs.commands["RELEASE_COMMAND"])
+            releaseCommand = commandDefs.commands["RELEASE_COMMAND"] + ' 0'
+            self.sendCommand(releaseCommand)           # Release block
+            self.waitForCommandFinished(releaseCommand)
             self.hasBlock = None
 
 

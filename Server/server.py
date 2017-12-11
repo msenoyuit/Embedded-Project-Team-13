@@ -25,6 +25,7 @@ class team13Server(QObject):
         self.client1 = None
         self.sckt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Construct socket object
         self.clientsConnected = 0
+        self.continueRunning = True
 
     def runServer(self):
 
@@ -33,6 +34,7 @@ class team13Server(QObject):
         '''self.client0, address0 = self.sckt.accept()                       # Accept client connection
         self.clientsConnected = 1
         print('Client 0 connected')'''
+        self.sckt.settimeout(1)                                           # Timeout on blocking calls after 1s
         client0Thread = threading.Thread(target=self.monitorClient0)
         client0Thread.start()                                             # Start thread to monitor client 0
         '''self.client1, address1 = self.sckt.accept()
@@ -41,34 +43,31 @@ class team13Server(QObject):
         client1Thread = threading.Thread(target=self.monitorClient1)
         client1Thread.start()
 
-
-        '''
-        while True:
-            try:
-                receivedData = self.client0.recv(self.maxMessageSize)
-            except socket.error:
-                break
-            if not receivedData:
-                break
-            self.client0Message.emit(receivedData)
-            try:
-                receivedData = self.client1.recv(self.maxMessageSize)
-            except socket.error:
-                break
-            if not receivedData:
-                break
-            self.client1Message.emit(receivedData)
-        self.serverClosed.emit()
-        self.sckt.close()'''
-
     def monitorClient0(self):
-        self.client0, address0 = self.sckt.accept()  # Accept client connection
+        connected = False
+        while not connected:
+            try:
+                self.client0, address0 = self.sckt.accept()  # Accept client connection
+                connected = True
+            except socket.timeout:
+                if not self.continueRunning:
+                    exit()
+                pass
+            except socket.error:
+                exit()
+                
+        self.sckt.settimeout(1)
+                
         self.clientsConnected += 1
         print('Client 0 connected')
 
-        while True:
+        while self.continueRunning:
+            #print('Client 0 Continuing')
             try:
                 receivedData = self.client0.recv(self.maxMessageSize)
+            except socket.timeout:
+                #print('Client 0 timeout')
+                pass
             except socket.error:
                 break
             if not receivedData:
@@ -77,19 +76,32 @@ class team13Server(QObject):
         self.clientsConnected -= 1
         if self.clientsConnected == 0:
             self.serverClosed.emit()
+            print('Closing socket')
             self.sckt.close()
 
     def monitorClient1(self):
         while self.clientsConnected < 1:    # Wait for client 0 to connect
             time.sleep(0.1)
 
-        self.client1, address1 = self.sckt.accept()
+        connected = False
+        while not connected:
+            try:
+                self.client1, address1 = self.sckt.accept()  # Accept client connection
+                connected = True
+            except socket.timeout:
+                if not self.continueRunning:
+                    exit()
+                pass
+            except socket.error:
+                exit()
         self.clientsConnected = 2
         print('Client 1 connected')
 
-        while True:
+        while self.continueRunning:
             try:
                 receivedData = self.client1.recv(self.maxMessageSize)
+            except socket.timeout:
+                pass
             except socket.error:
                 break
             if not receivedData:
@@ -102,6 +114,7 @@ class team13Server(QObject):
 
 
     def closeServer(self):
+        self.continueRunning = False
         if self.clientsConnected > 0:
             self.client0.close()
             if self.clientsConnected > 1:

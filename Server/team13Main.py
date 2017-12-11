@@ -6,6 +6,7 @@ from rover0Control import Rover0Control
 from rover1Control import Rover1Control
 import commandDefs
 import sys
+import os
 import threading
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import *
@@ -52,6 +53,7 @@ def reset():
     global state
     state = 'INIT'
     # TODO: complete
+    os.system('sudo reboot')
 
 def rover0Message(message):
     global state, rover0Controller
@@ -102,7 +104,7 @@ def cleanup():
 app = QApplication(sys.argv)
 
 # Declare server
-server = team13Server('localhost', 50000)
+server = team13Server('192.168.42.1', 2000)
 # Declare server GUI
 serverGui = MainWindow()
 # Declare parser for rover 0
